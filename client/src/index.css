@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-marine-blue: #0A2540;
+  --color-mustard-gold: #E5A93D;
+  --color-neutral-bg: #F7F9FC;
+}
+
+body {
+  background-color: var(--color-neutral-bg);
+  color: var(--color-marine-blue);
+  font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
+}

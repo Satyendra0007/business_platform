@@ -1,0 +1,8 @@
+# Sensitive environment variables — never commit this file
+.env
+node_modules
+frontend flow.docx
+frontend flow.pdf
+tracker.md
+Tradafy technical report .pdf
+tradafy_mern_development_workflow.md

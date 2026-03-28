@@ -1,0 +1,40 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs'); // Will use bcryptjs for hashing
+
+const userSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  
+  // IMPROVEMENT 2 & 3: Normalize email spacing/casing and firmly index for lookup speed
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true 
+  },
+  
+  // IMPROVEMENT 1: Password field is secured and stripped from default API GET requests
+  password: { type: String, required: true, select: false },
+  
+  // IMPROVEMENT 5: Role is an array to flexibly support "both" (e.g. ['buyer', 'supplier'])
+  roles: [{ type: String, enum: ['buyer', 'supplier', 'admin'] }],
+  
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  isEmailVerified: { type: Boolean, default: false },
+  
+  // IMPROVEMENT 4: Active status flag to allow Admins to suspend/ban accounts cleanly
+  isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+
+// IMPROVEMENT 6: Critical pre-save hook that hashes passwords natively via bcryptjs
+userSchema.pre('save', async function() {
+  // Only hash the password if it has been modified (or is newly created)
+  if (!this.isModified('password')) return;
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+module.exports = mongoose.model('User', userSchema);
