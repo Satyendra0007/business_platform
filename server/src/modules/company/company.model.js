@@ -21,6 +21,21 @@ const companySchema = new mongoose.Schema({
   mainProducts: [{ type: String }],
   exportMarkets: [{ type: String }],
 
+  // Verification Documents — uploaded by company owner, reviewed by admin
+  // Optional: companies without documents remain in 'draft' status
+  documents: {
+    type: [{
+      name: { type: String, required: true },  // e.g. "Business License"
+      url:  { type: String, required: true },  // Cloudinary / S3 URL
+      type: { type: String }                   // e.g. "pdf", "image"
+    }],
+    default:  [],
+    validate: {
+      validator: (docs) => docs.length <= 5,
+      message:  'A company may upload a maximum of 5 verification documents.'
+    }
+  },
+
   // Verification Workflow ensuring Admins have B2B legal control
   verificationStatus: { 
     type: String, 

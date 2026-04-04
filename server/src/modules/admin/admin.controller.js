@@ -95,7 +95,8 @@ const getCompanies = async (req, res) => {
 
     const [companies, total] = await Promise.all([
       Company.find(query)
-        .select('name country verificationStatus subscriptionPlan isActive createdAt')
+        // Include documents so admin can review uploaded verification files
+        .select('name country verificationStatus subscriptionPlan isActive documents createdAt')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: -1 })

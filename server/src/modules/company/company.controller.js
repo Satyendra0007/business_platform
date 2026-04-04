@@ -14,10 +14,15 @@ const createCompany = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User is already linked to an existing company' });
     }
 
+    // AUTO-STATUS: If documents are provided at creation, advance status to 'submitted'
+    // so admin can immediately see documents are ready for review.
+    // Without documents, the profile stays 'draft' until the owner uploads them.
+    const hasDocuments = Array.isArray(data.documents) && data.documents.length > 0;
+    const verificationStatus = hasDocuments ? 'submitted' : 'draft';
+
     const company = await Company.create({
       ...data,
-      // Defaulting verification status to draft for fresh profiles
-      verificationStatus: 'draft' 
+      verificationStatus
     });
 
     if (company) {
@@ -53,13 +58,22 @@ const updateCompany = async (req, res) => {
     }
 
     const company = await Company.findById(companyId);
-    if (!company) {
+    if (!company || company.isDeleted) {
       return res.status(404).json({ success: false, message: 'Company not found' });
     }
 
     // Safety constraint: Prevent manual bypass of the verification workflow via arbitrary API payloads
     if (data.verificationStatus && !isAdmin) {
       delete data.verificationStatus;
+    }
+
+    // AUTO-STATUS: If documents are newly uploaded by the owner and the company isn't
+    // already verified/rejected, auto-advance status to 'submitted' for admin review.
+    // Admin-initiated updates are exempt — they manage status directly.
+    const uploadingDocuments = Array.isArray(data.documents) && data.documents.length > 0;
+    const notYetReviewed = ['draft', 'submitted'].includes(company.verificationStatus);
+    if (uploadingDocuments && notYetReviewed && !isAdmin) {
+      data.verificationStatus = 'submitted';
     }
 
     const updatedCompany = await Company.findByIdAndUpdate(
@@ -120,7 +134,10 @@ const getCompanies = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // NOTE: documents field intentionally excluded from public listing for privacy —
+    // full documents are visible via GET /api/companies/:id and all /api/admin/companies endpoints.
     const companies = await Company.find(query)
+      .select('-documents')
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 });
