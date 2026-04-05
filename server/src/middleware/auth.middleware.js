@@ -8,11 +8,11 @@ const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      
+
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tradafy_super_secret_fallback');
-      
+
       req.user = await User.findById(decoded.id).select('-password');
-      
+
       if (!req.user) {
         return res.status(401).json({ success: false, message: 'Not authorized, user not found' });
       }
@@ -20,17 +20,17 @@ const protect = async (req, res, next) => {
       if (!req.user.isActive) {
         return res.status(403).json({ success: false, message: 'Account has been deactivated by Admin' });
       }
-      
-      next();
+
+      return next(); // ← return prevents fall-through to the !token check below
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ success: false, message: 'Not authorized, token failed' });
+      console.error('[protect]', error.message);
+      // return prevents Express from emitting "headers already sent" errors
+      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
-  }
+  // Reached only when no Authorization header is present at all
+  return res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
 };
 
 // Grant access to specific roles

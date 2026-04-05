@@ -1,6 +1,6 @@
 const { check } = require('express-validator');
 
-const DEAL_STAGES = ['inquiry', 'negotiation', 'agreement', 'payment', 'production', 'shipping', 'delivery', 'closed'];
+const DEAL_STAGES = ['inquiry', 'negotiation', 'agreement', 'payment', 'production', 'shipping_request', 'shipping', 'delivery', 'closed'];
 
 // Create Deal validation
 const createDealValidation = [

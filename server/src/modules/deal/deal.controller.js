@@ -7,22 +7,27 @@ const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 // Sequential lifecycle map — each stage only moves forward to the next allowed stage(s)
 // Prevents a deal from jumping from 'inquiry' straight to 'closed' etc.
 const VALID_TRANSITIONS = {
-  inquiry:     ['negotiation', 'closed'],
-  negotiation: ['agreement',   'closed'],
-  agreement:   ['payment',     'closed'],
-  payment:     ['production',  'closed'],
-  production:  ['shipping',    'closed'],
-  shipping:    ['delivery',    'closed'],
-  delivery:    ['closed'],
-  closed:      [] // Terminal state
+  inquiry:          ['negotiation',     'closed'],
+  negotiation:      ['agreement',       'closed'],
+  agreement:        ['payment',         'closed'],
+  payment:          ['production',      'closed'],
+  production:       ['shipping_request','closed'],  // must raise shipping request next
+  shipping_request: ['shipping',        'closed'],  // unlocked when a bid is accepted
+  shipping:         ['delivery',        'closed'],
+  delivery:         ['closed'],
+  closed:           []                              // terminal
 };
 
-// Helper — checks if the requesting user is a participant of this deal
+// Helper — checks if the requesting user is a participant of this deal.
+// Accepts: buyer company member, supplier company member,
+//          the assigned shipping agent (User._id match), or admin.
 const isParticipant = (deal, user) => {
-  const c = user.companyId?.toString();
+  const c   = user.companyId?.toString();
+  const uid = user._id?.toString();
   return (
-    deal.buyerCompanyId?.toString()    === c ||
-    deal.supplierCompanyId?.toString() === c ||
+    deal.buyerCompanyId?.toString()    === c   ||  // buyer company
+    deal.supplierCompanyId?.toString() === c   ||  // supplier company
+    deal.shippingAgentId?.toString()   === uid ||  // assigned freight agent
     user.roles.includes('admin')
   );
 };
@@ -138,13 +143,22 @@ const getDealById = async (req, res) => {
 // ─── UPDATE DEAL DETAILS ─────────────────────────────────────────────────────
 // @route   PUT /api/deals/:id
 // @access  Private (participants only)
+// WHITELIST: Only trade fields may be updated here. Shipping references
+// (shippingAgentId, selectedBidId) and lifecycle field (status) are
+// managed by the shipping workflow only — not by direct PUT payload.
 const updateDeal = async (req, res) => {
   try {
     if (!isValidId(req.params.id)) {
       return res.status(400).json({ success: false, message: 'Invalid Deal ID.' });
     }
 
-    const data = matchedData(req, { locations: ['body'] });
+    // Strict whitelist — only safe trade fields accepted via PUT /deals/:id
+    const ALLOWED_UPDATE_FIELDS = ['quantity', 'price', 'paymentTerms', 'incoterm', 'productName'];
+    const raw  = matchedData(req, { locations: ['body'] });
+    const data = Object.fromEntries(
+      Object.entries(raw).filter(([k]) => ALLOWED_UPDATE_FIELDS.includes(k))
+    );
+
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ success: false, message: 'No valid fields provided for update.' });
     }
@@ -208,12 +222,33 @@ const updateDealStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: `Deal is already at status '${status}'.` });
     }
 
-    // IMPROVEMENT 1: Enforce sequential transitions — prevent invalid stage jumps
+    // Enforce sequential transitions
     const allowed = VALID_TRANSITIONS[deal.status] || [];
     if (!allowed.includes(status)) {
       return res.status(400).json({
         success: false,
         message: `Cannot transition from '${deal.status}' to '${status}'. Allowed next stages: ${allowed.join(', ') || 'none'}.`
+      });
+    }
+
+    // ── DATA-DRIVEN STATUS GUARDS ────────────────────────────────────────────
+
+    // Guard: shipping_request → shipping requires an accepted bid
+    // acceptBid() in the shipping controller sets selectedBidId automatically.
+    // Reject any manual attempt to push to 'shipping' without a confirmed bid.
+    if (status === 'shipping' && !deal.selectedBidId) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot advance to 'shipping' until a shipping bid has been accepted (selectedBidId missing).`
+      });
+    }
+
+    // Guard: shipping → delivery requires agent to confirm physical delivery
+    // The shipping agent must call PATCH /deals/:id/shipment with status:'delivered' first.
+    if (status === 'delivery' && deal.shipment?.status !== 'delivered') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot advance to 'delivery' until shipment status is 'delivered'. Current shipment status: '${deal.shipment?.status || 'not set'}'.`
       });
     }
 
@@ -245,4 +280,83 @@ const updateDealStatus = async (req, res) => {
   }
 };
 
-module.exports = { createDeal, getDeals, getDealById, updateDeal, updateDealStatus };
+// ─── UPDATE SHIPMENT STATUS ───────────────────────────────────────────────────
+// @route   PATCH /api/deals/:id/shipment
+// @access  Private (shipping agent assigned to this deal, or admin)
+// Allows the shipping agent to push incremental shipment milestone updates
+// (booking → loaded → in_transit → delivered) without touching deal status.
+const updateShipment = async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid Deal ID.' });
+    }
+
+    const deal = await Deal.findById(req.params.id);
+    if (!deal || deal.isDeleted) {
+      return res.status(404).json({ success: false, message: 'Deal not found.' });
+    }
+
+    // Only the assigned shipping agent or an admin can update shipment
+    const uid = req.user._id?.toString();
+    const isAgent = deal.shippingAgentId?.toString() === uid;
+    const isAdmin = req.user.roles.includes('admin');
+
+    if (!isAgent && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the assigned shipping agent or an admin can update shipment details.'
+      });
+    }
+
+    // Deal must be in shipping stage for meaningful shipment updates
+    if (!['shipping', 'delivery'].includes(deal.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Shipment updates are only allowed when deal is in 'shipping' or 'delivery' stage. Current: '${deal.status}'.`
+      });
+    }
+
+    const SHIPMENT_STATUSES = ['booking', 'loaded', 'in_transit', 'delivered'];
+    const { status, notes } = req.body;
+
+    if (status && !SHIPMENT_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid shipment status. Allowed: ${SHIPMENT_STATUSES.join(', ')}.`
+      });
+    }
+
+    // Build the update payload — only apply provided fields
+    const shipmentUpdate = { 'shipment.updatedAt': new Date() };
+    if (status) shipmentUpdate['shipment.status'] = status;
+    if (notes !== undefined) shipmentUpdate['shipment.notes'] = notes;
+
+    const updated = await Deal.findByIdAndUpdate(
+      req.params.id,
+      { $set: shipmentUpdate },
+      { new: true, runValidators: true }
+    ).lean();
+
+    // Log the event in activityLog
+    await Deal.findByIdAndUpdate(req.params.id, {
+      $push: {
+        activityLog: {
+          action:    `Shipment status updated to '${status || deal.shipment?.status}'`,
+          userId:    req.user._id,
+          timestamp: new Date()
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Shipment status updated to '${updated.shipment.status}'.`,
+      data: { shipment: updated.shipment }
+    });
+  } catch (error) {
+    console.error('[updateShipment]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+module.exports = { createDeal, getDeals, getDealById, updateDeal, updateDealStatus, updateShipment };

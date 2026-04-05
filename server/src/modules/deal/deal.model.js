@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
-const DEAL_STAGES = ['inquiry', 'negotiation', 'agreement', 'payment', 'production', 'shipping', 'delivery', 'closed'];
-
-const shipmentStatuses = [
-  'booking_confirmed', 'loaded', 'departed',
-  'in_transit', 'arrived_at_port', 'customs_clearance', 'delivered'
-];
+const DEAL_STAGES = ['inquiry', 'negotiation', 'agreement', 'payment', 'production', 'shipping_request', 'shipping', 'delivery', 'closed'];
 
 const dealSchema = new mongoose.Schema({
 
@@ -47,16 +42,15 @@ const dealSchema = new mongoose.Schema({
   }],
 
   // ── SHIPMENT ─────────────────────────────────────────────────────────────
-  // Lightweight placeholder — Phase 2 will expand this with full logistics tracking
+  // Lightweight tracking block — updated by the shipping agent after bid acceptance.
+  // Full logistics detail (vessel, BL, port) can be added in Phase 3.
   shipment: {
-    vesselName:       { type: String },
-    containerNumber:  { type: String },
-    bookingReference: { type: String },
-    originPort:       { type: String },
-    destinationPort:  { type: String },
-    estimatedDeparture: { type: Date },
-    estimatedArrival:   { type: Date },
-    status: { type: String, enum: shipmentStatuses }
+    status: {
+      type: String,
+      enum: ['booking', 'loaded', 'in_transit', 'delivered']
+    },
+    updatedAt: { type: Date },
+    notes:     { type: String }
   },
 
   // ── ACTIVITY LOG ─────────────────────────────────────────────────────────
@@ -67,6 +61,15 @@ const dealSchema = new mongoose.Schema({
     userId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     timestamp: { type: Date, default: Date.now }
   }],
+
+  // ── SHIPPING WORKFLOW REFERENCES ─────────────────────────────────────────
+  // Populated once the deal enters the shipping_request → shipping flow.
+  // shippingRequestId — the open freight request raised on this deal
+  // selectedBidId     — the winning ShippingBid chosen by buyer/supplier
+  // shippingAgentId   — the User (_id) of the chosen shipping agent
+  shippingRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShippingRequest' },
+  selectedBidId:     { type: mongoose.Schema.Types.ObjectId, ref: 'ShippingBid' },
+  shippingAgentId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
   // Soft delete for compliance & audit recovery
   isDeleted: { type: Boolean, default: false }
@@ -83,5 +86,7 @@ dealSchema.index({ buyerCompanyId: 1, supplierCompanyId: 1 });
 // Compound: buyer/supplier dashboard filter "show my deals by status"
 dealSchema.index({ buyerCompanyId: 1, status: 1 });
 dealSchema.index({ supplierCompanyId: 1, status: 1 });
+// Agent dashboard: "show all deals assigned to me"
+dealSchema.index({ shippingAgentId: 1 });
 
 module.exports = mongoose.model('Deal', dealSchema);

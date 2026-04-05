@@ -21,7 +21,7 @@
   "role": "buyer"
 }
 ```
-> `role` accepts: `"buyer"`, `"supplier"`, `"admin"`
+> `role` accepts: `"buyer"`, `"supplier"`, `"admin"`, `"shipping_agent"`
 
 **201 Response:**
 ```json
@@ -530,8 +530,9 @@ All routes require authentication 🔒.
 
 **Allowed status flow:**
 ```
-inquiry → negotiation → agreement → payment → production → shipping → delivery → closed
+inquiry → negotiation → agreement → payment → production → shipping_request → shipping → delivery → closed
 ```
+> `shipping_request` stage: buyer/supplier creates a freight request. Once a bid is accepted the deal auto-transitions to `shipping`.
 > Any stage can also jump directly to `closed`.
 
 **Body:**
@@ -745,6 +746,187 @@ All routes require authentication 🔒 **and** `admin` role.
 {
   "success": true,
   "data": { "_id": "...", "productName": "...", "quantity": 100, "status": "converted", "dealId": "..." }
+}
+```
+
+---
+
+---
+
+## 8. Shipping — `/api/shipping`
+
+All routes require authentication 🔒.
+
+**Role matrix:**
+| Endpoint | Buyer/Supplier | Shipping Agent | Admin |
+|----------|:-:|:-:|:-:|
+| POST /shipping/request | ✅ | ❌ | ✅ |
+| GET /shipping/request/:dealId | ✅ | ❌ | ✅ |
+| GET /shipping/bids/:requestId | ✅ | ❌ | ✅ |
+| POST /shipping/bid/:id/accept | ✅ | ❌ | ✅ |
+| GET /shipping/requests | ❌ | ✅ | ❌ |
+| POST /shipping/bid | ❌ | ✅ | ❌ |
+
+---
+
+### POST `/api/shipping/request`
+**Access:** Private 🔒 (buyer or supplier — deal must be in `shipping_request` status)
+
+**Body:**
+```json
+{
+  "dealId": "<ObjectId>",
+  "origin": "Shanghai, CN",
+  "destination": "Los Angeles, US",
+  "cargoDetails": "Electronic components, fragile",
+  "quantity": 500,
+  "incoterm": "FOB"
+}
+```
+> Only one shipping request per deal. Duplicate requests return `400` with the existing `shippingRequestId`.
+
+**201 Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "...",
+    "dealId": "...",
+    "origin": "Shanghai, CN",
+    "destination": "Los Angeles, US",
+    "quantity": 500,
+    "incoterm": "FOB",
+    "status": "open",
+    "createdByRole": "buyer"
+  }
+}
+```
+
+---
+
+### GET `/api/shipping/request/:dealId`
+**Access:** Private 🔒 (buyer or supplier)
+
+**200 Response:**
+```json
+{
+  "success": true,
+  "data": { "_id": "...", "dealId": "...", "origin": "...", "destination": "...", "status": "open", ... }
+}
+```
+
+---
+
+### GET `/api/shipping/bids/:requestId`
+**Access:** Private 🔒 (buyer or supplier)
+
+**200 Response:**
+```json
+{
+  "success": true,
+  "count": 3,
+  "data": [
+    {
+      "_id": "...",
+      "agentId": "...",
+      "price": 4500,
+      "transportType": "sea",
+      "transitTime": "18-22 days",
+      "services": ["customs"],
+      "validity": "2026-05-01T00:00:00.000Z",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+---
+
+### POST `/api/shipping/bid/:id/accept`
+**Access:** Private 🔒 (buyer or supplier)
+
+> **Side effects (atomic):**
+> - Winning bid → `accepted`
+> - All other bids → `rejected`
+> - ShippingRequest → `closed`
+> - Deal: `selectedBidId` + `shippingAgentId` set; `status` auto-transitions to `shipping`
+
+**200 Response:**
+```json
+{
+  "success": true,
+  "message": "Bid accepted. Deal has moved to shipping stage.",
+  "data": {
+    "bid": { "_id": "...", "status": "accepted", ... },
+    "deal": { "_id": "...", "status": "shipping", "shippingAgentId": "..." }
+  }
+}
+```
+
+---
+
+### GET `/api/shipping/requests`
+**Access:** Private 🔒 (shipping_agent only)
+
+> ⚠️ **Privacy:** Only cargo-level fields are returned. Deal pricing, buyer/supplier identities, and payment terms are **never** exposed to agents.
+
+**Query Params:** `page`, `limit`
+
+**200 Response:**
+```json
+{
+  "success": true,
+  "count": 5,
+  "total": 12,
+  "totalPages": 3,
+  "page": 1,
+  "data": [
+    {
+      "_id": "...",
+      "origin": "Shanghai, CN",
+      "destination": "Los Angeles, US",
+      "cargoDetails": "Electronics, fragile",
+      "quantity": 500,
+      "incoterm": "FOB",
+      "createdAt": "2026-04-05T..."
+    }
+  ]
+}
+```
+
+---
+
+### POST `/api/shipping/bid`
+**Access:** Private 🔒 (shipping_agent only)
+
+> One bid per agent per request — duplicate submissions return `400`.
+
+**Body:**
+```json
+{
+  "shippingRequestId": "<ObjectId>",
+  "price": 4500,
+  "transportType": "sea",
+  "transitTime": "18-22 days",
+  "services": ["customs", "door-to-door"],
+  "validity": "2026-05-01",
+  "notes": "Includes full cargo insurance.",
+  "documents": ["https://cdn.example.com/bl_template.pdf"]
+}
+```
+
+**201 Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "...",
+    "shippingRequestId": "...",
+    "agentId": "...",
+    "price": 4500,
+    "transportType": "sea",
+    "status": "pending"
+  }
 }
 ```
 

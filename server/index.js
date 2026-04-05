@@ -32,6 +32,7 @@ app.use('/api/products',  require('./src/modules/product/product.routes'));
 app.use('/api/rfq',       require('./src/modules/rfq/rfq.routes'));
 app.use('/api/deals',     require('./src/modules/deal/deal.routes'));
 app.use('/api/messages',  require('./src/modules/chat/message.routes'));
+app.use('/api/shipping',  require('./src/modules/shipping/shipping.routes'));
 app.use('/api/admin',     require('./src/modules/admin/admin.routes'));
 
 app.get('/', (req, res) => {

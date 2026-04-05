@@ -5,12 +5,16 @@ const { matchedData } = require('express-validator');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-// Helper — confirms requesting user belongs to this deal
+// Helper — confirms requesting user belongs to this deal.
+// Includes the assigned shipping agent (populated after bid acceptance)
+// so they can participate in deal messaging without holding a company role.
 const isDealParticipant = (deal, user) => {
-  const c = user.companyId?.toString();
+  const c   = user.companyId?.toString();
+  const uid = user._id?.toString();
   return (
-    deal.buyerCompanyId?.toString()    === c ||
-    deal.supplierCompanyId?.toString() === c ||
+    deal.buyerCompanyId?.toString()    === c   ||  // buyer company member
+    deal.supplierCompanyId?.toString() === c   ||  // supplier company member
+    deal.shippingAgentId?.toString()   === uid ||  // assigned freight agent
     user.roles.includes('admin')
   );
 };
@@ -39,6 +43,24 @@ const sendMessage = async (req, res) => {
     // Closed deals are read-only — no new messages allowed
     if (deal.status === 'closed') {
       return res.status(400).json({ success: false, message: 'Cannot send messages in a closed Deal.' });
+    }
+
+    // Receiver validation: receiverId must belong to one of the deal's user-level participants.
+    // This prevents a user from sending a message tagged to an unrelated user.
+    // Allowed participant IDs: buyerUserId, supplierUserId, shippingAgentId.
+    if (receiverId) {
+      const allowedReceiverIds = [
+        deal.buyerUserId?.toString(),
+        deal.supplierUserId?.toString(),
+        deal.shippingAgentId?.toString()
+      ].filter(Boolean); // remove undefined/null for deals without all participants yet
+
+      if (!allowedReceiverIds.includes(receiverId.toString())) {
+        return res.status(400).json({
+          success: false,
+          message: 'receiverId must be a participant of this Deal (buyer, supplier, or shipping agent).'
+        });
+      }
     }
 
     // Guard: at least text or attachments must exist (the pre-validate hook on schema also catches this)

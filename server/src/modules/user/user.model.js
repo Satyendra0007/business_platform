@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
   
   // IMPROVEMENT 5: Role is an array to flexibly support "both" (e.g. ['buyer', 'supplier'])
-  roles: [{ type: String, enum: ['buyer', 'supplier', 'admin'] }],
+  roles: [{ type: String, enum: ['buyer', 'supplier', 'admin', 'shipping_agent'] }],
   
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   isEmailVerified: { type: Boolean, default: false },
