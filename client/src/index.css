@@ -4,6 +4,12 @@
   --color-marine-blue: #0A2540;
   --color-mustard-gold: #E5A93D;
   --color-neutral-bg: #F7F9FC;
+  --color-accent-orange: #FF8A00;
+  --color-accent-blue: #143A6A;
+  --color-border-subtle: #E2E8F0;
+  --color-surface-glass: rgba(255, 255, 255, 0.85);
+  --color-footer-bg: #050E1C;
+  --color-footer-text: #94A3B8;
 }
 
 body {
@@ -43,8 +49,81 @@ body {
 }
 
 .animate-in-up {
-  animation: inUp 0.8s ease both;
+  animation: inUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+@keyframes fadeInBlur {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes revealRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomInSoft {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+.animate-fade-in-blur {
+  animation: fadeInBlur 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-reveal-right {
+  animation: revealRight 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-zoom-in-soft {
+  animation: zoomInSoft 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.hover-lift {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.15);
+}
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
 
 .animation-delay-1 {
   animation-delay: 0.1s;
@@ -68,4 +147,101 @@ body {
 
 .floating-orb-delayed {
   animation: floatOrb 9s ease-in-out infinite;
+}
+
+.glass-card {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+}
+
+.premium-shadow {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #0A2540 0%, #143A6A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.process-step-active {
+  background: linear-gradient(135deg, #E5A93D 0%, #FF8A00 100%);
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.process-step-inactive {
+  background: white;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.vector-illustration-container {
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+@keyframes parallax {
+  from { background-position: 50% 0%; }
+  to { background-position: 50% 100%; }
+}
+
+.animate-parallax {
+  animation: parallax 20s linear infinite alternate;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite linear;
+}
+
+@keyframes marqueeLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.marquee-content {
+  display: flex;
+  width: max-content;
+  gap: 2rem;
+  will-change: transform;
+}
+
+.marquee-left {
+  animation: marqueeLeft 60s linear infinite;
+}
+
+.marquee-right {
+  animation: marqueeRight 60s linear infinite;
+}
+
+.marquee-fast {
+  animation-duration: 38s;
+}
+
+.marquee-slow {
+  animation-duration: 75s;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
 }

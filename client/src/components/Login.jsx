@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck, ShipWheel, Sparkles, UserRound } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck, ShipWheel, Sparkles, UserRound, Globe, Zap, Shield } from 'lucide-react';
+import { Reveal } from './ui';
 import dashboardReference from '../assets/dashboard-reference.jpeg';
 
 const roles = [
   { key: 'buyer', label: 'Buyer', tag: 'Procurement', note: 'Browse listings, create RFQs, and convert strong opportunities into deals.' },
   { key: 'supplier', label: 'Supplier', tag: 'Sales', note: 'Manage your catalog, respond to incoming RFQs, and deliver with confidence.' },
-  { key: 'shipping_agent', label: 'Shipping Agent', tag: 'Logistics', note: 'Coordinate logistics milestones, shipment updates, and delivery visibility.' },
+  { key: 'shipping_agent', label: 'Shipping Agent', tag: 'Logistics', note: 'Bid on approved deal lanes, win freight awards, and manage shipment execution visibility.' },
   { key: 'admin', label: 'Admin', tag: 'Operations', note: 'Monitor the entire platform from a single oversight workspace.' },
 ];
 
@@ -20,81 +21,78 @@ function LoginPage({ navigate, onLogin }) {
   return (
     <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(236,181,58,0.18),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.16),transparent_22%),linear-gradient(180deg,#eff4fb_0%,#f8fafc_42%,#edf3fb_100%)] px-4 py-4 sm:px-6 lg:px-8">
       <div className="mx-auto grid h-[calc(100vh-2rem)] max-w-[1520px] overflow-hidden rounded-[38px] border border-white/70 bg-white/70 shadow-[0_32px_100px_rgba(15,23,42,0.16)] backdrop-blur-xl lg:grid-cols-[1.03fr_0.97fr]">
-        <section className="relative hidden overflow-hidden bg-[linear-gradient(150deg,#091a30_0%,#102542_40%,#163860_100%)] p-7 text-white lg:flex lg:flex-col">
-          <div className="absolute inset-0">
-            <img src={dashboardReference} alt="TRADAFY platform workspace preview" className="h-full w-full object-cover opacity-28" />
+        <section className="relative hidden overflow-hidden bg-[#050E1C] p-10 text-white lg:flex lg:flex-col justify-center">
+          {/* Animated Background Mesh */}
+          <div className="absolute inset-0 z-0 opacity-20">
+            <svg className="h-full w-full" viewBox="0 0 800 800">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+              <circle cx="150" cy="150" r="120" className="fill-blue-500/20 blur-3xl animate-float-slow" />
+              <circle cx="650" cy="650" r="150" className="fill-amber-500/10 blur-3xl animate-float-slow delay-700" />
+            </svg>
           </div>
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(5,14,28,0.82),rgba(10,27,50,0.72),rgba(16,37,66,0.9))]" />
-          <div className="absolute left-10 top-10 h-44 w-44 rounded-full bg-amber-300/18 blur-3xl" />
-          <div className="absolute bottom-12 right-10 h-52 w-52 rounded-full bg-sky-300/16 blur-3xl" />
-
-          <div className="relative z-10 flex items-center justify-between">
-            <button onClick={() => navigate('/')} className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-left backdrop-blur">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-400 font-bold text-slate-950">T</div>
-              <div>
-                <div className="text-lg font-semibold tracking-[0.22em]">TRADAFY</div>
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Global Trade Workspace</div>
-              </div>
-            </button>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100">
-              <Sparkles className="h-3.5 w-3.5" />
-              Trusted Network
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-10 max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200">Professional Access</p>
-            <h1 className="mt-4 font-display text-5xl leading-[0.96] tracking-[-0.04em] text-white">
-              A sharper login experience for serious global trade teams.
-            </h1>
-            <p className="mt-5 max-w-lg text-sm leading-7 text-slate-200">
-              Step into a workspace built for procurement, supplier coordination, logistics visibility, and platform oversight without losing the visual confidence of a modern enterprise product.
-            </p>
-          </div>
-
-          <div className="relative z-10 mt-8 grid gap-4 xl:grid-cols-3">
-            {[
-              ['Verified companies', 'Buyers, suppliers, and logistics partners are modeled as trusted platform participants.'],
-              ['Live RFQ conversion', 'Move from public discovery into private deal collaboration with clear role access.'],
-              ['Shipment visibility', 'Track commercial and logistics milestones in one coordinated workspace.'],
-            ].map(([title, copy]) => (
-              <div key={title} className="rounded-[26px] border border-white/10 bg-white/10 p-4 backdrop-blur">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                  <CheckCircle2 className="h-5 w-5 text-amber-200" />
+          
+          <div className="relative z-10">
+            <Reveal effect="zoom">
+              <button onClick={() => navigate('/')} className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md mb-12">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-orange-400 font-black text-[#0A2540] text-xl shadow-lg">T</div>
+                <div className="text-left">
+                  <div className="text-lg font-black tracking-widest text-white uppercase">TRADAFY</div>
+                  <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-400">Global Workspace</div>
                 </div>
-                <h2 className="mt-3 text-base font-semibold text-white">{title}</h2>
-                <p className="mt-2 text-sm leading-5 text-slate-300">{copy}</p>
-              </div>
-            ))}
+              </button>
+            </Reveal>
+
+            <div className="space-y-6 max-w-lg">
+              <Reveal delay={200}>
+                <h1 className="text-6xl font-black leading-[0.9] tracking-tight">
+                  Serious trade <br />
+                  <span className="text-[#E5A93D]">needs serious tools.</span>
+                </h1>
+              </Reveal>
+              <Reveal delay={400}>
+                <p className="text-xl text-slate-400 font-medium leading-relaxed">
+                  Join a verified ecosystem where procurement meets logistics visibility. One workspace, zero friction.
+                </p>
+              </Reveal>
+            </div>
+
+            <div className="mt-16 grid gap-4">
+              {[
+                { icon: Shield, title: 'Verified Network', desc: 'Secure deals with 100% vetted participants.' },
+                { icon: Zap, title: 'Instant Workspace', desc: 'Convert RFQs to deals in seconds.' },
+                { icon: Globe, title: 'Global Execution', desc: 'Track shipments across all major routes.' }
+              ].map((item, i) => (
+                <Reveal key={i} delay={600 + (i * 150)} effect="right">
+                  <div className="group flex items-center gap-6 p-6 rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-xl transition hover:bg-white/10 hover:border-white/20">
+                    <div className="h-14 w-14 rounded-2xl bg-amber-300/10 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
+                      <item.icon className="h-7 w-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">{item.title}</h3>
+                      <p className="text-sm text-slate-400 font-medium leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
           </div>
 
-          <div className="relative z-10 mt-auto grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-[28px] border border-white/10 bg-white/10 p-4 backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">What Happens After Login</p>
-              <div className="mt-3 grid gap-2.5">
-                {[
-                  'Buyers review products and create RFQs.',
-                  'Suppliers respond to requests and activate deals.',
-                  'Shipping agents update live shipment milestones.',
-                  'Admins monitor workspace health and platform activity.',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3 rounded-[18px] bg-white/6 px-4 py-2.5 text-sm text-slate-100">
-                    <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-300" />
-                    <span>{item}</span>
-                  </div>
-                ))}
+          <div className="absolute bottom-10 left-10 right-10 relative z-10 pt-12">
+            <Reveal delay={1000}>
+              <div className="pt-8 border-t border-white/10 flex items-center justify-between">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-10 w-10 rounded-full border-2 border-[#050E1C] bg-slate-800 flex items-center justify-center text-[10px] font-black">U{i}</div>
+                  ))}
+                </div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Global active users</p>
               </div>
-            </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/10 p-4 backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">Demo Credentials</p>
-              <div className="mt-3 space-y-2.5 text-sm text-slate-100">
-                <div className="rounded-[16px] bg-white/6 px-4 py-2.5">Buyer: `buyer@tradafy.app`</div>
-                <div className="rounded-[16px] bg-white/6 px-4 py-2.5">Supplier: `supplier@tradafy.app`</div>
-                <div className="rounded-[16px] bg-white/6 px-4 py-2.5">Shipping: `shipping_agent@tradafy.app`</div>
-                <div className="rounded-[16px] bg-white/6 px-4 py-2.5">Admin: `admin@tradafy.app`</div>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -222,6 +220,19 @@ function LoginPage({ navigate, onLogin }) {
                   <span>Password</span>
                   <span className="font-semibold text-slate-900">password</span>
                 </div>
+              </div>
+
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <div className="h-px w-full bg-slate-200" />
+                <p className="text-sm text-slate-600">
+                  New to TRADAFY?{' '}
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="font-bold text-slate-900 underline underline-offset-4 decoration-amber-400 hover:text-blue-900 transition-colors"
+                  >
+                    Create an account
+                  </button>
+                </p>
               </div>
             </div>
           </div>

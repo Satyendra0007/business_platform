@@ -8,9 +8,11 @@ import RequestQuotePage from './components/RequestQuotePage';
 import RFQListPage from './components/RFQListPage';
 import DealsPage from './components/DealsPage';
 import DealPage from './components/DealPage';
+import TransportBidsPage from './components/TransportBidsPage';
 import AdminPage from './components/AdminPage';
 import NotFound from './components/NotFound';
-import { privatePaths } from './components/ui';
+import { privatePaths } from './lib/navConstants';
+import RegisterPage from './components/Register';
 import { clearCurrentUser, ensureSeedData, getCurrentUser, loginAsRole } from './lib/tradafyData';
 
 function getHashPath() {
@@ -65,6 +67,7 @@ function App() {
   if (!user && requiresAuth) return <LoginPage navigate={navigate} onLogin={onLogin} />;
   if (pathname === '/') return <LandingPage currentUser={user} navigate={navigate} />;
   if (pathname === '/login') return <LoginPage navigate={navigate} onLogin={onLogin} />;
+  if (pathname === '/register') return <RegisterPage navigate={navigate} />;
   if (pathname === '/dashboard') return <DashboardPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} />;
   if (pathname === '/products') return <ProductsPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={onLogout} />;
   if (segments[0] === 'product' && segments[1]) return <ProductDetailPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={onLogout} productId={segments[1]} />;
@@ -72,6 +75,7 @@ function App() {
   if (pathname === '/my-rfqs' && user) return <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} incoming={false} onMutate={forceRefresh} />;
   if (pathname === '/incoming-rfqs' && user) return <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} incoming={true} onMutate={forceRefresh} />;
   if (pathname === '/deals' && user) return <DealsPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} />;
+  if (pathname === '/transport-bids' && user) return <TransportBidsPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} onMutate={forceRefresh} />;
   if (segments[0] === 'deal' && segments[1] && user) return <DealPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} dealId={segments[1]} onMutate={forceRefresh} />;
   if (pathname === '/admin' && user) return <AdminPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} onMutate={forceRefresh} />;
   if (segments[0] === 'product' && segments[1]) return <NotFound navigate={navigate} />;

@@ -1,14 +1,15 @@
 import React from 'react';
-import { ArrowRight, Boxes, FileText, FolderKanban, MapPin, PackageCheck, ShipWheel, Timer } from 'lucide-react';
+import { ArrowRight, BadgeDollarSign, Boxes, FileText, FolderKanban, MapPin, PackageCheck, ShipWheel, Timer } from 'lucide-react';
 import dashboardReference from '../assets/dashboard-reference.jpeg';
-import { formatDate, getAdminSnapshot, getDealsForUser, getProductsForUser, getRFQsForUser, getStatusSteps } from '../lib/tradafyData';
+import { formatDate, getAdminSnapshot, getDealsForUser, getProductsForUser, getRFQsForUser, getStatusSteps, getTransportBidOpportunities } from '../lib/tradafyData';
 import { AppShell, MetricCard } from './ui';
 
 function DashboardPage({ user, navigate, pathname, onLogout }) {
   const products = getProductsForUser(user);
   const rfqs = getRFQsForUser(user);
   const deals = getDealsForUser(user);
-  const featuredDeal = deals[0];
+  const bidOpportunities = getTransportBidOpportunities(user);
+  const featuredDeal = user.role === 'shipping_agent' ? bidOpportunities[0] || deals[0] : deals[0] || bidOpportunities[0];
   const steps = getStatusSteps();
   const activeStepIndex = featuredDeal ? steps.findIndex((step) => step.key === featuredDeal.status) : -1;
   const adminSnapshot = user.role === 'admin' ? getAdminSnapshot() : null;
@@ -18,18 +19,18 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
       ? [
           { label: 'Products', value: products.length, note: 'Verified supplier listings', action: '/products' },
           { label: 'My RFQs', value: rfqs.length, note: 'Buyer requests in progress', action: '/my-rfqs' },
-          { label: 'My Deals', value: deals.length, note: 'Active commercial workspaces', action: '/deals' },
+          { label: 'Transport Tenders', value: bidOpportunities.length, note: 'Freight comparisons after agreement', action: '/transport-bids' },
         ]
       : user.role === 'supplier'
         ? [
             { label: 'My Products', value: products.length, note: 'Catalog currently visible', action: '/products' },
             { label: 'Incoming RFQs', value: rfqs.length, note: 'Requests waiting for action', action: '/incoming-rfqs' },
-            { label: 'My Deals', value: deals.length, note: 'Deals in execution', action: '/deals' },
+            { label: 'Transport Tenders', value: bidOpportunities.length, note: 'Open carrier bidding rounds', action: '/transport-bids' },
           ]
         : user.role === 'shipping_agent'
           ? [
-              { label: 'Active Deals', value: deals.length, note: 'Logistics workspaces live', action: '/deals' },
-              { label: 'Shipments In Transit', value: deals.filter((deal) => deal.status === 'in-transit' || deal.status === 'shipment-booked').length, note: 'Tracked through shipment stages', action: '/deals' },
+              { label: 'Open Tenders', value: bidOpportunities.filter((deal) => deal.status === 'transport-bidding').length, note: 'Deals ready for freight quoting', action: '/transport-bids' },
+              { label: 'Awarded Shipments', value: deals.length, note: 'Carriers already awarded to your team', action: '/deals' },
               { label: 'Product Views', value: products.length, note: 'Reference catalog available', action: '/products' },
             ]
           : [
@@ -38,7 +39,7 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
               { label: 'Deals', value: adminSnapshot.deals.length, note: 'Platform-wide active collaborations', action: '/admin' },
             ];
 
-  const tileIcons = [Boxes, FolderKanban, ShipWheel];
+  const tileIcons = [Boxes, FolderKanban, user.role === 'shipping_agent' ? ShipWheel : BadgeDollarSign];
   const tileThemes = [
     {
       shell: 'from-white via-[#f7fbff] to-[#eef5fd]',
@@ -57,25 +58,34 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
     },
   ];
 
-  const requestCards = (rfqs.length ? rfqs : featuredDeal ? [featuredDeal] : []).slice(0, 3).map((item, index) => {
+  const requestSource =
+    user.role === 'shipping_agent'
+      ? bidOpportunities
+      : rfqs.length
+        ? rfqs
+        : featuredDeal
+          ? [featuredDeal]
+          : [];
+
+  const requestCards = requestSource.slice(0, 3).map((item, index) => {
     const isDeal = Boolean(item.deliveryDate);
     return {
       id: item.id,
-      title: isDeal ? item.productName : `${item.productName} Request`,
-      from: isDeal ? item.supplierCompany : item.supplierCompany,
+      title: user.role === 'shipping_agent' ? `${item.productName} Freight Tender` : isDeal ? item.productName : `${item.productName} Request`,
+      from: item.supplierCompany,
       to: item.deliveryLocation,
       volume: item.quantity,
-      deadline: isDeal ? formatDate(item.deliveryDate) : item.createdAt,
-      action: isDeal ? `/deal/${item.id}` : user.role === 'supplier' ? `/incoming-rfqs` : '/my-rfqs',
-      actionLabel: isDeal ? 'Open Deal' : user.role === 'supplier' ? 'Review RFQ' : 'View RFQ',
+      deadline: user.role === 'shipping_agent' ? item.transport?.biddingClosesOn : isDeal ? formatDate(item.deliveryDate) : item.createdAt,
+      action: user.role === 'shipping_agent' ? '/transport-bids' : isDeal ? `/deal/${item.id}` : user.role === 'supplier' ? `/incoming-rfqs` : '/my-rfqs',
+      actionLabel: user.role === 'shipping_agent' ? 'Submit Bid' : isDeal ? 'Open Deal' : user.role === 'supplier' ? 'Review RFQ' : 'View RFQ',
       accent: index === 0 ? 'bg-[#eaf3ff]' : 'bg-white',
-      code: isDeal ? item.id.toUpperCase() : item.id.toUpperCase(),
+      code: item.id.toUpperCase(),
     };
   });
 
   const dashboardTitle =
     user.role === 'shipping_agent'
-      ? 'Shipping Opportunities'
+      ? 'Transport Command Center'
       : user.role === 'supplier'
         ? 'Supplier Opportunities'
         : user.role === 'admin'
@@ -97,8 +107,8 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                 <h2 className="mt-1 font-display text-[1.9rem] font-semibold tracking-[-0.03em] text-white sm:text-[2.05rem]">{dashboardTitle}</h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-5 text-sky-100/90">
                   {user.role === 'shipping_agent'
-                    ? 'Place bids, monitor shipment milestones, and keep logistics execution visible across every active trade deal.'
-                    : 'Monitor active opportunities, move RFQs into execution, and operate from a visually clear trade command center.'}
+                    ? 'Place freight bids on newly approved deals, convert awarded tenders into shipments, and keep execution visible in one logistics workspace.'
+                    : 'Monitor active opportunities, move RFQs into execution, and coordinate freight bidding before shipment starts.'}
                 </p>
               </div>
 
@@ -144,10 +154,10 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Open Activity</p>
-                  <h3 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.02em] text-[#143a6a]">Open Shipping Requests</h3>
+                  <h3 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.02em] text-[#143a6a]">{user.role === 'shipping_agent' ? 'Open Transport Tenders' : 'Open Shipping Requests'}</h3>
                 </div>
                 <button
-                  onClick={() => navigate(user.role === 'supplier' ? '/incoming-rfqs' : '/deals')}
+                  onClick={() => navigate(user.role === 'shipping_agent' ? '/transport-bids' : user.role === 'supplier' ? '/incoming-rfqs' : '/deals')}
                   className="text-sm font-semibold text-[#245c9d]"
                 >
                   All
@@ -179,7 +189,7 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                             </div>
                             <div className="flex items-center gap-2">
                               <Timer className="h-4 w-4 text-[#245c9d]" />
-                              <span>{isNaN(Date.parse(card.deadline)) ? `Deadline: ${card.deadline}` : `ETA: ${card.deadline}`}</span>
+                              <span>{user.role === 'shipping_agent' ? `Bid closes: ${formatDate(card.deadline)}` : isNaN(Date.parse(card.deadline)) ? `Deadline: ${card.deadline}` : `ETA: ${card.deadline}`}</span>
                             </div>
                           </div>
                         </div>
@@ -195,7 +205,9 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                   ))
                 ) : (
                   <div className="rounded-[22px] border border-dashed border-[#c7d7ea] bg-[#f7fbff] p-5 text-sm text-slate-600">
-                    There are no live requests yet. Create or convert an RFQ to populate this operations panel.
+                    {user.role === 'shipping_agent'
+                      ? 'No transport tenders are open right now. Newly agreed deals will appear here automatically for freight bidding.'
+                      : 'There are no live requests yet. Create or convert an RFQ to populate this operations panel.'}
                   </div>
                 )}
               </div>
@@ -205,7 +217,7 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Deal Board</p>
-                  <h3 className="mt-2 text-[1.55rem] font-semibold tracking-[-0.02em] text-[#143a6a]">Offer and execution summary</h3>
+                  <h3 className="mt-2 text-[1.55rem] font-semibold tracking-[-0.02em] text-[#143a6a]">Deal and bidding summary</h3>
                 </div>
               </div>
 
@@ -224,7 +236,7 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                   >
                     <span className="font-semibold text-[#143a6a]">{deal.productName}</span>
                     <span className="text-slate-600">{deal.price} - {deal.quantity}</span>
-                    <span className="font-medium capitalize text-emerald-600">{deal.status.replace('-', ' ')}</span>
+                    <span className={`font-medium capitalize ${deal.status === 'transport-bidding' ? 'text-amber-600' : 'text-emerald-600'}`}>{deal.status.replace('-', ' ')}</span>
                     <span className="font-semibold text-[#245c9d]">Open</span>
                   </button>
                 ))}
@@ -240,14 +252,50 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
               </div>
 
               <div className="mt-5 overflow-hidden rounded-[22px] border border-[#dce7f2]">
-                <div className="relative h-48 bg-[radial-gradient(circle_at_18%_28%,#8dd7ff_0%,#6cc4f3_18%,#53b7e4_30%,#73d2ef_31%,#7fd7f3_36%,#a8e5f7_48%,#79d5eb_49%,#8fdff1_55%,#d5f0f8_100%)]">
-                  <div className="absolute inset-y-0 left-[12%] w-[22%] rounded-full bg-[rgba(82,170,116,0.75)] blur-[2px]" />
-                  <div className="absolute left-[18%] top-[24%] h-[30%] w-[20%] rounded-[45%] bg-[rgba(88,173,122,0.85)]" />
-                  <div className="absolute right-[10%] top-[18%] h-[36%] w-[24%] rounded-[48%] bg-[rgba(98,183,128,0.78)]" />
-                  <div className="absolute bottom-[12%] left-[38%] h-[18%] w-[30%] rounded-[45%] bg-[rgba(98,183,128,0.8)]" />
-                  <div className="absolute left-[43%] top-[52%] h-4 w-28 rounded-full bg-[#0b5e9a]" />
-                  <div className="absolute left-[46%] top-[48%] h-3 w-14 rounded-sm bg-[#1f78c5]" />
-                  <div className="absolute left-[55%] top-[47%] h-6 w-2 rounded-full bg-[#f8fafc]" />
+                <div className="relative h-48 overflow-hidden bg-[linear-gradient(135deg,#e0f2fe_0%,#bae6fd_100%)]">
+                  {/* Sea texture / waves */}
+                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#0369a1 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
+                  
+                  {/* Port Area 1 */}
+                  <div className="absolute -left-4 top-1/4 h-32 w-24 rounded-full bg-slate-200/50 blur-xl" />
+                  <div className="absolute left-2 top-[35%] h-12 w-8 rounded-lg bg-slate-300/40" />
+                  
+                  {/* Port Area 2 */}
+                  <div className="absolute -right-4 top-1/2 h-32 w-24 rounded-full bg-emerald-100/40 blur-xl" />
+                  <div className="absolute right-4 top-[55%] h-10 w-12 rounded-lg bg-emerald-200/30" />
+
+                  {/* Route Line */}
+                  <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                    <path 
+                      d="M 60 80 Q 200 60, 360 110" 
+                      fill="none" 
+                      stroke="#0369a1" 
+                      strokeWidth="2" 
+                      strokeDasharray="6 4"
+                      className="opacity-40"
+                    />
+                  </svg>
+
+                  {/* Vessel Illustration */}
+                  <div className="absolute left-[160px] top-[60px] h-10 w-24 -rotate-12 transition-all hover:scale-105">
+                     {/* Ship Body */}
+                     <div className="absolute bottom-0 left-0 h-4 w-20 rounded-b-lg rounded-tr-3xl bg-[#0d2340]" />
+                     {/* Deck/Containers */}
+                     <div className="absolute bottom-4 left-2 h-3 w-14 bg-[#1e40af] rounded-t-sm" />
+                     <div className="absolute bottom-7 left-4 h-2 w-10 bg-[#3b82f6] rounded-t-sm" />
+                     {/* Bridge */}
+                     <div className="absolute bottom-4 right-4 h-5 w-4 bg-[#0d2340] rounded-t-md" />
+                     {/* Wake */}
+                     <div className="absolute -left-8 top-6 h-1 w-8 rounded-full bg-white/40 blur-sm animate-pulse" />
+                  </div>
+
+                  {/* Destination Pin */}
+                  <div className="absolute right-[40px] top-[110px]">
+                    <div className="relative flex h-8 w-8 items-center justify-center">
+                       <div className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-20" />
+                       <div className="z-10 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -256,8 +304,8 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                   <p className="font-semibold text-[#143a6a]">{featuredDeal.id.toUpperCase()} - {featuredDeal.productName}</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-600">
                     <p>Status: <span className="font-medium capitalize text-[#143a6a]">{featuredDeal.status.replace('-', ' ')}</span></p>
-                    <p>Mode: <span className="font-medium text-[#143a6a]">Sea Freight</span></p>
-                    <p>ETA: <span className="font-medium text-[#143a6a]">{formatDate(featuredDeal.deliveryDate)}</span></p>
+                    <p>Mode: <span className="font-medium text-[#143a6a]">{featuredDeal.transport?.preferredMode || featuredDeal.shipment?.mode || 'Sea Freight'}</span></p>
+                    <p>{featuredDeal.status === 'transport-bidding' ? 'Bid Deadline' : 'ETA'}: <span className="font-medium text-[#143a6a]">{formatDate(featuredDeal.status === 'transport-bidding' ? featuredDeal.transport?.biddingClosesOn : featuredDeal.deliveryDate)}</span></p>
                   </div>
                 </div>
               ) : null}
@@ -301,7 +349,11 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                   <span className="flex items-center gap-2"><ShipWheel className="h-4 w-4" /> Live Deals</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
-                <button onClick={() => navigate(user.role === 'supplier' ? '/incoming-rfqs' : user.role === 'admin' ? '/admin' : '/my-rfqs')} className="flex w-full items-center justify-between rounded-[18px] bg-[linear-gradient(135deg,#295f99,#3f79b8)] px-4 py-3 text-sm font-semibold text-white">
+                <button onClick={() => navigate('/transport-bids')} className="flex w-full items-center justify-between rounded-[18px] bg-[linear-gradient(135deg,#295f99,#3f79b8)] px-4 py-3 text-sm font-semibold text-white">
+                  <span className="flex items-center gap-2"><BadgeDollarSign className="h-4 w-4" /> {user.role === 'shipping_agent' ? 'Bid On Lanes' : 'Transport Bids'}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button onClick={() => navigate(user.role === 'supplier' ? '/incoming-rfqs' : user.role === 'admin' ? '/admin' : '/my-rfqs')} className="flex w-full items-center justify-between rounded-[18px] bg-[linear-gradient(135deg,#346aa5,#4b84c2)] px-4 py-3 text-sm font-semibold text-white">
                   <span className="flex items-center gap-2"><PackageCheck className="h-4 w-4" /> {user.role === 'supplier' ? 'Review RFQs' : user.role === 'admin' ? 'Control Center' : 'My RFQs'}</span>
                   <ArrowRight className="h-4 w-4" />
                 </button>

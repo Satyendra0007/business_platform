@@ -1,5 +1,5 @@
 import React from 'react';
-import { getProductById } from '../lib/tradafyData';
+import { createDealFromProduct, getProductById } from '../lib/tradafyData';
 import { getProductVisual } from '../lib/productVisuals';
 import { AppShell, MetricCard, PublicLayout } from './ui';
 
@@ -7,6 +7,16 @@ function ProductDetailPage({ currentUser, navigate, user, pathname, onLogout, pr
   const product = getProductById(productId);
   if (!product) return null;
   const visual = getProductVisual(product.id);
+  const activeUser = currentUser || user;
+
+  const openDealFromProduct = () => {
+    if (!activeUser) {
+      navigate('/login');
+      return;
+    }
+    const deal = createDealFromProduct(product.id, activeUser);
+    if (deal) navigate(`/deal/${deal.id}`);
+  };
 
   const body = (
     <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -45,7 +55,10 @@ function ProductDetailPage({ currentUser, navigate, user, pathname, onLogout, pr
         </div>
         <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
           <div className="mt-5 flex gap-3">
-            <button onClick={() => navigate(currentUser ? `/request-quote/${product.id}` : '/login')} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+            <button onClick={openDealFromProduct} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
+              Open Deal
+            </button>
+            <button onClick={() => navigate(activeUser ? `/request-quote/${product.id}` : '/login')} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">
               Request Quote
             </button>
             <button onClick={() => navigate('/products')} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">
