@@ -2,7 +2,7 @@
 
 **Base URL:** `http://localhost:5004/api`  
 **Auth:** Bearer token in `Authorization` header  
-**All responses follow:** `{ success: bool, data: {}, message: "" }`
+**All responses follow :** `{ success: bool, data: {}, message: "" }`
 
 ---
 
