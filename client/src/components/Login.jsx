@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Eye, EyeOff, Lock, Mail, Package, ShieldCheck, ShipWheel, Sparkles, UserRound, Globe, Zap, Shield } from 'lucide-react';
 import { Reveal } from './ui';
-import tradafyLogo from '../assets/tradafy_logo_official.png';
+import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import dashboardReference from '../assets/dashboard-reference.jpeg';
 
 const roles = [
@@ -59,9 +59,9 @@ function LoginPage({ navigate, onLogin }) {
           
           <div className="relative z-10">
             <Reveal effect="zoom">
-              <button onClick={() => navigate('/')} className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md mb-12">
-                <div className="flex items-center justify-center">
-                  <img src={tradafyLogo} alt="Tradafy" className="h-11 w-11 object-contain brightness-0 invert" />
+              <button onClick={() => navigate('/')} className="inline-flex items-center gap-4 rounded-[22px] border border-white/10 bg-white/5 px-5 py-3.5 backdrop-blur-md mb-12">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.2)]">
+                  <img src={tradafyLogo} alt="Tradafy" className="h-9 w-9 object-contain" />
                 </div>
                 <div className="text-left">
                   <div className="text-lg font-black tracking-widest text-white uppercase">TRADAFY</div>

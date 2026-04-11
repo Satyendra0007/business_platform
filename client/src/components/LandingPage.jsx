@@ -307,7 +307,7 @@ function LandingPage({ currentUser, navigate }) {
                 <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
               </h1>
               <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
-                Discover products. Execute deals. Deliver globally.
+                "Trade smarter. Close faster."
               </p>
               <div className="flex flex-col gap-2.5 text-sm font-bold sm:gap-4 sm:text-base lg:text-lg">
                 <div className="flex items-center gap-3">
@@ -474,8 +474,8 @@ function LandingPage({ currentUser, navigate }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {featuredProducts.map((p, i) => (
-              <Reveal key={p.id} delay={i * 150} effect="zoom">
-                <div className="group relative rounded-[28px] border border-blue-50/50 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-2.5 shadow-[0_15px_35px_rgba(10,37,64,0.06)] transition-all duration-[800ms] hover:-translate-y-3 hover:border-blue-100 hover:shadow-[0_45px_80px_rgba(10,37,64,0.15)]">
+              <Reveal key={p.id} delay={i * 150} effect="zoom" className="h-full">
+                <div className="group relative h-full flex flex-col rounded-[28px] border border-blue-50/50 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-2.5 shadow-[0_15px_35px_rgba(10,37,64,0.06)] transition-all duration-[800ms] hover:-translate-y-3 hover:border-blue-100 hover:shadow-[0_45px_80px_rgba(10,37,64,0.15)]">
                   <div className="absolute -inset-1 -z-10 rounded-[32px] bg-gradient-to-b from-blue-200/0 to-blue-300/40 opacity-0 blur-md transition duration-700 group-hover:opacity-100" />
                   <div className="relative aspect-[1/1] overflow-hidden rounded-[22px] bg-slate-50 shadow-inner">
                     <img src={p.img} alt={p.name} className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110" />
@@ -490,12 +490,12 @@ function LandingPage({ currentUser, navigate }) {
                       </button>
                     </div>
                   </div>
-                  <div className="p-2 pt-4 space-y-4">
-                    <div className="space-y-1">
+                  <div className="p-2 pt-4 flex flex-col flex-1">
+                    <div className="flex-1 space-y-1">
                       <span className="text-[8px] font-black uppercase tracking-[0.18em] text-[#143A6A]/40">{p.category}</span>
                       <h3 className="text-sm font-black text-[#0A2540] tracking-tight group-hover:text-[#143A6A] transition-colors leading-tight">{p.name}</h3>
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
                       <div className="space-y-0.5">
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Price</p>
                         <span className="text-xs font-black text-[#143A6A] tracking-tighter">{p.price}</span>

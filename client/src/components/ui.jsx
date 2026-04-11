@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LogOut, User, Mail, Globe, ShieldCheck, Quote, Star, ArrowRight, Sparkles, Send, PhoneCall, Building2 } from 'lucide-react';
 import { navByRole, pageCopy, getNavIcon } from '../lib/navConstants';
 import { Ship } from 'lucide-react';
-import tradafyLogo from '../assets/tradafy_logo_official.png';
+import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 
 function isActive(pathname, path) {
   return pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
@@ -33,7 +33,7 @@ function BrandMark({ size = 'md', tone = 'light', showSubtext = false, subtext }
   const selectedSize = brandSizes[size] || brandSizes.md;
   const frameTone = tone === 'dark'
     ? 'border-white/12 bg-white shadow-[0_16px_38px_rgba(15,23,42,0.22)]'
-    : 'border-[#d7e3f0] bg-white shadow-[0_16px_34px_rgba(20,58,106,0.12)]';
+    : 'border-transparent bg-transparent';
   const titleTone = tone === 'dark' ? 'text-white' : 'text-[#0A2540]';
   const subtextTone = tone === 'dark' ? 'text-sky-100/75' : 'text-slate-500';
 
@@ -212,7 +212,7 @@ export function Footer({ navigate }) {
   );
 }
 
-export function Reveal({ children, delay = 0, effect = 'up' }) {
+export function Reveal({ children, delay = 0, effect = 'up', className = '' }) {
   const effects = {
     up: 'animate-fade-in-blur',
     right: 'animate-reveal-right',
@@ -220,7 +220,7 @@ export function Reveal({ children, delay = 0, effect = 'up' }) {
   };
   
   return (
-    <div className={`${effects[effect]} ${delay ? `delay-${delay}` : ''}`}>
+    <div className={`${effects[effect]} ${delay ? `delay-${delay}` : ''} ${className}`}>
       {children}
     </div>
   );
