@@ -47,7 +47,8 @@ const featuredProducts = [
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
 
 const DashboardMock = () => (
-  <div className="overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,#fdfefe_0%,#f4f8fd_100%)] shadow-[0_28px_64px_rgba(10,37,64,0.2)] animate-in-up">
+  <div className="relative overflow-hidden rounded-[28px] border border-white/20 bg-[linear-gradient(180deg,#fdfefe_0%,#f4f8fd_100%)] shadow-[0_0_80px_rgba(10,37,64,0.3)] animate-in-up hover-lift transition-all duration-[800ms] ease-out hover:-translate-y-4 hover:shadow-[0_30px_100px_rgba(59,130,246,0.25)]">
+    <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-1000 group-hover:opacity-100" />
     <div className="bg-[linear-gradient(135deg,#0A2540_0%,#143A6A_68%,#245c9d_100%)] px-4 py-3 text-white">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -285,51 +286,54 @@ function LandingPage({ currentUser, navigate }) {
 
   return (
     <PublicLayout currentUser={currentUser} navigate={navigate}>
-      <div className="space-y-16 pb-32">
+      <div className="space-y-10 pb-20 sm:space-y-14 sm:pb-24 lg:space-y-16 lg:pb-32">
         
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
-        <section className="relative overflow-hidden rounded-[32px] px-8 pt-12 pb-24 text-white shadow-2xl lg:px-16"
+        <section className="relative flex min-h-[55vh] lg:min-h-[60vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-8 pb-24 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-28 lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
             style={{
-              background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.5)), url(${heroShip})`,
+              background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.22),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.2),transparent_26%)] pointer-events-none" />
           <Reveal effect="up">
-            <div className="relative max-w-4xl space-y-8">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-5 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-100 backdrop-blur">
-                <Ship className="h-3.5 w-3.5 text-[#E5A93D]" />
-                Global Trade OS
+            <div className="relative max-w-4xl space-y-4 sm:space-y-6">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
+                <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
+                <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
               </div>
-              <h1 className="text-5xl font-black leading-[0.95] tracking-tight lg:text-7xl">
-                Stop losing trade deals to <span className="text-[#E5A93D]">miscommunication.</span>
+              <h1 className="text-4xl font-black leading-[0.95] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
+                Stop losing deals to <br className="hidden sm:block" />
+                <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
               </h1>
-              <p className="text-2xl text-slate-100 font-medium leading-relaxed max-w-2xl">
+              <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
                 Discover products. Execute deals. Deliver globally.
               </p>
-              <div className="flex flex-col gap-4 text-xl font-bold">
+              <div className="flex flex-col gap-2.5 text-sm font-bold sm:gap-4 sm:text-base lg:text-lg">
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-[#E5A93D]" />
+                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
                   <span>Centralized communication</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-[#E5A93D]" />
+                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
                   <span>Full deal visibility</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-[#E5A93D]" />
+                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
                   <span>Integrated shipping & documents</span>
                 </div>
               </div>
-              <div className="pt-8 flex flex-wrap gap-4">
-                <button onClick={() => navigate('/login')} className="rounded-2xl bg-[#E5A93D] px-10 py-5 font-black text-[#0A2540] hover:bg-[#FF8A00] transition-all hover:-translate-y-1 shadow-lg">
-                  Start Trading
+              <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-5">
+                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:px-8 sm:py-4">
+                  <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
                 </button>
-                <button onClick={() => navigate('/products')} className="rounded-2xl bg-[#143A6A] border border-white/20 px-10 py-5 font-black text-white hover:bg-[#1d4d86] transition-all">
-                  Browse Opportunities
+                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:px-10 sm:py-4">
+                  <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
+                  <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
                 </button>
               </div>
-              <div className="flex flex-wrap items-center gap-6 border-t border-white/10 pt-8 text-sm font-bold text-slate-200/90">
+              <div className="flex flex-col gap-2 border-t border-white/10 pt-4 text-[13px] font-bold text-slate-200/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 sm:pt-5">
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 fill-[#E5A93D] text-[#E5A93D]" />
                   4.9/5 team satisfaction
@@ -341,17 +345,18 @@ function LandingPage({ currentUser, navigate }) {
           </Reveal>
 
           {/* Stats Bar */}
-          <div className="absolute bottom-0 left-0 right-0 px-8 py-6 lg:px-16">
+          <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-8 sm:right-8 lg:bottom-5 lg:left-16 lg:right-16">
             <Reveal delay={400} effect="zoom">
-              <div className="grid grid-cols-1 md:grid-cols-3 bg-white/95 backdrop-blur-xl rounded-[28px] p-2 shadow-2xl">
+              <div className="relative mx-auto grid max-w-4xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
+                <div className="absolute left-1/4 top-0 h-px w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
                 {[
                   { label: 'Active Deals', value: '24' },
                   { label: 'Bids Won', value: '8' },
                   { label: 'Shipments in Transit', value: '12' },
                 ].map((s, i) => (
-                  <div key={i} className="flex flex-col items-start rounded-[22px] px-10 py-6 border-r border-slate-100 last:border-0 hover:bg-slate-50 transition-colors cursor-default">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{s.label}</span>
-                    <span className="text-3xl font-black text-[#0A2540]">{s.value}</span>
+                  <div key={i} className="flex flex-col justify-center items-start rounded-[20px] border-b border-slate-100/50 px-5 py-2.5 last:border-b-0 md:border-b-0 md:border-r md:px-8 md:py-3.5 md:last:border-r-0 transition-colors cursor-default hover:bg-slate-50/50">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#245c9d] mb-0.5">{s.label}</span>
+                    <span className="text-3xl font-black text-[#0A2540] tracking-tight leading-none">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -360,13 +365,15 @@ function LandingPage({ currentUser, navigate }) {
         </section>
 
         {/* --- SECTION 2: DISCOVER OPPORTUNITIES (MOVED & BACKGROUND APPLIED) --- */}
-        <section className="relative overflow-hidden rounded-[36px] px-7 py-9 lg:px-14 text-white shadow-2xl"
+        <section className="relative overflow-hidden rounded-[30px] px-4 py-7 text-white shadow-2xl sm:px-6 sm:py-8 lg:rounded-[36px] lg:px-14 lg:py-9"
             style={{
               background: `linear-gradient(rgba(10, 31, 56, 0.85), rgba(20, 58, 106, 0.7)), url(${bgNegotiation})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(229,169,61,0.16),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_24%)] pointer-events-none" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(229,169,61,0.25),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.15),transparent_30%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
+          <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 animate-float-slow rounded-full bg-[#E5A93D]/20 blur-[100px]" />
            <div className="relative grid gap-5 xl:grid-cols-[0.9fr_1.1fr] items-center">
               <div className="space-y-4.5">
                  <Reveal effect="right">
@@ -398,15 +405,15 @@ function LandingPage({ currentUser, navigate }) {
                     </Reveal>
                   ))}
                  </div>
-                 <div className="grid grid-cols-3 gap-2">
+                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
                   {[
                     { value: '150+', label: 'Verified suppliers' },
                     { value: '32', label: 'Trade corridors' },
                     { value: '24/7', label: 'Workspace visibility' }
                   ].map((item) => (
-                    <div key={item.label} className="rounded-[18px] border border-white/10 bg-white/8 px-3 py-2.5 backdrop-blur">
-                      <div className="text-lg font-black text-white">{item.value}</div>
-                      <div className="mt-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/70">{item.label}</div>
+                    <div key={item.label} className="rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent)] px-5 py-4 backdrop-blur shadow-xl">
+                      <div className="text-3xl font-black text-white">{item.value}</div>
+                      <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-amber-300/90">{item.label}</div>
                     </div>
                   ))}
                  </div>
@@ -432,7 +439,7 @@ function LandingPage({ currentUser, navigate }) {
         </section>
 
         {/* --- SECTION 3: FEATURED PRODUCTS --- */}
-        <section className="px-8 lg:px-16 pt-1 pb-10">
+        <section className="px-0 pt-1 pb-10 sm:px-1 lg:px-16">
           <Reveal effect="up">
             <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div className="space-y-2">
@@ -444,8 +451,9 @@ function LandingPage({ currentUser, navigate }) {
                   Curated export-ready categories with polished photography so buyers can evaluate opportunities faster and trust what they are opening.
                 </p>
               </div>
-              <button onClick={() => navigate('/products')} className="group flex items-center gap-2 bg-white border border-slate-100 px-4 py-2.5 rounded-xl text-[9px] font-black text-[#143A6A] shadow-lg hover:-translate-y-1 transition-all">
-                VIEW LIVE MARKETPLACE <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-all" />
+              <button onClick={() => navigate('/products')} className="group relative flex overflow-hidden items-center gap-2 rounded-2xl border border-blue-900 bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-5 py-3 text-[10px] font-black text-white shadow-[0_10px_30px_rgba(20,58,106,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(20,58,106,0.5)]">
+                <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] group-hover:animate-[shimmer_1.5s_infinite]" />
+                <span className="relative z-10 flex items-center gap-2 drop-shadow-md">VIEW LIVE MARKETPLACE <ArrowRight className="h-4 w-4 text-sky-400 transition-transform group-hover:translate-x-1" /></span>
               </button>
             </div>
           </Reveal>
@@ -464,11 +472,12 @@ function LandingPage({ currentUser, navigate }) {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {featuredProducts.map((p, i) => (
               <Reveal key={p.id} delay={i * 150} effect="zoom">
-                <div className="group relative rounded-[28px] bg-white border border-slate-100 p-3 shadow-[0_18px_45px_rgba(10,37,64,0.08)] hover:shadow-[0_28px_60px_rgba(10,37,64,0.12)] transition-all duration-700 hover:-translate-y-2">
-                  <div className="relative aspect-[1/1] overflow-hidden rounded-[22px] bg-slate-50">
+                <div className="group relative rounded-[28px] border border-blue-50/50 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-2.5 shadow-[0_15px_35px_rgba(10,37,64,0.06)] transition-all duration-[800ms] hover:-translate-y-3 hover:border-blue-100 hover:shadow-[0_45px_80px_rgba(10,37,64,0.15)]">
+                  <div className="absolute -inset-1 -z-10 rounded-[32px] bg-gradient-to-b from-blue-200/0 to-blue-300/40 opacity-0 blur-md transition duration-700 group-hover:opacity-100" />
+                  <div className="relative aspect-[1/1] overflow-hidden rounded-[22px] bg-slate-50 shadow-inner">
                     <img src={p.img} alt={p.name} className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A2540]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-3 rounded-[18px] border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -503,44 +512,29 @@ function LandingPage({ currentUser, navigate }) {
         </section>
 
         {/* --- SECTION 6: MOVING REVIEWS --- */}
-        <section className="relative overflow-hidden rounded-[40px] border border-slate-100 bg-[linear-gradient(135deg,#f8fbff_0%,#eef5ff_45%,#ffffff_100%)] py-14 shadow-[0_24px_72px_rgba(15,23,42,0.06)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(20,58,106,0.10),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(229,169,61,0.16),transparent_24%)] pointer-events-none" />
-          <div className="absolute left-10 top-12 h-32 w-32 rounded-full bg-blue-100/60 blur-3xl pointer-events-none" />
-          <div className="absolute right-12 bottom-10 h-40 w-40 rounded-full bg-amber-100/50 blur-3xl pointer-events-none" />
+        <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-10 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-14 animate-float-slow">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(229,169,61,0.08),transparent_40%)] pointer-events-none" />
+          <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent animate-shimmer" />
+          
           <Reveal effect="up">
-            <div className="relative px-8 lg:px-16">
-              <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr] xl:items-end">
-                <div className="max-w-2xl space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-[9px] font-black uppercase tracking-[0.24em] text-[#143A6A] shadow-sm">
-                    Buyer Confidence
-                  </div>
-                  <h2 className="text-3xl font-black text-[#0A2540] tracking-tight leading-[0.95] lg:text-4xl">Reviews from teams moving real global deals</h2>
-                  <p className="text-sm font-semibold leading-6 text-slate-500">
-                    A stronger review section should feel trusted, polished, and anchored in actual product movement. These cards now sit inside a cleaner glass-style testimonial band.
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 gap-2.5">
-                  {[
-                    { value: '4.9/5', label: 'Buyer satisfaction' },
-                    { value: '92%', label: 'Faster alignment' },
-                    { value: '30+', label: 'Trade corridors' }
-                  ].map((stat) => (
-                    <div key={stat.label} className="rounded-[20px] border border-blue-100/80 bg-white/78 px-3 py-3 shadow-lg backdrop-blur">
-                      <div className="text-xl font-black text-[#0A2540]">{stat.value}</div>
-                      <div className="mt-1 text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
+            <div className="relative mx-auto mb-10 max-w-4xl px-4 text-center sm:px-6 lg:px-16">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.2)] backdrop-blur transition-all duration-700 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)]">
+                Trusted by Trade Leaders
               </div>
+              <h2 className="mt-4 text-3xl font-black leading-[0.95] tracking-tight text-white lg:text-4xl">
+                Proven across $2B+ in executed trade deals
+              </h2>
+              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 sm:text-base cursor-default hover:text-slate-300 transition-colors">
+                Supply chain directors, shipping agents, and procurement heads across 30+ countries use TRADAFY to move physical commodities with complete clarity.
+              </p>
             </div>
           </Reveal>
 
-          <div className="relative mt-6 px-4 lg:px-10">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#f5faff] via-[#f5faff] to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#f5faff] via-[#f5faff] to-transparent" />
-            <div className="rounded-[32px] border border-blue-100/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(240,247,255,0.7))] px-2 py-2 shadow-[0_22px_52px_rgba(30,64,175,0.10),inset_0_1px_0_rgba(255,255,255,0.78)] backdrop-blur-md">
-              <Marquee items={reviews} direction="left" speed="normal" className="px-1 py-0" />
-            </div>
+          <div className="relative flex flex-col px-2 sm:px-4 lg:px-8">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#050e1c] to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#050e1c] to-transparent" />
+            
+            <Marquee items={reviews} direction="left" speed="normal" className="py-2" />
           </div>
         </section>
       </div>

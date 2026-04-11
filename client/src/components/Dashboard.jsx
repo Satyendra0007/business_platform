@@ -95,50 +95,44 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
   return (
     <AppShell user={user} pathname={pathname} navigate={navigate} onLogout={onLogout} title="Dashboard" subtitle="Browse products, manage RFQs, and keep every trade workflow aligned from inquiry to shipment.">
       <div className="space-y-2">
-        <section className="-mt-6 overflow-hidden rounded-[30px] border border-[#c8d9ec] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <div className="relative min-h-[120px] overflow-hidden">
-            <img src={dashboardReference} alt="Trade operations dashboard banner" className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,45,83,0.92)_0%,rgba(24,64,111,0.86)_36%,rgba(28,77,134,0.38)_100%)]" />
-            <div className="relative flex h-full flex-col justify-between px-5 py-4 lg:px-6 lg:py-4">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-100">
+        <section className="-mt-6 overflow-hidden rounded-[30px] border border-slate-300/40 shadow-xl">
+          <div className="relative bg-[#0c1f38]">
+            <img src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=2400" alt="Trade operations dashboard banner" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a1b32] via-[#102a4e]/95 to-[#1c4f8d]/80 backdrop-blur-[2px]" />
+            
+            <div className="relative flex flex-col gap-8 px-6 py-8 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+              <div className="max-w-xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-sky-200 backdrop-blur-sm">
                   Live Workspace
                 </div>
-                <h2 className="mt-1 font-display text-[1.9rem] font-semibold tracking-[-0.03em] text-white sm:text-[2.05rem]">{dashboardTitle}</h2>
-                <p className="mt-1.5 max-w-xl text-sm leading-5 text-sky-100/90">
+                <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-white xl:text-4xl">{dashboardTitle}</h2>
+                <p className="mt-3 text-sm leading-6 text-sky-100/90">
                   {user.role === 'shipping_agent'
                     ? 'Place freight bids on newly approved deals, convert awarded tenders into shipments, and keep execution visible in one logistics workspace.'
                     : 'Monitor active opportunities, move RFQs into execution, and coordinate freight bidding before shipment starts.'}
                 </p>
               </div>
 
-              <div className="-mb-2 mt-2 grid max-w-[780px] gap-5 md:grid-cols-3">
+              <div className="grid w-full gap-4 sm:grid-cols-3 lg:w-[620px] shrink-0">
                 {tiles.map((tile, index) => {
                   const Icon = tileIcons[index] || Boxes;
-                  const theme = tileThemes[index] || tileThemes[0];
-                  const dark = index === 1;
                   return (
                   <button
                     key={tile.label}
                     onClick={() => navigate(tile.action)}
-                    className={`relative overflow-hidden rounded-[20px] border ${dark ? 'border-white/10 text-white' : 'border-[#d7e3f0] text-[#143a6a]'} bg-gradient-to-br ${theme.shell} px-3 py-3 text-left shadow-[0_14px_24px_rgba(15,23,42,0.10)] transition hover:-translate-y-1 hover:shadow-[0_18px_28px_rgba(15,23,42,0.14)]`}
+                    className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-5 text-left text-white shadow-lg backdrop-blur-md transition hover:-translate-y-1 hover:bg-white/10"
                   >
-                    <div className={`absolute inset-0 ${theme.glow}`} />
-                    <div className="relative">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-xl shadow-sm ${theme.icon}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${dark ? 'bg-white/10 text-sky-100' : 'bg-white text-[#245c9d]'}`}>
-                          Overview
-                        </div>
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-sky-500/20 shadow-inner">
+                        <Icon className="h-5 w-5 text-sky-300" />
                       </div>
-                      <p className={`mt-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${dark ? 'text-sky-100/80' : 'text-slate-500'}`}>{tile.label}</p>
+                    </div>
+                    <div className="mt-5">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sky-100/70">{tile.label}</p>
                       <div className="mt-1 flex items-end justify-between gap-2">
-                        <p className="text-[1.7rem] font-semibold tracking-[-0.05em]">{tile.value}</p>
-                        <ArrowRight className={`h-4 w-4 ${dark ? 'text-white' : 'text-[#245c9d]'}`} />
+                        <p className="text-3xl font-bold tracking-tight">{tile.value}</p>
+                        <ArrowRight className="h-4 w-4 text-sky-400 opacity-60" />
                       </div>
-                      <p className={`mt-1 max-w-[10rem] text-[10px] leading-4 ${dark ? 'text-sky-100/88' : 'text-slate-600'}`}>{tile.note}</p>
                     </div>
                   </button>
                 );
@@ -150,53 +144,53 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
 
         <section className="grid gap-6 pt-2 xl:grid-cols-[1.38fr_0.62fr]">
           <div className="space-y-6">
-            <section className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <section className="rounded-[28px] border border-[#d8e2ef] bg-white p-6 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Open Activity</p>
-                  <h3 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.02em] text-[#143a6a]">{user.role === 'shipping_agent' ? 'Open Transport Tenders' : 'Open Shipping Requests'}</h3>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">Open Activity</p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-[#143a6a]">{user.role === 'shipping_agent' ? 'Open Transport Tenders' : 'Open Shipping Requests'}</h3>
                 </div>
                 <button
                   onClick={() => navigate(user.role === 'shipping_agent' ? '/transport-bids' : user.role === 'supplier' ? '/incoming-rfqs' : '/deals')}
-                  className="text-sm font-semibold text-[#245c9d]"
+                  className="rounded-full bg-[#f4f8fc] px-4 py-2 text-xs font-semibold text-[#245c9d] transition hover:bg-[#eaf3ff]"
                 >
-                  All
+                  View All
                 </button>
               </div>
 
-              <div className="mt-5 space-y-4">
+              <div className="mt-6 space-y-4">
                 {requestCards.length ? (
-                  requestCards.map((card) => (
-                    <article key={card.id} className={`rounded-[22px] border border-[#dbe6f2] ${card.accent} p-4 shadow-sm`}>
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  requestCards.map((card, index) => (
+                    <article key={card.id} className="rounded-[24px] border border-[#dbe6f2] bg-white p-5 shadow-sm transition hover:shadow-md hover:border-[#cfdef2]">
+                      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                         <div>
                           <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-[#1f5aa0] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white">{card.code}</div>
-                            <h4 className="text-xl font-semibold text-[#143a6a]">{card.title}</h4>
+                            <div className="rounded-xl border border-sky-100 bg-[#f4f8fc] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#245c9d]">{card.code}</div>
+                            <h4 className="text-lg font-bold text-[#143a6a]">{card.title}</h4>
                           </div>
-                          <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-[#245c9d]" />
-                              <span>From: {card.from}</span>
+                          <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-slate-600 sm:grid-cols-4">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">From</p>
+                              <p className="mt-1 truncate font-semibold text-slate-700">{card.from}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <PackageCheck className="h-4 w-4 text-[#245c9d]" />
-                              <span>Volume: {card.volume}</span>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">To</p>
+                              <p className="mt-1 truncate font-semibold text-slate-700">{card.to}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-[#f59e0b]" />
-                              <span>To: {card.to}</span>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Volume</p>
+                              <p className="mt-1 truncate font-semibold text-slate-700">{card.volume}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Timer className="h-4 w-4 text-[#245c9d]" />
-                              <span>{user.role === 'shipping_agent' ? `Bid closes: ${formatDate(card.deadline)}` : isNaN(Date.parse(card.deadline)) ? `Deadline: ${card.deadline}` : `ETA: ${card.deadline}`}</span>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Timing</p>
+                              <p className="mt-1 truncate font-semibold text-slate-700">{user.role === 'shipping_agent' ? `Closes ${formatDate(card.deadline)}` : isNaN(Date.parse(card.deadline)) ? card.deadline : formatDate(card.deadline)}</p>
                             </div>
                           </div>
                         </div>
 
                         <button
                           onClick={() => navigate(card.action)}
-                          className="rounded-2xl bg-[linear-gradient(135deg,#1d4d86,#2563aa)] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(29,77,134,0.22)]"
+                          className={`mt-3 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition xl:mt-0 shadow-sm ${index === 0 ? 'bg-[#0f2846] text-white hover:bg-[#153a66]' : 'bg-[#f4f8fc] text-[#143a6a] hover:bg-[#eaf3ff]'}`}
                         >
                           {card.actionLabel}
                         </button>
@@ -204,10 +198,19 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-[22px] border border-dashed border-[#c7d7ea] bg-[#f7fbff] p-5 text-sm text-slate-600">
-                    {user.role === 'shipping_agent'
-                      ? 'No transport tenders are open right now. Newly agreed deals will appear here automatically for freight bidding.'
-                      : 'There are no live requests yet. Create or convert an RFQ to populate this operations panel.'}
+                  <div className="relative overflow-hidden rounded-[24px] border border-[#d8e2ef] bg-white shadow-sm">
+                    <div className="absolute inset-y-0 right-0 w-1/2 opacity-20">
+                       <img src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=1200" alt="Global Trade Port" className="h-full w-full object-cover" />
+                       <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent" />
+                    </div>
+                    <div className="relative z-10 p-6 lg:p-8">
+                       <p className="text-xl font-bold text-[#173b67]">No Open Activity</p>
+                       <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
+                         {user.role === 'shipping_agent'
+                           ? 'No transport tenders are open right now. Newly agreed deals will appear here automatically for freight bidding.'
+                           : 'There are no live requests yet. Create or convert an RFQ to populate this operations panel.'}
+                       </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -252,49 +255,18 @@ function DashboardPage({ user, navigate, pathname, onLogout }) {
               </div>
 
               <div className="mt-5 overflow-hidden rounded-[22px] border border-[#dce7f2]">
-                <div className="relative h-48 overflow-hidden bg-[linear-gradient(135deg,#e0f2fe_0%,#bae6fd_100%)]">
-                  {/* Sea texture / waves */}
-                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#0369a1 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
+                <div className="relative h-48 overflow-hidden bg-slate-100">
+                  <img src="https://images.unsplash.com/photo-1502444330042-d1a1ddf9bb5b?auto=format&fit=crop&q=80&w=1200" alt="Bulk carrier loading at port" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0e2746]/80 to-transparent" />
                   
-                  {/* Port Area 1 */}
-                  <div className="absolute -left-4 top-1/4 h-32 w-24 rounded-full bg-slate-200/50 blur-xl" />
-                  <div className="absolute left-2 top-[35%] h-12 w-8 rounded-lg bg-slate-300/40" />
-                  
-                  {/* Port Area 2 */}
-                  <div className="absolute -right-4 top-1/2 h-32 w-24 rounded-full bg-emerald-100/40 blur-xl" />
-                  <div className="absolute right-4 top-[55%] h-10 w-12 rounded-lg bg-emerald-200/30" />
-
-                  {/* Route Line */}
-                  <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
-                    <path 
-                      d="M 60 80 Q 200 60, 360 110" 
-                      fill="none" 
-                      stroke="#0369a1" 
-                      strokeWidth="2" 
-                      strokeDasharray="6 4"
-                      className="opacity-40"
-                    />
-                  </svg>
-
-                  {/* Vessel Illustration */}
-                  <div className="absolute left-[160px] top-[60px] h-10 w-24 -rotate-12 transition-all hover:scale-105">
-                     {/* Ship Body */}
-                     <div className="absolute bottom-0 left-0 h-4 w-20 rounded-b-lg rounded-tr-3xl bg-[#0d2340]" />
-                     {/* Deck/Containers */}
-                     <div className="absolute bottom-4 left-2 h-3 w-14 bg-[#1e40af] rounded-t-sm" />
-                     <div className="absolute bottom-7 left-4 h-2 w-10 bg-[#3b82f6] rounded-t-sm" />
-                     {/* Bridge */}
-                     <div className="absolute bottom-4 right-4 h-5 w-4 bg-[#0d2340] rounded-t-md" />
-                     {/* Wake */}
-                     <div className="absolute -left-8 top-6 h-1 w-8 rounded-full bg-white/40 blur-sm animate-pulse" />
-                  </div>
-
-                  {/* Destination Pin */}
-                  <div className="absolute right-[40px] top-[110px]">
-                    <div className="relative flex h-8 w-8 items-center justify-center">
-                       <div className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-20" />
-                       <div className="z-10 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
-                    </div>
+                  <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                      <span className="relative flex h-2 w-2">
+                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                      </span>
+                      Live Shipment Tracker
+                    </span>
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import LoginPage from './components/Login';
 import DashboardPage from './components/Dashboard';
@@ -11,37 +12,154 @@ import DealPage from './components/DealPage';
 import TransportBidsPage from './components/TransportBidsPage';
 import AdminPage from './components/AdminPage';
 import NotFound from './components/NotFound';
-import { privatePaths } from './lib/navConstants';
 import RegisterPage from './components/Register';
 import { clearCurrentUser, ensureSeedData, getCurrentUser, loginAsRole } from './lib/tradafyData';
 
-function getHashPath() {
-  const raw = window.location.hash.replace(/^#/, '');
-  return raw || '/';
+function ProtectedRoute({ user, children }) {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
 
-function navigateTo(path) {
-  window.location.hash = path;
+function AppRoutes({ user, onLogin, onLogout, forceRefresh }) {
+  const navigateRouter = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  const navigate = (path) => navigateRouter(path);
+  const handleLogin = (role) => {
+    onLogin(role);
+    navigate('/dashboard');
+  };
+  const handleLogout = () => {
+    navigate('/');
+    setTimeout(() => {
+      onLogout();
+    }, 10);
+  };
+
+  const ProductDetailRoute = () => {
+    const { productId } = useParams();
+
+    return (
+      <ProductDetailPage
+        currentUser={user}
+        navigate={navigate}
+        user={user}
+        pathname={pathname}
+        onLogout={handleLogout}
+        productId={productId}
+      />
+    );
+  };
+
+  const RequestQuoteRoute = () => {
+    const { productId } = useParams();
+
+    return (
+      <ProtectedRoute user={user}>
+        <RequestQuotePage
+          user={user}
+          navigate={navigate}
+          pathname={pathname}
+          onLogout={handleLogout}
+          productId={productId}
+          onMutate={forceRefresh}
+        />
+      </ProtectedRoute>
+    );
+  };
+
+  const DealRoute = () => {
+    const { dealId } = useParams();
+
+    return (
+      <ProtectedRoute user={user}>
+        <DealPage
+          user={user}
+          navigate={navigate}
+          pathname={pathname}
+          onLogout={handleLogout}
+          dealId={dealId}
+          onMutate={forceRefresh}
+        />
+      </ProtectedRoute>
+    );
+  };
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage currentUser={user} navigate={navigate} />} />
+      <Route path="/login" element={<LoginPage navigate={navigate} onLogin={handleLogin} />} />
+      <Route path="/register" element={<RegisterPage navigate={navigate} />} />
+      <Route
+        path="/dashboard"
+        element={(
+          <ProtectedRoute user={user}>
+            <DashboardPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/products"
+        element={<ProductsPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={handleLogout} />}
+      />
+      <Route path="/product/:productId" element={<ProductDetailRoute />} />
+      <Route path="/request-quote/:productId" element={<RequestQuoteRoute />} />
+      <Route
+        path="/my-rfqs"
+        element={(
+          <ProtectedRoute user={user}>
+            <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} incoming={false} onMutate={forceRefresh} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/incoming-rfqs"
+        element={(
+          <ProtectedRoute user={user}>
+            <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} incoming={true} onMutate={forceRefresh} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/deals"
+        element={(
+          <ProtectedRoute user={user}>
+            <DealsPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/transport-bids"
+        element={(
+          <ProtectedRoute user={user}>
+            <TransportBidsPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} onMutate={forceRefresh} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="/deal/:dealId" element={<DealRoute />} />
+      <Route
+        path="/admin"
+        element={(
+          <ProtectedRoute user={user}>
+            <AdminPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} onMutate={forceRefresh} />
+          </ProtectedRoute>
+        )}
+      />
+      <Route path="*" element={<NotFound navigate={navigate} />} />
+    </Routes>
+  );
 }
 
 function App() {
-  const [pathname, setPathname] = useState(getHashPath());
   const [user, setUser] = useState(() => getCurrentUser());
   const [, setRevision] = useState(0);
 
   useEffect(() => {
     ensureSeedData();
-    if (!window.location.hash) {
-      window.location.hash = '/';
-    }
-
-    const onHashChange = () => {
-      setPathname(getHashPath());
-      setUser(getCurrentUser());
-    };
-
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   const forceRefresh = () => {
@@ -49,37 +167,17 @@ function App() {
     setUser(getCurrentUser());
   };
 
-  const navigate = (path) => navigateTo(path);
   const onLogout = () => {
     clearCurrentUser();
     setUser(null);
-    navigate('/');
   };
+
   const onLogin = (role) => {
     const nextUser = loginAsRole(role);
     setUser(nextUser);
-    navigate('/dashboard');
   };
 
-  const segments = useMemo(() => pathname.split('/').filter(Boolean), [pathname]);
-  const requiresAuth = privatePaths.some((path) => pathname.startsWith(path));
-
-  if (!user && requiresAuth) return <LoginPage navigate={navigate} onLogin={onLogin} />;
-  if (pathname === '/') return <LandingPage currentUser={user} navigate={navigate} />;
-  if (pathname === '/login') return <LoginPage navigate={navigate} onLogin={onLogin} />;
-  if (pathname === '/register') return <RegisterPage navigate={navigate} />;
-  if (pathname === '/dashboard') return <DashboardPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} />;
-  if (pathname === '/products') return <ProductsPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={onLogout} />;
-  if (segments[0] === 'product' && segments[1]) return <ProductDetailPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={onLogout} productId={segments[1]} />;
-  if (segments[0] === 'request-quote' && segments[1] && user) return <RequestQuotePage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} productId={segments[1]} onMutate={forceRefresh} />;
-  if (pathname === '/my-rfqs' && user) return <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} incoming={false} onMutate={forceRefresh} />;
-  if (pathname === '/incoming-rfqs' && user) return <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} incoming={true} onMutate={forceRefresh} />;
-  if (pathname === '/deals' && user) return <DealsPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} />;
-  if (pathname === '/transport-bids' && user) return <TransportBidsPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} onMutate={forceRefresh} />;
-  if (segments[0] === 'deal' && segments[1] && user) return <DealPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} dealId={segments[1]} onMutate={forceRefresh} />;
-  if (pathname === '/admin' && user) return <AdminPage user={user} navigate={navigate} pathname={pathname} onLogout={onLogout} onMutate={forceRefresh} />;
-  if (segments[0] === 'product' && segments[1]) return <NotFound navigate={navigate} />;
-  return <NotFound navigate={navigate} />;
+  return <AppRoutes user={user} onLogin={onLogin} onLogout={onLogout} forceRefresh={forceRefresh} />;
 }
 
 export default App;
