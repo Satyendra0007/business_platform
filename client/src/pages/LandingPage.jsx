@@ -27,8 +27,9 @@ import productMetalsBulk from '../assets/product-metals-bulk.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
 import productAgriBulk from '../assets/product-agri-bulk.png';
-import { createDealFromProduct } from '../lib/tradafyData';
-import { PublicLayout, Reveal, Marquee } from './ui';
+import { PublicLayout, Reveal, Marquee } from '../components/ui';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 const featuredProducts = [
   { id: 'sunflower-oil', name: 'Sunflower Oil', category: 'Food & Agriculture', img: productOilBulk, price: '$850 / MT', origin: 'Ukraine', moq: '500 MT' },
@@ -175,15 +176,9 @@ const DashboardMock = () => (
   </div>
 );
 
-function LandingPage({ currentUser, navigate }) {
-  const openDealFromProduct = (productId) => {
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
-    const deal = createDealFromProduct(productId, currentUser);
-    if (deal) navigate(`/deal/${deal.id}`);
-  };
+function LandingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const reviews = [
     {
@@ -285,16 +280,16 @@ function LandingPage({ currentUser, navigate }) {
   ];
 
   return (
-    <PublicLayout currentUser={currentUser} navigate={navigate}>
+    <PublicLayout>
       <div className="space-y-10 pb-20 sm:space-y-14 sm:pb-24 lg:space-y-16 lg:pb-32">
-        
+
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
         <section className="relative flex min-h-[55vh] lg:min-h-[60vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-8 pb-24 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-28 lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
-            style={{
-              background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}>
+          style={{
+            background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.22),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.2),transparent_26%)] pointer-events-none" />
           <Reveal effect="up">
             <div className="relative max-w-4xl space-y-4 sm:space-y-6">
@@ -366,156 +361,137 @@ function LandingPage({ currentUser, navigate }) {
 
         {/* --- SECTION 2: DISCOVER OPPORTUNITIES (MOVED & BACKGROUND APPLIED) --- */}
         <section className="relative overflow-hidden rounded-[30px] px-4 py-7 text-white shadow-2xl sm:px-6 sm:py-8 lg:rounded-[36px] lg:px-14 lg:py-9"
-            style={{
-              background: `linear-gradient(rgba(10, 31, 56, 0.85), rgba(20, 58, 106, 0.7)), url(${bgNegotiation})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}>
+          style={{
+            background: `linear-gradient(rgba(10, 31, 56, 0.85), rgba(20, 58, 106, 0.7)), url(${bgNegotiation})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(229,169,61,0.25),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.15),transparent_30%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
           <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 animate-float-slow rounded-full bg-[#E5A93D]/20 blur-[100px]" />
-           <div className="relative grid gap-5 xl:grid-cols-[0.9fr_1.1fr] items-center">
-              <div className="space-y-4.5">
-                 <Reveal effect="right">
-                  <div className="space-y-2.5">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.22em] text-sky-100">
-                        Market Clarity
-                      </div>
-                      <h2 className="text-[30px] font-black text-white tracking-tight leading-[0.95] lg:text-[2.2rem]">Discover real trade opportunities</h2>
-                      <p className="max-w-2xl text-[13px] font-semibold leading-5 text-sky-100/85 lg:text-[15px]">Live products from <span className="text-white border-b-2 border-[#E5A93D]">verified suppliers</span>, organized into one buyer-friendly trade command surface.</p>
-                  </div>
-                 </Reveal>
-                 <div className="grid gap-2.5 sm:grid-cols-2">
-                  {[
-                    { title: 'Without structure', tone: 'text-rose-200', icon: XCircle, items: ['Scattered emails', 'Lost documents', 'Slow approvals'] },
-                    { title: 'With TRADAFY', tone: 'text-emerald-300', icon: CheckCircle2, items: ['One shared workspace', 'Transport bidding built in', 'Real-time shipment context'] }
-                  ].map((group, index) => (
-                    <Reveal key={group.title} delay={200 + index * 160} effect="up">
-                      <div className="rounded-[22px] border border-white/10 bg-white/10 p-3.5 backdrop-blur-md shadow-xl">
-                        <h3 className={`text-[11px] font-black uppercase tracking-[0.16em] ${group.tone}`}>{group.title}</h3>
-                        <div className="mt-2.5 space-y-2">
-                          {group.items.map((item) => (
-                            <div key={item} className="flex items-center gap-2.5 rounded-2xl bg-white/6 px-3 py-2 text-[12px] font-bold text-white/90">
-                              <group.icon className={`h-3.5 w-3.5 ${index === 0 ? 'text-rose-300' : 'text-emerald-400'}`} />
-                              {item}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </Reveal>
-                  ))}
-                 </div>
-                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
-                  {[
-                    { value: '150+', label: 'Verified suppliers' },
-                    { value: '32', label: 'Trade corridors' },
-                    { value: '24/7', label: 'Workspace visibility' }
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent)] px-5 py-4 backdrop-blur shadow-xl">
-                      <div className="text-3xl font-black text-white">{item.value}</div>
-                      <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-amber-300/90">{item.label}</div>
-                    </div>
-                  ))}
-                 </div>
-              </div>
-              <Reveal delay={600} effect="zoom">
+          <div className="relative grid gap-5 xl:grid-cols-[0.9fr_1.1fr] items-center">
+            <div className="space-y-4.5">
+              <Reveal effect="right">
                 <div className="space-y-2.5">
-                  <DashboardMock />
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    {[
-                      { label: 'Product match', value: 'Sunflower Oil / 2,500 MT' },
-                      { label: 'Carrier market', value: '8 live shipping bids' },
-                      { label: 'Execution status', value: 'Docs and shipment aligned' }
-                    ].map((card) => (
-                      <div key={card.label} className="rounded-[18px] border border-white/10 bg-white/10 px-3 py-2.5 text-left backdrop-blur">
-                        <div className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/70">{card.label}</div>
-                        <div className="mt-1 text-[12px] font-black text-white">{card.value}</div>
-                      </div>
-                    ))}
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.22em] text-sky-100">
+                    Market Clarity
                   </div>
+                  <h2 className="text-[30px] font-black text-white tracking-tight leading-[0.95] lg:text-[2.2rem]">Discover real trade opportunities</h2>
+                  <p className="max-w-2xl text-[13px] font-semibold leading-5 text-sky-100/85 lg:text-[15px]">Live products from <span className="text-white border-b-2 border-[#E5A93D]">verified suppliers</span>, organized into one buyer-friendly trade command surface.</p>
                 </div>
               </Reveal>
-           </div>
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {[
+                  { title: 'Without structure', tone: 'text-rose-200', icon: XCircle, items: ['Scattered emails', 'Lost documents', 'Slow approvals'] },
+                  { title: 'With TRADAFY', tone: 'text-emerald-300', icon: CheckCircle2, items: ['One shared workspace', 'Transport bidding built in', 'Real-time shipment context'] }
+                ].map((group, index) => (
+                  <Reveal key={group.title} delay={200 + index * 160} effect="up">
+                    <div className="rounded-[22px] border border-white/10 bg-white/10 p-3.5 backdrop-blur-md shadow-xl">
+                      <h3 className={`text-[11px] font-black uppercase tracking-[0.16em] ${group.tone}`}>{group.title}</h3>
+                      <div className="mt-2.5 space-y-2">
+                        {group.items.map((item) => (
+                          <div key={item} className="flex items-center gap-2.5 rounded-2xl bg-white/6 px-3 py-2 text-[12px] font-bold text-white/90">
+                            <group.icon className={`h-3.5 w-3.5 ${index === 0 ? 'text-rose-300' : 'text-emerald-400'}`} />
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
+                {[
+                  { value: '150+', label: 'Verified suppliers' },
+                  { value: '32', label: 'Trade corridors' },
+                  { value: '24/7', label: 'Workspace visibility' }
+                ].map((item) => (
+                  <div key={item.label} className="rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent)] px-5 py-4 backdrop-blur shadow-xl">
+                    <div className="text-3xl font-black text-white">{item.value}</div>
+                    <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-amber-300/90">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <Reveal delay={600} effect="zoom">
+              <div className="space-y-2.5">
+                <DashboardMock />
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {[
+                    { label: 'Product match', value: 'Sunflower Oil / 2,500 MT' },
+                    { label: 'Carrier market', value: '8 live shipping bids' },
+                    { label: 'Execution status', value: 'Docs and shipment aligned' }
+                  ].map((card) => (
+                    <div key={card.label} className="rounded-[18px] border border-white/10 bg-white/10 px-3 py-2.5 text-left backdrop-blur">
+                      <div className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/70">{card.label}</div>
+                      <div className="mt-1 text-[12px] font-black text-white">{card.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </section>
 
-        {/* --- SECTION 3: FEATURED PRODUCTS --- */}
+        {/* --- SECTION 3: MARKETPLACE CTA --- */}
         <section className="px-0 pt-1 pb-10 sm:px-1 lg:px-16">
           <Reveal effect="up">
-            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50/50 px-3.5 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-[#143A6A] border border-blue-100">
+            <div className="relative overflow-hidden rounded-[36px] border border-blue-100 bg-[linear-gradient(135deg,#f0f7ff,#e8f2ff)] px-8 py-12 text-center shadow-[0_24px_60px_rgba(20,58,106,0.10)] lg:px-16 lg:py-16">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#245c9d]/10 blur-[80px]" />
+              <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-[#E5A93D]/10 blur-[60px]" />
+
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#143A6A] shadow-sm">
                   <Globe className="h-3.5 w-3.5" /> Direct Bulk Sourcing
                 </div>
-                <h2 className="text-3xl font-black text-[#0A2540] tracking-tight leading-[0.94] md:text-4xl lg:text-[2.8rem]">Bulk Shipping <br /><span className="text-[#143A6A]/30">Live Inventory</span></h2>
-                <p className="max-w-xl text-xs font-semibold leading-5 text-slate-500 md:text-sm">
-                  Curated export-ready categories with polished photography so buyers can evaluate opportunities faster and trust what they are opening.
+                <h2 className="mt-5 text-3xl font-black tracking-tight text-[#0A2540] md:text-4xl lg:text-[2.6rem]">
+                  Bulk Shipping
+                  <span className="block text-[#143A6A]/40">Live Marketplace</span>
+                </h2>
+                <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+                  Real products from verified suppliers — search, filter by sector, and open a deal workspace instantly.
                 </p>
+
+                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                  <button
+                    onClick={() => navigate('/products')}
+                    className="group relative flex items-center gap-2 overflow-hidden rounded-2xl border border-blue-900 bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-8 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(20,58,106,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(20,58,106,0.5)]"
+                  >
+                    <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] group-hover:animate-[shimmer_1.5s_infinite]" />
+                    <span className="relative z-10 flex items-center gap-2">VIEW LIVE MARKETPLACE <ArrowRight className="h-4 w-4 text-sky-400 transition-transform group-hover:translate-x-1" /></span>
+                  </button>
+                  <button
+                    onClick={() => navigate(user ? '/dashboard' : '/register')}
+                    className="rounded-2xl border border-blue-200 bg-white px-8 py-3.5 text-sm font-bold text-[#143A6A] shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50"
+                  >
+                    {user ? 'Go to Dashboard' : 'Start Free'}
+                  </button>
+                </div>
+
+                {/* Stat pills */}
+                <div className="mx-auto mt-8 flex flex-wrap justify-center gap-3">
+                  {[
+                    { value: '12+', label: 'High-trust sectors' },
+                    { value: '40K+', label: 'Units listed' },
+                    { value: '28', label: 'Export destinations' },
+                    { value: '1', label: 'Shared workspace' },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-2xl border border-blue-100 bg-white px-4 py-2.5 shadow-sm">
+                      <div className="text-base font-black text-[#0A2540]">{s.value}</div>
+                      <div className="mt-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button onClick={() => navigate('/products')} className="group relative flex overflow-hidden items-center gap-2 rounded-2xl border border-blue-900 bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-5 py-3 text-[10px] font-black text-white shadow-[0_10px_30px_rgba(20,58,106,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(20,58,106,0.5)]">
-                <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] group-hover:animate-[shimmer_1.5s_infinite]" />
-                <span className="relative z-10 flex items-center gap-2 drop-shadow-md">VIEW LIVE MARKETPLACE <ArrowRight className="h-4 w-4 text-sky-400 transition-transform group-hover:translate-x-1" /></span>
-              </button>
             </div>
           </Reveal>
-
-          <div className="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4">
-            {[
-              { value: '12', label: 'High-trust sectors' },
-              { value: '40K+', label: 'Units listed weekly' },
-              { value: '28', label: 'Export destinations' },
-              { value: '1', label: 'Shared trade workspace' },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-[18px] border border-slate-100 bg-white/85 px-3 py-2.5 shadow-md">
-                <div className="text-lg font-black text-[#0A2540] md:text-xl">{stat.value}</div>
-                <div className="mt-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400 md:text-[9px]">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-            {featuredProducts.map((p, i) => (
-              <Reveal key={p.id} delay={i * 150} effect="zoom" className="h-full">
-                <div className="group relative h-full flex flex-col rounded-[28px] border border-blue-50/50 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-2.5 shadow-[0_15px_35px_rgba(10,37,64,0.06)] transition-all duration-[800ms] hover:-translate-y-3 hover:border-blue-100 hover:shadow-[0_45px_80px_rgba(10,37,64,0.15)]">
-                  <div className="absolute -inset-1 -z-10 rounded-[32px] bg-gradient-to-b from-blue-200/0 to-blue-300/40 opacity-0 blur-md transition duration-700 group-hover:opacity-100" />
-                  <div className="relative aspect-[1/1] overflow-hidden rounded-[22px] bg-slate-50 shadow-inner">
-                    <img src={p.img} alt={p.name} className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A2540]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="absolute inset-3 rounded-[18px] border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[8px] font-black text-[#0A2540] shadow-xl">
-                      MIN: {p.moq}
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                      <button onClick={() => openDealFromProduct(p.id)} className="w-full rounded-xl bg-[#E5A93D] py-2.5 text-[9px] font-black uppercase tracking-widest text-[#0A2540] shadow-lg hover:bg-white transition-all">
-                        Open
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-2 pt-4 flex flex-col flex-1">
-                    <div className="flex-1 space-y-1">
-                      <span className="text-[8px] font-black uppercase tracking-[0.18em] text-[#143A6A]/40">{p.category}</span>
-                      <h3 className="text-sm font-black text-[#0A2540] tracking-tight group-hover:text-[#143A6A] transition-colors leading-tight">{p.name}</h3>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
-                      <div className="space-y-0.5">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Price</p>
-                        <span className="text-xs font-black text-[#143A6A] tracking-tighter">{p.price}</span>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-[#143A6A] group-hover:text-white transition-all group-hover:rotate-45">
-                        <ChevronRight className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
         </section>
 
         {/* --- SECTION 6: MOVING REVIEWS --- */}
         <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-10 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-14 animate-float-slow">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(229,169,61,0.08),transparent_40%)] pointer-events-none" />
           <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent animate-shimmer" />
-          
+
           <Reveal effect="up">
             <div className="relative mx-auto mb-10 max-w-4xl px-4 text-center sm:px-6 lg:px-16">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.2)] backdrop-blur transition-all duration-700 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)]">
@@ -533,7 +509,7 @@ function LandingPage({ currentUser, navigate }) {
           <div className="relative flex flex-col px-2 sm:px-4 lg:px-8">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#050e1c] to-transparent" />
             <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#050e1c] to-transparent" />
-            
+
             <Marquee items={reviews} direction="left" speed="normal" className="py-2" />
           </div>
         </section>

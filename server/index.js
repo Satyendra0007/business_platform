@@ -12,7 +12,10 @@ const app = express();
 
 // Security & Middleware
 app.use(helmet()); // Secure HTTP headers
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  credentials: true,
+}));
 app.use(express.json());
 
 // API Rate Limiting (Security Rule)

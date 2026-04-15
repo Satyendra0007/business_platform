@@ -35,6 +35,7 @@ const createProduct = async (req, res) => {
 };
 
 // @desc    Get paginated product listings with optimized filters
+// @desc    Get paginated product listings with filters
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
@@ -43,17 +44,23 @@ const getProducts = async (req, res) => {
 
     let query = { isDeleted: false, isActive: true };
     let sortOption = { createdAt: -1 };
-    let projection = {};
 
-    if (search) {
-      query.$text = { $search: search };
-      // IMPROVEMENT 5: Sort by text relevance score when searching
-      projection = { score: { $meta: 'textScore' } };
-      sortOption = { score: { $meta: 'textScore' } };
+    // Case-insensitive regex search across key fields — supports partial matching
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { countryOfOrigin: regex },
+      ];
     }
 
-    // Only use indexed fields in filter queries
-    if (category) query.category = category;
+    // Exact category match (case-insensitive using regex for safer DB matching)
+    if (category && category.trim()) {
+      query.category = new RegExp(`^${category.trim()}$`, 'i');
+    }
+
     if (companyId) query.companyId = companyId;
 
     if (minPrice || maxPrice) {
@@ -62,15 +69,13 @@ const getProducts = async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    // IMPROVEMENT 2: Clamp page to minimum 1 — negative values would produce broken skip logic
     const limitValue = Math.min(parseInt(limit), 50);
-    const pageValue = Math.max(parseInt(page), 1);
-    const skip = (pageValue - 1) * limitValue;
+    const pageValue  = Math.max(parseInt(page), 1);
+    const skip       = (pageValue - 1) * limitValue;
 
-    // IMPROVEMENT 1: Run find and count in PARALLEL — eliminates two sequential round-trips to MongoDB
     const [products, total] = await Promise.all([
-      Product.find(query, projection)
-        .select('title price images category companyId')
+      Product.find(query)
+        .select('title price unit MOQ images category countryOfOrigin companyId leadTime')
         .skip(skip)
         .limit(limitValue)
         .sort(sortOption)
@@ -78,8 +83,7 @@ const getProducts = async (req, res) => {
       Product.countDocuments(query)
     ]);
 
-    // IMPROVEMENT 4: Expose totalPages so the frontend can compute navigation without extra requests
-    const totalPages = Math.ceil(total / limitValue);
+    const totalPages = Math.ceil(total / limitValue) || 1;
 
     res.json({
       success: true,
@@ -90,11 +94,24 @@ const getProducts = async (req, res) => {
       data: products
     });
   } catch (error) {
-    // IMPROVEMENT 6: Generic error message for security
     console.error('[getProducts]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+// @desc    Get distinct product categories from the live DB
+// @route   GET /api/products/categories
+// @access  Public
+const getCategories = async (req, res) => {
+  try {
+    const categories = await Product.distinct('category', { isDeleted: false, isActive: true });
+    res.json({ success: true, data: categories.filter(Boolean).sort() });
+  } catch (error) {
+    console.error('[getCategories]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 
 // @desc    Get a single product by ID
 // @route   GET /api/products/:id
@@ -199,4 +216,5 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct };
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getCategories };
+

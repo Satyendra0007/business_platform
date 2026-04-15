@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import LandingPage from './components/LandingPage';
-import LoginPage from './components/Login';
+import React from 'react';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+
+// ─── Page imports ─────────────────────────────────────────────────────────────
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/Login';
+import RegisterPage from './pages/Register';
 import DashboardPage from './components/Dashboard';
-import ProductsPage from './components/ProductsPage';
+import CompanySetupPage from './components/CompanySetupPage';
+import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './components/ProductDetailPage';
 import RequestQuotePage from './components/RequestQuotePage';
 import RFQListPage from './components/RFQListPage';
@@ -11,173 +16,56 @@ import DealsPage from './components/DealsPage';
 import DealPage from './components/DealPage';
 import TransportBidsPage from './components/TransportBidsPage';
 import AdminPage from './components/AdminPage';
-import NotFound from './components/NotFound';
-import RegisterPage from './components/Register';
-import { clearCurrentUser, ensureSeedData, getCurrentUser, loginAsRole } from './lib/tradafyData';
+import NotFound from './pages/NotFound';
 
-function ProtectedRoute({ user, children }) {
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
 
-  return children;
+// ─── Route guards ─────────────────────────────────────────────────────────────
+
+/** Redirects to /login when there is no active session. */
+function RequireAuth() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <Outlet />;
 }
 
-function AppRoutes({ user, onLogin, onLogout, forceRefresh }) {
-  const navigateRouter = useNavigate();
-  const location = useLocation();
-  const pathname = location.pathname;
+/** Redirects non-admin users to /dashboard. */
+function RequireAdmin() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.roles?.includes('admin')) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
 
-  const navigate = (path) => navigateRouter(path);
-  const handleLogin = (role) => {
-    onLogin(role);
-    navigate('/dashboard');
-  };
-  const handleLogout = () => {
-    navigate('/');
-    setTimeout(() => {
-      onLogout();
-    }, 10);
-  };
+// ─── App — pure route config, no state, no handlers ──────────────────────────
 
-  const ProductDetailRoute = () => {
-    const { productId } = useParams();
-
-    return (
-      <ProductDetailPage
-        currentUser={user}
-        navigate={navigate}
-        user={user}
-        pathname={pathname}
-        onLogout={handleLogout}
-        productId={productId}
-      />
-    );
-  };
-
-  const RequestQuoteRoute = () => {
-    const { productId } = useParams();
-
-    return (
-      <ProtectedRoute user={user}>
-        <RequestQuotePage
-          user={user}
-          navigate={navigate}
-          pathname={pathname}
-          onLogout={handleLogout}
-          productId={productId}
-          onMutate={forceRefresh}
-        />
-      </ProtectedRoute>
-    );
-  };
-
-  const DealRoute = () => {
-    const { dealId } = useParams();
-
-    return (
-      <ProtectedRoute user={user}>
-        <DealPage
-          user={user}
-          navigate={navigate}
-          pathname={pathname}
-          onLogout={handleLogout}
-          dealId={dealId}
-          onMutate={forceRefresh}
-        />
-      </ProtectedRoute>
-    );
-  };
-
+export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage currentUser={user} navigate={navigate} />} />
-      <Route path="/login" element={<LoginPage navigate={navigate} onLogin={handleLogin} />} />
-      <Route path="/register" element={<RegisterPage navigate={navigate} />} />
-      <Route
-        path="/dashboard"
-        element={(
-          <ProtectedRoute user={user}>
-            <DashboardPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/products"
-        element={<ProductsPage currentUser={user} navigate={navigate} user={user} pathname={pathname} onLogout={handleLogout} />}
-      />
-      <Route path="/product/:productId" element={<ProductDetailRoute />} />
-      <Route path="/request-quote/:productId" element={<RequestQuoteRoute />} />
-      <Route
-        path="/my-rfqs"
-        element={(
-          <ProtectedRoute user={user}>
-            <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} incoming={false} onMutate={forceRefresh} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/incoming-rfqs"
-        element={(
-          <ProtectedRoute user={user}>
-            <RFQListPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} incoming={true} onMutate={forceRefresh} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/deals"
-        element={(
-          <ProtectedRoute user={user}>
-            <DealsPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/transport-bids"
-        element={(
-          <ProtectedRoute user={user}>
-            <TransportBidsPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} onMutate={forceRefresh} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route path="/deal/:dealId" element={<DealRoute />} />
-      <Route
-        path="/admin"
-        element={(
-          <ProtectedRoute user={user}>
-            <AdminPage user={user} navigate={navigate} pathname={pathname} onLogout={handleLogout} onMutate={forceRefresh} />
-          </ProtectedRoute>
-        )}
-      />
-      <Route path="*" element={<NotFound navigate={navigate} />} />
+      {/* ── Public ── */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/products" element={<ProductsPage />} />
+      <Route path="/product/:productId" element={<ProductDetailPage />} />
+
+      {/* ── Authenticated ── */}
+      <Route element={<RequireAuth />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/company/setup" element={<CompanySetupPage />} />
+        <Route path="/my-rfqs" element={<RFQListPage incoming={false} />} />
+        <Route path="/incoming-rfqs" element={<RFQListPage incoming={true} />} />
+        <Route path="/deals" element={<DealsPage />} />
+        <Route path="/deal/:dealId" element={<DealPage />} />
+        <Route path="/transport-bids" element={<TransportBidsPage />} />
+        <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
+      </Route>
+
+      {/* ── Admin only ── */}
+      <Route element={<RequireAdmin />}>
+        <Route path="/admin" element={<AdminPage />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
-
-function App() {
-  const [user, setUser] = useState(() => getCurrentUser());
-  const [, setRevision] = useState(0);
-
-  useEffect(() => {
-    ensureSeedData();
-  }, []);
-
-  const forceRefresh = () => {
-    setRevision((value) => value + 1);
-    setUser(getCurrentUser());
-  };
-
-  const onLogout = () => {
-    clearCurrentUser();
-    setUser(null);
-  };
-
-  const onLogin = (role) => {
-    const nextUser = loginAsRole(role);
-    setUser(nextUser);
-  };
-
-  return <AppRoutes user={user} onLogin={onLogin} onLogout={onLogout} forceRefresh={forceRefresh} />;
-}
-
-export default App;

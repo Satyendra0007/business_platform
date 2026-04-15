@@ -1,5 +1,5 @@
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const {
   createShippingRequest,
@@ -12,7 +12,7 @@ const {
 
 const { createRequestValidation, submitBidValidation } = require('./shipping.validator');
 const { validateRequest } = require('../../middleware/validate.middleware');
-const { protect }         = require('../../middleware/auth.middleware');
+const { protect } = require('../../middleware/auth.middleware');
 const { requireShippingAgent, requireParticipantRole } = require('../../middleware/shippingAgent.middleware');
 
 // All shipping routes require authentication

@@ -73,14 +73,18 @@ const createRFQ = async (req, res) => {
 // ─── LIST RFQs ──────────────────────────────────────────────────────────────
 // @route   GET /api/rfq
 // @access  Private
+// @query   incoming=true → returns RFQs where user's company is the supplier
 const getRFQs = async (req, res) => {
   try {
-    const { page = 1, limit = 20, status } = req.query;
+    const { page = 1, limit = 20, status, incoming } = req.query;
 
-    // Users only see RFQs belonging to their own company
+    // Switch between buyer and supplier perspective
+    const isIncoming = incoming === 'true';
     const query = {
       isDeleted: false,
-      buyerCompanyId: req.user.companyId
+      ...(isIncoming
+        ? { supplierCompanyId: req.user.companyId }
+        : { buyerCompanyId:    req.user.companyId })
     };
 
     if (status) query.status = status;
@@ -103,7 +107,7 @@ const getRFQs = async (req, res) => {
       success: true,
       count: rfqs.length,
       total,
-      totalPages: Math.ceil(total / limitValue),
+      totalPages: Math.ceil(total / limitValue) || 1,
       page: pageValue,
       data: rfqs
     });
@@ -112,6 +116,7 @@ const getRFQs = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 // ─── GET SINGLE RFQ ─────────────────────────────────────────────────────────
 // @route   GET /api/rfq/:id
@@ -248,19 +253,28 @@ const convertRFQtoDeal = async (req, res) => {
     }
 
     // Resolve optional supplierUserId from request body (caller may pass it)
-    const { supplierUserId } = req.body;
+    const { supplierUserId } = req.body || {};
 
-    // CREATE DEAL — map RFQ fields directly, preserving both company & user references
+
+    // CREATE DEAL — map RFQ fields, preserving both company & user references
     const deal = await Deal.create({
       buyerCompanyId:    rfq.buyerCompanyId,
       supplierCompanyId: rfq.supplierCompanyId,
       buyerUserId:       rfq.buyerUserId,
-      supplierUserId:    supplierUserId || undefined,
-      productId:         rfq.productId  || undefined,
-      quantity:          rfq.quantity,
-      price:             rfq.targetPrice,
-      incoterm:          rfq.incoterm,
+      supplierUserId:    supplierUserId   || undefined,
+      productId:         rfq.productId    || undefined,
+      productName:       rfq.productName  || undefined,  // was missing — deal.productName was always blank
+      quantity:          rfq.quantity     || undefined,
+      price:             rfq.targetPrice  || undefined,
+      incoterm:          rfq.incoterm     || undefined,
       status:            'inquiry',
+      // Seed the timeline so the workspace always loads a non-empty history
+      timeline: [{
+        stage:     'inquiry',
+        updatedAt: new Date(),
+        updatedBy: req.user._id,
+        notes:     `Converted from RFQ #${rfq._id}`
+      }],
       activityLog: [{
         action:    `Deal created from RFQ #${rfq._id}`,
         userId:    req.user._id,
@@ -278,11 +292,22 @@ const convertRFQtoDeal = async (req, res) => {
       message: 'RFQ successfully converted to Deal.',
       data: { rfqId: rfq._id, deal }
     });
+
   } catch (error) {
-    console.error('[convertRFQtoDeal]', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error('[convertRFQtoDeal] ERROR:', error.name, error.message);
+    // Surface the individual Mongoose validation errors if present
+    if (error.errors) {
+      Object.entries(error.errors).forEach(([field, err]) => {
+        console.error(`  Field "${field}": ${err.message}`);
+      });
+    }
+    const message = error.name === 'ValidationError'
+      ? `Validation failed: ${Object.values(error.errors || {}).map(e => e.message).join(', ')}`
+      : 'Internal server error';
+    res.status(500).json({ success: false, message });
   }
 };
+
 
 // ─── ASSIGN SUPPLIER ──────────────────────────────────────────────
 // @route   PATCH /api/rfq/:id/assign-supplier

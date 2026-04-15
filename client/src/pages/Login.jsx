@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, Eye, EyeOff, Lock, Mail, Package, ShieldCheck, ShipWheel, Sparkles, UserRound, Globe, Zap, Shield } from 'lucide-react';
-import { Reveal } from './ui';
+import {
+  ArrowRight, BriefcaseBusiness, Eye, EyeOff, Lock, Mail,
+  Package, ShipWheel, Globe, Zap, Shield, AlertCircle, Loader2
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Reveal } from '../components/ui';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
-import dashboardReference from '../assets/dashboard-reference.jpeg';
+import { login } from '../lib/authService';
+import { useAuth } from '../hooks/useAuth';
 
 const roles = [
   {
@@ -31,17 +36,41 @@ const roles = [
   },
 ];
 
-function LoginPage({ navigate, onLogin }) {
-  const [selectedRole, setSelectedRole] = useState('buyer');
-  const [email, setEmail] = useState('buyer@tradafy.app');
-  const [password, setPassword] = useState('password');
+function LoginPage() {
+  const { login: contextLogin } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const selectedMeta = roles.find((role) => role.key === selectedRole);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const userData = await login(email.trim(), password);
+      // login() in authService saves the token; contextLogin() sets React state + navigates
+      contextLogin(userData);
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(236,181,58,0.18),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.16),transparent_22%),linear-gradient(180deg,#eff4fb_0%,#f8fafc_42%,#edf3fb_100%)] px-3 py-2 sm:px-4 sm:py-3 lg:px-6">
       <div className="mx-auto grid max-w-[1520px] rounded-[28px] border border-white/70 bg-white/70 shadow-[0_32px_100px_rgba(15,23,42,0.16)] backdrop-blur-xl lg:h-[calc(100vh-1rem)] lg:overflow-hidden lg:rounded-[34px] lg:grid-cols-[1.03fr_0.97fr]">
+
+        {/* ─── Left Panel ─── */}
         <section className="relative hidden overflow-hidden bg-[#050E1C] p-10 text-white lg:flex lg:flex-col justify-center">
           {/* Animated Background Mesh */}
           <div className="absolute inset-0 z-0 opacity-20">
@@ -56,7 +85,7 @@ function LoginPage({ navigate, onLogin }) {
               <circle cx="650" cy="650" r="150" className="fill-amber-500/10 blur-3xl animate-float-slow delay-700" />
             </svg>
           </div>
-          
+
           <div className="relative z-10">
             <Reveal effect="zoom">
               <button onClick={() => navigate('/')} className="inline-flex items-center gap-4 rounded-[22px] border border-white/10 bg-white/5 px-5 py-3.5 backdrop-blur-md mb-12">
@@ -105,9 +134,9 @@ function LoginPage({ navigate, onLogin }) {
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-10 right-10 relative z-10 pt-12">
+          <div className="relative z-10 pt-12 mt-8 border-t border-white/10">
             <Reveal delay={1000}>
-              <div className="pt-8 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className="h-10 w-10 rounded-full border-2 border-[#050E1C] bg-slate-800 flex items-center justify-center text-[10px] font-black">U{i}</div>
@@ -119,6 +148,7 @@ function LoginPage({ navigate, onLogin }) {
           </div>
         </section>
 
+        {/* ─── Right Panel (Form) ─── */}
         <section className="flex min-h-full items-center justify-center bg-white px-6 py-12 lg:h-full lg:overflow-y-auto lg:px-12">
           <div className="w-full max-w-[440px]">
             <div className="mb-8">
@@ -127,46 +157,28 @@ function LoginPage({ navigate, onLogin }) {
               <p className="mt-2 text-sm text-slate-600">Enter your credentials to access your global trade workspace.</p>
             </div>
 
-            <div className="mb-8 rounded-[16px] bg-slate-100 p-1">
-              <div className="grid grid-cols-3 gap-1">
-                {roles.map((role) => {
-                  const active = selectedRole === role.key;
-                  return (
-                    <button
-                      key={role.key}
-                      onClick={() => {
-                        setSelectedRole(role.key);
-                        setEmail(`${role.key}@tradafy.app`);
-                      }}
-                      className={`flex flex-col items-center justify-center rounded-[12px] py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                        active ? 'bg-white text-[#143a6a] shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <role.icon className={`mb-1 h-5 w-5 ${active ? 'text-[#e5a93d]' : 'text-slate-400'}`} />
-                      {role.label}
-                    </button>
-                  );
-                })}
+            {/* Error Banner */}
+            {error && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                <p className="text-sm font-medium text-red-700">{error}</p>
               </div>
-            </div>
+            )}
 
-            <form
-              className="space-y-5"
-              onSubmit={(event) => {
-                event.preventDefault();
-                onLogin(selectedRole);
-              }}
-            >
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-slate-700">Email Address</span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
                   <Mail className="h-5 w-5 text-slate-400" />
                   <input
+                    id="login-email"
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                     placeholder="you@company.com"
+                    autoComplete="email"
+                    required
                   />
                 </div>
               </label>
@@ -176,11 +188,14 @@ function LoginPage({ navigate, onLogin }) {
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
                   <Lock className="h-5 w-5 text-slate-400" />
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                     placeholder="Enter your password"
+                    autoComplete="current-password"
+                    required
                   />
                   <button type="button" onClick={() => setShowPassword((value) => !value)} className="text-slate-400 transition hover:text-slate-700">
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -198,19 +213,25 @@ function LoginPage({ navigate, onLogin }) {
 
               <div className="pt-2">
                 <button
+                  id="login-submit"
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0c1f38] px-4 py-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(12,31,56,0.2)] transition hover:bg-[#153a66]"
+                  disabled={isLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0c1f38] px-4 py-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(12,31,56,0.2)] transition hover:bg-[#153a66] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Log In to Workspace
-                  <ArrowRight className="h-4 w-4" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Signing in…
+                    </>
+                  ) : (
+                    <>
+                      Log In to Workspace
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
               </div>
             </form>
-
-            <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center text-sm text-slate-500">
-              <p>Demo Credentials Active:</p>
-              <p className="mt-1 font-mono text-xs font-bold text-slate-700">{selectedRole}@tradafy.app <span className="text-slate-400 px-1">/</span> password</p>
-            </div>
 
             <div className="mt-10 text-center">
               <p className="text-sm text-slate-600">

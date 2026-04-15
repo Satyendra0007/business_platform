@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { LogOut, User, Mail, Globe, ShieldCheck, Quote, Star, ArrowRight, Sparkles, Send, PhoneCall, Building2 } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { navByRole, pageCopy, getNavIcon } from '../lib/navConstants';
 import { Ship } from 'lucide-react';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
+import { useAuth } from '../hooks/useAuth';
 
 function isActive(pathname, path) {
   return pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
@@ -54,7 +56,9 @@ function BrandMark({ size = 'md', tone = 'light', showSubtext = false, subtext }
   );
 }
 
-export function PublicHeader({ navigate, currentUser }) {
+export function PublicHeader() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/50 bg-transparent px-0 pb-3 pt-1">
       <button onClick={() => navigate('/')} className="text-left transition-transform hover:-translate-y-0.5">
@@ -67,7 +71,7 @@ export function PublicHeader({ navigate, currentUser }) {
       </div>
 
       <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
-        {!currentUser && (
+        {!user && (
           <button
             onClick={() => navigate('/login')}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-[#0A2540] transition hover:border-slate-300 hover:bg-slate-50"
@@ -76,17 +80,18 @@ export function PublicHeader({ navigate, currentUser }) {
           </button>
         )}
         <button
-          onClick={() => navigate(currentUser ? '/dashboard' : '/login')}
+          onClick={() => navigate(user ? '/dashboard' : '/login')}
           className="rounded-xl bg-[#E5A93D] px-5 py-2.5 text-sm font-black text-[#0A2540] transition hover:bg-[#FF8A00] shadow-[0_10px_20px_rgba(229,169,61,0.2)]"
         >
-          {currentUser ? 'Open Workspace' : 'Start Trading'}
+          {user ? 'Open Workspace' : 'Start Trading'}
         </button>
       </div>
     </header>
   );
 }
 
-export function Footer({ navigate }) {
+export function Footer() {
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   
   return (
@@ -301,23 +306,26 @@ export function Marquee({ items, direction = 'left', speed = 'normal', className
   );
 }
 
-export function PublicLayout({ currentUser, navigate, children }) {
+export function PublicLayout({ children }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-4 pt-1 sm:px-5 sm:pb-6 sm:pt-2 lg:px-6 lg:pb-8 lg:pt-3">
-        <PublicHeader navigate={navigate} currentUser={currentUser} />
+        <PublicHeader />
         <main className="flex-1">
           {children}
         </main>
       </div>
-      <Footer navigate={navigate} />
+      <Footer />
     </div>
   );
 }
 
-export function AppShell({ user, pathname, navigate, onLogout, title, subtitle, children }) {
+export function AppShell({ title, subtitle, children }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigation = navByRole[user.role] || navByRole.buyer;
+  const navigation = navByRole[user?.role] || navByRole.buyer;
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -389,7 +397,7 @@ export function AppShell({ user, pathname, navigate, onLogout, title, subtitle, 
         <button
           onClick={(event) => {
             event.stopPropagation();
-            onLogout();
+            logout();
           }}
           className={`mt-4 flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/10 py-3 text-sm font-medium text-white transition hover:bg-white/20 ${
             sidebarOpen ? 'px-4' : 'px-0'

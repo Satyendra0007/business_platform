@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { createProduct, getProducts, getProductById, updateProduct, deleteProduct } = require('./product.controller');
+const { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getCategories } = require('./product.controller');
 const { createProductValidation, updateProductValidation } = require('./product.validator');
 const { validateRequest } = require('../../middleware/validate.middleware');
 const { protect } = require('../../middleware/auth.middleware');
 
-// Public endpoints natively enabled to assist generic SEO and B2B global lookup platforms
+// Public endpoints
 router.get('/', getProducts);
+router.get('/categories', getCategories);   // MUST be before /:id
 router.get('/:id', getProductById);
 
 // Protected endpoints explicitly requiring a valid JWT and an attached B2B Company ownership

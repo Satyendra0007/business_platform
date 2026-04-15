@@ -1,42 +1,78 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Mail, Phone, ShieldCheck, Sparkles, UserRound, Zap, Shield, Globe, ShipWheel } from 'lucide-react';
-import { Reveal } from './ui';
+import {
+  ArrowRight, Building2, CheckCircle2, Eye, EyeOff, Lock, Mail,
+  Phone, UserRound, Globe, Zap, Shield, AlertCircle, Loader2
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Reveal } from '../components/ui';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
-import dashboardReference from '../assets/dashboard-reference.jpeg';
+import { register } from '../lib/authService';
 
 const roles = [
-  { key: 'buyer', label: 'Join as Buyer', tag: 'Procurement', note: 'Source products, create RFQs, and secure global trade deals.' },
-  { key: 'supplier', label: 'Join as Supplier', tag: 'Sales', note: 'List your catalog, respond to RFQs, and scale your exports.' },
-  { key: 'shipping_agent', label: 'Join as Shipping Agent', tag: 'Logistics', note: 'Bid on transport lanes, win freight awards, and manage shipment execution.' },
+  { key: 'buyer', label: 'Buyer', tag: 'Procurement', note: 'Source products, create RFQs, and secure global trade deals.' },
+  { key: 'supplier', label: 'Supplier', tag: 'Sales', note: 'List your catalog, respond to RFQs, and scale your exports.' },
+  { key: 'shipping_agent', label: 'Shipping Agent', tag: 'Logistics', note: 'Bid on transport lanes, win freight awards, and manage shipment execution.' },
 ];
 
-function RegisterPage({ navigate }) {
+function RegisterPage() {
+  const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState('buyer');
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    mobile: '',
-    company: '',
+    password: '',
+    confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
-  const selectedMeta = roles.find((role) => role.key === selectedRole);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (error) setError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!formData.name || !formData.mobile || !formData.company) {
-      alert('Please fill in all required fields (Name, Mobile, and Company).');
+    setError('');
+
+    const { firstName, lastName, email, password, confirmPassword } = formData;
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
+      setError('Please fill in all required fields.');
       return;
     }
-    // Simulation of registration success
-    setSubmitted(true);
-    setTimeout(() => navigate('/login'), 2500);
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await register({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        password,
+        role: selectedRole,
+      });
+      setSubmitted(true);
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (err) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // ─── Success Screen ───────────────────────────────────────────────────────
   if (submitted) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
@@ -46,11 +82,11 @@ function RegisterPage({ navigate }) {
           </div>
           <h2 className="text-3xl font-display font-bold text-slate-900">Account Created!</h2>
           <p className="mt-4 text-slate-600">
-            Welcome to TRADAFY, <span className="font-semibold">{formData.name}</span>. Your workspace is being prepared. Redirecting to login...
+            Welcome to TRADAFY, <span className="font-semibold">{formData.firstName}</span>. Your workspace is being prepared. Redirecting to login…
           </p>
           <div className="mt-8 flex justify-center">
             <div className="h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full w-full origin-left animate-[loading_2s_ease-in-out] bg-green-500" />
+              <div className="h-full w-full origin-left animate-[loading_2.5s_ease-in-out] bg-green-500" />
             </div>
           </div>
         </div>
@@ -64,19 +100,21 @@ function RegisterPage({ navigate }) {
     );
   }
 
+  // ─── Registration Form ────────────────────────────────────────────────────
   return (
     <div className="min-h-screen overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(236,181,58,0.18),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.16),transparent_22%),linear-gradient(180deg,#eff4fb_0%,#f8fafc_42%,#edf3fb_100%)] px-3 py-2 sm:px-4 sm:py-3 lg:px-8">
       <div className="mx-auto grid max-w-[1520px] rounded-[28px] border border-white/70 bg-white/70 shadow-[0_32px_100px_rgba(15,23,42,0.16)] backdrop-blur-xl lg:h-[calc(100vh-1rem)] lg:overflow-hidden lg:rounded-[38px] lg:grid-cols-[1fr_1.1fr]">
+
+        {/* ─── Left Panel ─── */}
         <section className="relative hidden overflow-hidden bg-[#050E1C] p-10 text-white lg:flex lg:flex-col justify-center">
-          {/* Animated Background Mesh */}
           <div className="absolute inset-0 z-0 opacity-20">
             <svg className="h-full w-full" viewBox="0 0 800 800">
               <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <pattern id="grid-reg" width="40" height="40" patternUnits="userSpaceOnUse">
                   <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
                 </pattern>
               </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
+              <rect width="100%" height="100%" fill="url(#grid-reg)" />
               <circle cx="150" cy="150" r="120" className="fill-amber-500/20 blur-3xl animate-float-slow" />
               <circle cx="650" cy="650" r="150" className="fill-blue-500/10 blur-3xl animate-float-slow delay-700" />
             </svg>
@@ -130,12 +168,12 @@ function RegisterPage({ navigate }) {
             </div>
           </div>
 
-          <div className="absolute bottom-10 left-10 right-10 relative z-10 pt-12">
+          <div className="relative z-10 pt-12 mt-8 border-t border-white/10">
             <Reveal delay={1000}>
-              <div className="pt-8 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <button
-                   onClick={() => navigate('/login')}
-                   className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => navigate('/login')}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
                 >
                   Back to Login
                   <ArrowRight className="h-4 w-4" />
@@ -146,6 +184,7 @@ function RegisterPage({ navigate }) {
           </div>
         </section>
 
+        {/* ─── Right Panel (Form) ─── */}
         <section className="flex min-h-full items-center justify-center bg-white px-6 py-12 lg:h-full lg:overflow-y-auto lg:px-12">
           <div className="w-full max-w-[480px]">
             <div className="mb-8">
@@ -154,6 +193,7 @@ function RegisterPage({ navigate }) {
               <p className="mt-2 text-sm text-slate-600">Select your role and enter your professional credentials.</p>
             </div>
 
+            {/* Role Selector */}
             <div className="mb-8 rounded-[16px] bg-slate-100 p-1">
               <div className="grid grid-cols-3 gap-1">
                 {roles.map((role) => {
@@ -161,10 +201,10 @@ function RegisterPage({ navigate }) {
                   return (
                     <button
                       key={role.key}
+                      type="button"
                       onClick={() => setSelectedRole(role.key)}
-                      className={`flex flex-col items-center justify-center rounded-[12px] py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                        active ? 'bg-white text-[#143a6a] shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      }`}
+                      className={`flex flex-col items-center justify-center rounded-[12px] py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all ${active ? 'bg-white text-[#143a6a] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
                     >
                       <UserRound className={`mb-1 h-5 w-5 ${active ? 'text-[#e5a93d]' : 'text-slate-400'}`} />
                       {role.label.replace('Join as ', '')}
@@ -174,74 +214,130 @@ function RegisterPage({ navigate }) {
               </div>
             </div>
 
+            {/* Error Banner */}
+            {error && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+                <p className="text-sm font-medium text-red-700">{error}</p>
+              </div>
+            )}
+
             <form className="space-y-5" onSubmit={handleSubmit}>
+              {/* First & Last Name */}
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-slate-700">Full Name</span>
+                  <span className="mb-2 block text-sm font-bold text-slate-700">First Name</span>
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
                     <UserRound className="h-5 w-5 text-slate-400" />
                     <input
+                      id="reg-firstName"
                       required
                       type="text"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
                       className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                      placeholder="John Doe"
+                      placeholder="John"
+                      autoComplete="given-name"
                     />
                   </div>
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-slate-700">Company Name</span>
+                  <span className="mb-2 block text-sm font-bold text-slate-700">Last Name</span>
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
-                    <Building2 className="h-5 w-5 text-slate-400" />
+                    <UserRound className="h-5 w-5 text-slate-400" />
                     <input
+                      id="reg-lastName"
                       required
                       type="text"
-                      value={formData.company}
-                      onChange={(e) => handleInputChange('company', e.target.value)}
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
                       className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                      placeholder="Organization"
+                      placeholder="Doe"
+                      autoComplete="family-name"
                     />
                   </div>
                 </label>
               </div>
 
+              {/* Email */}
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-slate-700">Email Address</span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
                   <Mail className="h-5 w-5 text-slate-400" />
                   <input
+                    id="reg-email"
+                    required
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                     placeholder="you@company.com"
+                    autoComplete="email"
                   />
                 </div>
               </label>
 
+              {/* Password */}
               <label className="block">
-                <span className="mb-2 block text-sm font-bold text-slate-700">Mobile Number</span>
+                <span className="mb-2 block text-sm font-bold text-slate-700">Password <span className="text-slate-400 font-normal">(min. 6 characters)</span></span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
-                  <Phone className="h-5 w-5 text-slate-400" />
+                  <Lock className="h-5 w-5 text-slate-400" />
                   <input
+                    id="reg-password"
                     required
-                    type="tel"
-                    value={formData.mobile}
-                    onChange={(e) => handleInputChange('mobile', e.target.value)}
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
                     className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="Create a strong password"
+                    autoComplete="new-password"
+                    minLength={6}
                   />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} className="text-slate-400 transition hover:text-slate-700">
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </label>
+
+              {/* Confirm Password */}
+              <label className="block">
+                <span className="mb-2 block text-sm font-bold text-slate-700">Confirm Password</span>
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                  <input
+                    id="reg-confirmPassword"
+                    required
+                    type={showConfirm ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                    placeholder="Re-enter your password"
+                    autoComplete="new-password"
+                  />
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)} className="text-slate-400 transition hover:text-slate-700">
+                    {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </label>
 
               <div className="pt-4">
                 <button
+                  id="register-submit"
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0c1f38] px-4 py-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(12,31,56,0.2)] transition hover:bg-[#153a66]"
+                  disabled={isLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0c1f38] px-4 py-4 text-sm font-bold text-white shadow-[0_10px_20px_rgba(12,31,56,0.2)] transition hover:bg-[#153a66] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Activate {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Workspace
-                  <ArrowRight className="h-4 w-4" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating account…
+                    </>
+                  ) : (
+                    <>
+                      Activate {selectedRole === 'shipping_agent' ? 'Shipping Agent' : selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} Workspace
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
                 <p className="mt-4 text-center text-xs leading-5 text-slate-500">
                   By activating, you agree to the TRADAFY Platform Terms and our data coordination standards.
