@@ -3,7 +3,8 @@
  * Right sidebar column — deal milestone tracker + quick access links.
  */
 import React from 'react';
-import { ArrowRight, BadgeDollarSign, FileText, PackageCheck, ShipWheel } from 'lucide-react';
+import { ArrowRight, BadgeDollarSign, FileText, Package, PackageCheck, ShipWheel } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -55,10 +56,11 @@ export function QuickAccess() {
   const role = user?.roles?.[0] || user?.role;
 
   const links = [
+    // First link: Browse all products for everyone, BUT suppliers also get a 'My Products' management link
     {
-      label: 'Product Reference',
-      icon: FileText,
-      path: '/products',
+      label: role === 'supplier' ? 'My Products' : 'Product Reference',
+      icon: role === 'supplier' ? Package : FileText,
+      path: role === 'supplier' ? '/supplier/products' : '/products',
       style: { background: 'linear-gradient(135deg,#1d4d86,#2b66ad)' },
     },
     {

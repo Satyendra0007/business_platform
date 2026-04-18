@@ -17,7 +17,7 @@ const registerUser = async (req, res) => {
   try {
     // Only accept validated/sanitized fields explicitly requested via express-validator middleware rules
     const data = matchedData(req, { locations: ['body'] });
-    const { firstName, lastName, email, password, role } = data;
+    const { firstName, lastName, email, password, role, profileImage } = data;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -31,8 +31,9 @@ const registerUser = async (req, res) => {
       firstName,
       lastName,
       email,
-      password, // Password hashing is handled by the pre-save hook in user.model.js
-      roles: rolesArray
+      password,           // hashed by pre-save hook in user.model.js
+      roles: rolesArray,
+      profileImage: profileImage || undefined   // only set if provided
     });
 
     if (user) {
@@ -44,6 +45,7 @@ const registerUser = async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           roles: user.roles,
+          profileImage: user.profileImage || null,
           token: generateToken(user._id)
         }
       });
@@ -69,7 +71,7 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    
+
     // Check active status
     if (!user.isActive) {
       return res.status(403).json({ success: false, message: 'Account deactivated' });
@@ -86,6 +88,7 @@ const loginUser = async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           roles: user.roles,
+          profileImage: user.profileImage || null,
           companyId: user.companyId || null,
           token: generateToken(user._id)
         }

@@ -19,7 +19,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppShell, MetricCard } from './ui';
 import { useAuth } from '../hooks/useAuth';
-import { getDealById, advanceDealStatus, getMessages, sendMessage } from '../lib/dealService';
+import { getDealById, advanceDealStatus, getMessages, sendMessage, updateDealShipment } from '../lib/dealService';
 
 // ─── Stage lifecycle ──────────────────────────────────────────────────────────
 
@@ -66,6 +66,8 @@ const fmtPrice = (p) => p != null
   : '—';
 
 // ─── Chat tab ─────────────────────────────────────────────────────────────────
+
+const sameId = (a, b) => String(a || '') === String(b || '');
 
 function ChatTab({ dealId, user }) {
   const [messages, setMessages]   = useState([]);
@@ -117,15 +119,15 @@ function ChatTab({ dealId, user }) {
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col h-full">
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700 shrink-0">
           <AlertCircle className="h-4 w-4 shrink-0" /> {error}
         </div>
       )}
 
       {/* Messages */}
-      <div className="max-h-[380px] space-y-3 overflow-y-auto pr-1">
+      <div className="flex-1 overflow-y-auto p-2 space-y-[6px] pr-2 scroll-smooth">
         {messages.length === 0 ? (
           <div className="rounded-[20px] bg-slate-50 py-10 text-center text-sm text-slate-400">
             No messages yet. Start the conversation below.
@@ -136,35 +138,39 @@ function ChatTab({ dealId, user }) {
             return (
               <div
                 key={msg._id}
-                className={`rounded-[22px] p-4 ${isMine ? 'ml-auto max-w-[85%] bg-[#eaf3ff]' : 'max-w-[85%] bg-[#f5f9fd]'}`}
+                className={`rounded-2xl px-3.5 py-2 shadow-sm ${
+                  isMine ? 'ml-auto max-w-[55%] bg-[#eaf3ff] text-right' : 'max-w-[55%] bg-[#f5f9fd] text-left'
+                }`}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#173b67]">
-                    {isMine ? 'You' : (msg.senderId?.firstName ? `${msg.senderId.firstName}` : 'Participant')}
-                  </p>
-                  <p className="text-xs text-slate-400">{fmtDate(msg.createdAt)}</p>
+                <div className={`mb-1 flex items-center gap-3 ${isMine ? 'justify-end' : 'justify-between'}`}>
+                  {!isMine && (
+                    <span className="text-[11px] font-bold text-[#173b67]/60">
+                      {msg.senderId?.firstName ? msg.senderId.firstName : 'Participant'}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-400/80">{fmtDate(msg.createdAt)}</span>
                 </div>
-                <p className="mt-1.5 text-sm leading-6 text-slate-700">{msg.text}</p>
+                <p className="text-[13px] leading-snug text-slate-700">{msg.text}</p>
               </div>
             );
           })
         )}
-        <div ref={bottomRef} />
+        <div ref={bottomRef} className="h-1" />
       </div>
 
       {/* Send form */}
-      <form onSubmit={handleSend} className="flex gap-3">
+      <form onSubmit={handleSend} className="flex gap-2 shrink-0 border-t border-slate-100 pt-3 mt-1">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Write a message in the deal workspace…"
           disabled={sending}
-          className="w-full rounded-2xl border border-[#d8e2ef] px-4 py-3 text-sm outline-none transition focus:border-[#245c9d] focus:ring-2 focus:ring-[#245c9d]/10 disabled:opacity-50"
+          className="w-full rounded-xl border border-[#d8e2ef] px-3 py-2 text-[13px] outline-none transition focus:border-[#245c9d] focus:ring-2 focus:ring-[#245c9d]/10 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={sending || !draft.trim()}
-          className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
         >
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Send
@@ -213,10 +219,16 @@ function TimelineTab({ timeline = [] }) {
 
 // ─── Shipment tab ─────────────────────────────────────────────────────────────
 
-function ShipmentTab({ deal }) {
+function ShipmentTab({ deal, canUpdateShipment, onShipmentUpdate, updatingShipment }) {
   const { shipment } = deal;
+  const [notes, setNotes] = useState(shipment?.notes || '');
+
+  useEffect(() => {
+    setNotes(shipment?.notes || '');
+  }, [shipment?.notes]);
 
   const details = [
+    { label: 'Selected Bid', value: deal.selectedBidId || 'Not assigned' },
     { label: 'Shipment Status', value: shipment?.status?.replace(/_/g, ' ') || 'Not yet in shipping' },
     { label: 'Shipment Notes',  value: shipment?.notes || '—' },
     { label: 'Last Updated',    value: fmtDate(shipment?.updatedAt) },
@@ -224,7 +236,7 @@ function ShipmentTab({ deal }) {
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {details.map(({ label, value }) => (
           <div key={label} className="rounded-[22px] border border-[#e2ebf4] bg-[#f8fbff] p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
@@ -232,6 +244,49 @@ function ShipmentTab({ deal }) {
           </div>
         ))}
       </div>
+      {canUpdateShipment && (
+        <div className="rounded-[24px] border border-[#d8e2ef] bg-[#f8fbff] p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-[#173b67]">Shipment Progress Controls</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Only the assigned shipping agent can update freight milestones for this deal.
+              </p>
+            </div>
+            {updatingShipment && <Loader2 className="h-5 w-5 animate-spin text-slate-400" />}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['booking', 'loaded', 'in_transit', 'delivered'].map((step) => {
+              const active = shipment?.status === step;
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  onClick={() => onShipmentUpdate({ status: step, notes })}
+                  disabled={updatingShipment || active}
+                  className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                    active
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-[#173b67] text-white hover:bg-[#245c9d] disabled:opacity-60'
+                  }`}
+                >
+                  {step.replace(/_/g, ' ')}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add shipment notes for buyer and supplier visibility..."
+              disabled={updatingShipment}
+              rows={3}
+              className="w-full rounded-2xl border border-[#d8e2ef] bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#245c9d] focus:ring-2 focus:ring-[#245c9d]/10 disabled:opacity-60"
+            />
+          </div>
+        </div>
+      )}
       <div className="relative overflow-hidden rounded-[28px] border border-[#dbe5f0] bg-white shadow-sm">
         <div className="grid lg:grid-cols-[1fr_1fr]">
           <div className="p-6">
@@ -274,6 +329,7 @@ export default function DealPage() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
   const { dealId }= useParams();
+  const isShippingAgentRole = Boolean(user?.roles?.includes('shipping_agent') && !user?.roles?.includes('admin'));
 
   const [deal,       setDeal]      = useState(null);
   const [loading,    setLoading]   = useState(true);
@@ -281,6 +337,8 @@ export default function DealPage() {
   const [activeTab,  setActiveTab] = useState('chat');
   const [advancing,  setAdvancing] = useState(false);
   const [advError,   setAdvError]  = useState('');
+  const [shipmentError, setShipmentError] = useState('');
+  const [updatingShipment, setUpdatingShipment] = useState(false);
 
   // ── Fetch deal ─────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -298,6 +356,12 @@ export default function DealPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (isShippingAgentRole && activeTab !== 'shipment') {
+      setActiveTab('shipment');
+    }
+  }, [activeTab, isShippingAgentRole]);
+
   // ── Advance status ─────────────────────────────────────────────────────────
   const handleAdvance = async () => {
     const next = NEXT_STAGE[deal.status];
@@ -312,6 +376,19 @@ export default function DealPage() {
       setAdvError(err.message);
     } finally {
       setAdvancing(false);
+    }
+  };
+
+  const handleShipmentUpdate = async (payload) => {
+    setUpdatingShipment(true);
+    setShipmentError('');
+    try {
+      const updated = await updateDealShipment(dealId, payload);
+      setDeal((prev) => ({ ...prev, shipment: updated.shipment }));
+    } catch (err) {
+      setShipmentError(err.message);
+    } finally {
+      setUpdatingShipment(false);
     }
   };
 
@@ -338,11 +415,21 @@ export default function DealPage() {
 
   const activeStepIndex = STAGES.findIndex((s) => s.key === deal.status);
   const nextStage = NEXT_STAGE[deal.status];
+  const isBuyer = Boolean(user?.companyId && sameId(user.companyId, deal?.buyerCompanyId));
+  const isSupplier = Boolean(user?.companyId && sameId(user.companyId, deal?.supplierCompanyId));
+  const isAssignedAgent = Boolean(user?._id && sameId(user._id, deal?.shippingAgentId));
+  const isAdmin = Boolean(user?.roles?.includes('admin'));
+  const isShippingAgent = isShippingAgentRole;
+  const isCompanyUser = Boolean(isBuyer || isSupplier || isAdmin);
+  const canEditDeal = isCompanyUser && ['inquiry', 'negotiation'].includes(deal.status);
+  const canAdvanceStatus = Boolean(isBuyer && nextStage);
+  const canUpdateShipment = Boolean((isShippingAgent || isAssignedAgent || isAdmin) && ['shipping', 'delivery'].includes(deal.status));
+  const visibleTabs = isShippingAgent ? TABS.filter((tab) => tab.key === 'shipment') : TABS;
 
   return (
     <AppShell
       title={deal.productName || 'Deal Workspace'}
-      subtitle="Shared workspace where buyer, supplier, and logistics teams coordinate from inquiry through delivery."
+      subtitle={isShippingAgent ? 'Logistics-only workspace for the assigned freight agent.' : 'Shared workspace where buyer, supplier, and the assigned freight agent coordinate from inquiry through delivery.'}
     >
       <div className="space-y-6">
 
@@ -366,24 +453,43 @@ export default function DealPage() {
                 {deal.productName || 'Deal Workspace'}
               </h2>
               <p className="mt-3 text-sm leading-7 text-sky-100/90">
-                Buyer and supplier work together here through chat, timeline updates, freight bidding, and shipment tracking.
+                {isShippingAgent
+                  ? 'Cargo lane details and shipment progress are available here for the assigned freight agent only.'
+                  : 'Buyer, supplier, and the assigned freight agent coordinate here through chat, timeline updates, and shipment tracking.'}
               </p>
             </div>
 
             <div className="flex flex-col gap-3 xl:mt-2 xl:items-end">
-              {nextStage && (
-                <button
-                  onClick={handleAdvance}
-                  disabled={advancing}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,165,233,0.3)] transition hover:bg-sky-400 disabled:opacity-60"
-                >
-                  {advancing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  {advancing ? 'Advancing…' : `Advance to ${nextStage.replace(/_/g, ' ')}`}
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {canEditDeal && (
+                  <button
+                    onClick={() => navigate(`/deal/${dealId}/edit`)}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-sky-400/30 bg-sky-500/10 px-6 py-3.5 text-sm font-semibold text-sky-200 transition hover:bg-sky-500/20"
+                  >
+                    Edit Terms
+                  </button>
+                )}
+
+                {canAdvanceStatus && (
+                  <button
+                    onClick={handleAdvance}
+                    disabled={advancing}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(14,165,233,0.3)] transition hover:bg-sky-400 disabled:opacity-60"
+                  >
+                    {advancing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {advancing ? 'Advancing…' : `Advance to ${nextStage.replace(/_/g, ' ')}`}
+                  </button>
+                )}
+              </div>
+              
               {advError && (
                 <p className="max-w-xs rounded-2xl bg-rose-500/20 px-4 py-2 text-xs font-medium text-rose-300">
                   {advError}
+                </p>
+              )}
+              {shipmentError && (
+                <p className="max-w-xs rounded-2xl bg-rose-500/20 px-4 py-2 text-xs font-medium text-rose-300">
+                  {shipmentError}
                 </p>
               )}
               {!nextStage && (
@@ -399,7 +505,7 @@ export default function DealPage() {
             <MetricCard dark label="Product"    value={deal.productName || '—'} />
             <MetricCard dark label="Quantity"   value={deal.quantity ? String(deal.quantity) : '—'} />
             <MetricCard dark label="Stage"      value={STAGES[Math.max(activeStepIndex, 0)]?.label || deal.status} />
-            <MetricCard dark label="Deal Price" value={fmtPrice(deal.price)} />
+            <MetricCard dark label={isShippingAgent ? 'Route' : 'Deal Price'} value={isShippingAgent ? `${deal.origin || '—'} → ${deal.destination || '—'}` : fmtPrice(deal.price)} />
           </div>
         </section>
 
@@ -441,13 +547,21 @@ export default function DealPage() {
           {/* Left — deal summary */}
           <div className="space-y-5">
             <div className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
-              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Deal Summary</p>
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{isShippingAgent ? 'Cargo Summary' : 'Deal Summary'}</p>
               <div className="space-y-3">
                 <MetricCard label="Status"      value={STAGES[Math.max(activeStepIndex, 0)]?.label || deal.status} />
-                <MetricCard label="Price"       value={fmtPrice(deal.price)} />
+                {isShippingAgent ? (
+                  <MetricCard label="Route" value={`${deal.origin || '—'} → ${deal.destination || '—'}`} />
+                ) : (
+                  <MetricCard label="Price" value={fmtPrice(deal.price)} />
+                )}
                 <MetricCard label="Incoterm"    value={deal.incoterm || '—'} />
-                <MetricCard label="Payment"     value={deal.paymentTerms || 'Not set'} />
-                <MetricCard label="Opened"      value={fmtDate(deal.createdAt)} />
+                {isShippingAgent ? (
+                  <MetricCard label="Selected Bid" value={deal.selectedBidId || '—'} />
+                ) : (
+                  <MetricCard label="Payment" value={deal.paymentTerms || 'Not set'} />
+                )}
+                <MetricCard label={isShippingAgent ? 'Shipment Status' : 'Opened'} value={isShippingAgent ? (deal.shipment?.status?.replace(/_/g, ' ') || 'not started') : fmtDate(deal.createdAt)} />
               </div>
             </div>
 
@@ -456,10 +570,10 @@ export default function DealPage() {
               <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Workspace Rules</p>
               <div className="space-y-2 text-sm text-slate-600">
                 {[
-                  'Chat belongs only to participants in this deal.',
-                  'Stage progression is sequential — no skipping.',
-                  'A shipping bid must be accepted before entering Shipping.',
-                  'Buyer and supplier see identical deal state in real time.',
+                  isShippingAgent ? 'Only assigned shipment data is visible in this workspace.' : 'Chat belongs only to participants in this deal.',
+                  isShippingAgent ? 'Commercial pricing and negotiation details are hidden from shipping agents.' : 'Stage progression is sequential — no skipping.',
+                  isShippingAgent ? 'Only the assigned shipping agent can update shipment milestones.' : 'A shipping bid must be accepted before entering Shipping.',
+                  'Only the assigned shipping agent can update shipment progress.',
                 ].map((rule) => (
                   <div key={rule} className="rounded-[18px] border border-[#e2ebf4] bg-[#f8fbff] px-4 py-3 text-xs shadow-sm">
                     {rule}
@@ -470,10 +584,10 @@ export default function DealPage() {
           </div>
 
           {/* Right — tab panel */}
-          <div className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col h-full max-h-[90vh] xl:max-h-none xl:h-[calc(100vh-120px)] min-h-[620px] rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
             {/* Tabs */}
-            <div className="mb-5 flex flex-wrap gap-2 border-b border-slate-100 pb-4">
-              {TABS.map((tab) => {
+            <div className="mb-4 flex shrink-0 flex-wrap gap-2 border-b border-slate-100 pb-3">
+              {visibleTabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.key;
                 return (
@@ -494,9 +608,18 @@ export default function DealPage() {
             </div>
 
             {/* Tab content */}
-            {activeTab === 'chat'     && <ChatTab     dealId={dealId} user={user} />}
-            {activeTab === 'timeline' && <TimelineTab timeline={deal.timeline} />}
-            {activeTab === 'shipment' && <ShipmentTab deal={deal} />}
+            <div className={`flex-1 min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto pr-1'}`}>
+              {activeTab === 'chat'     && <ChatTab     dealId={dealId} user={user} />}
+              {activeTab === 'timeline' && <TimelineTab timeline={deal.timeline} />}
+              {activeTab === 'shipment' && (
+                <ShipmentTab
+                  deal={deal}
+                  canUpdateShipment={canUpdateShipment}
+                  onShipmentUpdate={handleShipmentUpdate}
+                  updatingShipment={updatingShipment}
+                />
+              )}
+            </div>
           </div>
         </section>
       </div>

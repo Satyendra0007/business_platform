@@ -32,6 +32,39 @@ const isParticipant = (deal, user) => {
   );
 };
 
+const isShippingAgentUser = (user) =>
+  user.roles?.includes('shipping_agent') && !user.roles?.includes('admin');
+
+const isAssignedShippingAgent = (deal, user) =>
+  deal.shippingAgentId?.toString() === user._id?.toString();
+
+const isCompanyParticipant = (deal, user) => {
+  const c = user.companyId?.toString();
+  return (
+    deal.buyerCompanyId?.toString()    === c ||
+    deal.supplierCompanyId?.toString() === c ||
+    user.roles.includes('admin')
+  );
+};
+
+const sanitizeForShippingAgent = (deal) => {
+  const shippingRequest = deal.shippingRequestId && typeof deal.shippingRequestId === 'object'
+    ? deal.shippingRequestId
+    : null;
+
+  return {
+    _id: deal._id,
+    productName: deal.productName,
+    quantity: shippingRequest?.quantity ?? deal.quantity,
+    origin: shippingRequest?.origin || null,
+    destination: shippingRequest?.destination || null,
+    incoterm: shippingRequest?.incoterm || deal.incoterm || null,
+    shipment: deal.shipment || {},
+    selectedBidId: deal.selectedBidId || null,
+    status: deal.status
+  };
+};
+
 // ─── CREATE DEAL ─────────────────────────────────────────────────────────────
 // @route   POST /api/deals
 // @access  Private (Company Users)
@@ -74,16 +107,19 @@ const createDeal = async (req, res) => {
 const getDeals = async (req, res) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
-
-    // Participants see deals where they are buyer or supplier company
+    const shippingAgentView = isShippingAgentUser(req.user);
     const companyId = req.user.companyId;
-    const query = {
-      isDeleted: false,
-      $or: [
-        { buyerCompanyId: companyId },
-        { supplierCompanyId: companyId }
-      ]
-    };
+    const userId = req.user._id;
+
+    const query = shippingAgentView
+      ? { isDeleted: false, shippingAgentId: userId }
+      : {
+          isDeleted: false,
+          $or: [
+            { buyerCompanyId: companyId },
+            { supplierCompanyId: companyId }
+          ]
+        };
 
     if (status) query.status = status;
 
@@ -93,7 +129,12 @@ const getDeals = async (req, res) => {
 
     const [deals, total] = await Promise.all([
       Deal.find(query)
-        .select('buyerCompanyId supplierCompanyId productName status quantity price createdAt')
+        .select(
+          shippingAgentView
+            ? 'productName quantity incoterm status shipment selectedBidId shippingAgentId shippingRequestId'
+            : 'buyerCompanyId supplierCompanyId shippingAgentId selectedBidId productName status quantity price shipment createdAt'
+        )
+        .populate('shippingRequestId', 'origin destination incoterm quantity')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: -1 })
@@ -107,7 +148,7 @@ const getDeals = async (req, res) => {
       total,
       totalPages: Math.ceil(total / limitValue),
       page: pageValue,
-      data: deals
+      data: shippingAgentView ? deals.map(sanitizeForShippingAgent) : deals
     });
   } catch (error) {
     console.error('[getDeals]', error);
@@ -124,16 +165,25 @@ const getDealById = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid Deal ID.' });
     }
 
-    const deal = await Deal.findById(req.params.id).select('-__v').lean();
+    const shippingAgentView = isShippingAgentUser(req.user);
+
+    const deal = await Deal.findById(req.params.id)
+      .select('-__v')
+      .populate('shippingRequestId', 'origin destination incoterm quantity')
+      .lean();
     if (!deal || deal.isDeleted) {
       return res.status(404).json({ success: false, message: 'Deal not found.' });
     }
 
-    if (!isParticipant(deal, req.user)) {
+    if (shippingAgentView) {
+      if (!isAssignedShippingAgent(deal, req.user)) {
+        return res.status(403).json({ success: false, message: 'Not authorized to view this Deal.' });
+      }
+    } else if (!isParticipant(deal, req.user)) {
       return res.status(403).json({ success: false, message: 'Not authorized to view this Deal.' });
     }
 
-    res.json({ success: true, data: deal });
+    res.json({ success: true, data: shippingAgentView ? sanitizeForShippingAgent(deal) : deal });
   } catch (error) {
     console.error('[getDealById]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -168,7 +218,7 @@ const updateDeal = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Deal not found.' });
     }
 
-    if (!isParticipant(deal, req.user)) {
+    if (!isCompanyParticipant(deal, req.user)) {
       return res.status(403).json({ success: false, message: 'Not authorized to update this Deal.' });
     }
 
@@ -210,8 +260,14 @@ const updateDealStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Deal not found.' });
     }
 
-    if (!isParticipant(deal, req.user)) {
+    if (!isCompanyParticipant(deal, req.user)) {
       return res.status(403).json({ success: false, message: 'Not authorized to update this Deal.' });
+    }
+
+    // Role Control Guard: ONLY the Buyer company can progress the core deal lifecycle stages.
+    // The logical flow dictates that buyers approve progression. Suppliers do not dictate stage increments.
+    if (deal.buyerCompanyId.toString() !== req.user.companyId?.toString()) {
+      return res.status(403).json({ success: false, message: 'Only the Buyer can trigger deal progression.' });
     }
 
     if (deal.status === 'closed') {

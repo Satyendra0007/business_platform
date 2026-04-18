@@ -57,13 +57,19 @@ function LoginPage() {
     setIsLoading(true);
     try {
       const userData = await login(email.trim(), password);
-      // login() in authService saves the token; contextLogin() sets React state + navigates
+      if (!userData || !userData._id) {
+        setError('Login failed. Please try again.');
+        return;
+      }
+      // Token is already saved to localStorage by authService.login()
+      // contextLogin() sets React state and navigates to /dashboard
       contextLogin(userData);
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
+
   };
 
   return (

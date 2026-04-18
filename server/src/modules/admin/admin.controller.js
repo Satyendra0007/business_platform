@@ -95,8 +95,8 @@ const getCompanies = async (req, res) => {
 
     const [companies, total] = await Promise.all([
       Company.find(query)
-        // Include documents so admin can review uploaded verification files
-        .select('name country verificationStatus subscriptionPlan isActive documents createdAt')
+        // Include all fields so admin can review full profile including logo and description
+        .select('name logo coverImage description country city industry companyType yearEstablished numberOfEmployees website mainProducts exportMarkets documents verificationStatus subscriptionPlan isActive createdAt')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: -1 })

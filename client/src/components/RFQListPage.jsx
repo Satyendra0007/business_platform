@@ -44,7 +44,7 @@ function StatusBadge({ status }) {
 
 // ─── RFQ card ─────────────────────────────────────────────────────────────────
 
-function RFQCard({ rfq, incoming, onConvert, onClose }) {
+function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
   const navigate = useNavigate();
   const [converting, setConverting] = useState(false);
   const [closing,    setClosing]    = useState(false);
@@ -52,6 +52,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose }) {
 
   const canConvert = !incoming && (rfq.status === 'open' || rfq.status === 'in_progress') && !rfq.dealId;
   const canClose   = !incoming && rfq.status !== 'converted' && rfq.status !== 'closed';
+  const canEdit    = !incoming && rfq.status !== 'converted' && rfq.status !== 'closed';
   const isConverted = rfq.status === 'converted';
 
   const handleConvert = async () => {
@@ -158,6 +159,15 @@ function RFQCard({ rfq, incoming, onConvert, onClose }) {
           </button>
         )}
 
+        {canEdit && (
+          <button
+            onClick={() => onEdit(rfq)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Edit RFQ
+          </button>
+        )}
+
         {canClose && (
           <button
             onClick={handleClose}
@@ -217,6 +227,7 @@ export default function RFQListPage({ incoming = false }) {
   const [page,       setPage]      = useState(1);
   const [loading,    setLoading]   = useState(true);
   const [error,      setError]     = useState('');
+  const [filter,     setFilter]    = useState('all');
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -279,16 +290,43 @@ export default function RFQListPage({ incoming = false }) {
         ) : rfqs.length === 0 ? (
           <EmptyState incoming={incoming} navigate={navigate} />
         ) : (
-          <div className="space-y-4">
-            {rfqs.map((rfq) => (
-              <RFQCard
-                key={rfq._id}
-                rfq={rfq}
-                incoming={incoming}
-                onConvert={handleConverted}
-                onClose={handleClosed}
-              />
-            ))}
+          <div className="space-y-5">
+            {/* Filter */}
+            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+              {['all', 'open', 'in_progress', 'converted', 'closed'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest transition ${
+                    filter === f
+                      ? 'bg-[#143a6a] text-white shadow-md'
+                      : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                  }`}
+                >
+                  {f.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-4">
+              {rfqs.filter(r => filter === 'all' || r.status === filter).map((rfq) => (
+                <RFQCard
+                  key={rfq._id}
+                  rfq={rfq}
+                  incoming={incoming}
+                  onConvert={handleConverted}
+                  onClose={handleClosed}
+                  onEdit={(r) => navigate(`/rfq/${r._id}/edit`)}
+                />
+              ))}
+              
+              {/* Show empty message if filter matches nothing but rfqs exist */}
+              {rfqs.filter(r => filter === 'all' || r.status === filter).length === 0 && (
+                <div className="rounded-[28px] border border-dashed border-slate-200 py-16 text-center text-sm font-medium text-slate-500">
+                  No RFQs match the selected filter.
+                </div>
+              )}
+            </div>
           </div>
         )}
 

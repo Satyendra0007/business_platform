@@ -75,7 +75,8 @@ const getProducts = async (req, res) => {
 
     const [products, total] = await Promise.all([
       Product.find(query)
-        .select('title price unit MOQ images category countryOfOrigin companyId leadTime')
+        .select('title price unit MOQ images category countryOfOrigin companyId leadTime isActive')
+
         .skip(skip)
         .limit(limitValue)
         .sort(sortOption)

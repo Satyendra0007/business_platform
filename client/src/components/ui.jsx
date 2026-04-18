@@ -93,7 +93,7 @@ export function PublicHeader() {
 export function Footer() {
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer className="bg-[#050E1C] text-slate-400 pt-10 pb-6 border-t border-white/5 overflow-hidden relative">
       {/* Background decoration */}
@@ -203,13 +203,13 @@ export function Footer() {
           <div className="flex items-center gap-6">
             <span>© {currentYear} TRADAFY Global. All rights reserved.</span>
             <div className="hidden md:flex items-center gap-4">
-               <button className="hover:text-slate-300 transition-colors">Privacy Policy</button>
-               <button className="hover:text-slate-300 transition-colors">Terms of Service</button>
+              <button className="hover:text-slate-300 transition-colors">Privacy Policy</button>
+              <button className="hover:text-slate-300 transition-colors">Terms of Service</button>
             </div>
           </div>
           <div className="flex items-center gap-3">
-             <ShieldCheck className="h-4 w-4 text-emerald-500/50" />
-             <span>ISO 27001 Certified Trade Workspace</span>
+            <ShieldCheck className="h-4 w-4 text-emerald-500/50" />
+            <span>ISO 27001 Certified Trade Workspace</span>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export function Reveal({ children, delay = 0, effect = 'up', className = '' }) {
     right: 'animate-reveal-right',
     zoom: 'animate-zoom-in-soft'
   };
-  
+
   return (
     <div className={`${effects[effect]} ${delay ? `delay-${delay}` : ''} ${className}`}>
       {children}
@@ -325,7 +325,13 @@ export function AppShell({ title, subtitle, children }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigation = navByRole[user?.role] || navByRole.buyer;
+
+  // Real auth object uses roles[] array, not a single role string
+  const userRole     = user?.roles?.[0] || 'buyer';
+  const navigation   = navByRole[userRole] || navByRole.buyer;
+  const fullName     = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : '';
+  const userInitial  = fullName.charAt(0).toUpperCase() || '?';
+  const roleLabel    = pageCopy[userRole] || 'Workspace';
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -343,16 +349,15 @@ export function AppShell({ title, subtitle, children }) {
             navigate('/dashboard');
           }
         }}
-        className={`flex items-center rounded-2xl border border-white/10 bg-white/6 py-3 text-left transition-all ${
-          sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'
-        }`}
+        className={`flex items-center rounded-2xl border border-white/10 bg-white/6 py-3 text-left transition-all ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'
+          }`}
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
           <img src={tradafyLogo} alt="Tradafy" className="h-9 w-9 object-contain" />
         </div>
         <div className={sidebarOpen ? 'block' : 'hidden'}>
           <div className="text-lg font-semibold tracking-[0.2em]">TRADAFY</div>
-          <div className="text-xs text-slate-300">{pageCopy[user.role]}</div>
+          <div className="text-xs text-slate-300">{roleLabel}</div>
         </div>
       </button>
 
@@ -367,11 +372,10 @@ export function AppShell({ title, subtitle, children }) {
                   event.stopPropagation();
                   navigate(item.path);
                 }}
-                className={`flex w-full items-center rounded-2xl py-3 text-left transition ${
-                  isActive(pathname, item.path)
+                className={`flex w-full items-center rounded-2xl py-3 text-left transition ${isActive(pathname, item.path)
                     ? 'bg-white text-[#173c68] shadow-[0_10px_24px_rgba(255,255,255,0.16)]'
                     : 'text-slate-200 hover:bg-white/10 hover:text-white'
-                } ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'}`}
+                  } ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'}`}
                 title={item.label}
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
@@ -386,12 +390,16 @@ export function AppShell({ title, subtitle, children }) {
 
       <div className={`mt-auto rounded-[24px] border border-white/10 bg-white/6 ${sidebarOpen ? 'p-4' : 'p-3'}`}>
         <div className={`flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'}`}>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-sm font-semibold">
-            {sidebarOpen ? user.avatar : <User className="h-5 w-5" />}
+          {/* Avatar — image if available, otherwise initial */}
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-white/10">
+            {user?.profileImage
+              ? <img src={user.profileImage} alt={fullName} className="h-full w-full object-cover" />
+              : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-white">{userInitial}</span>
+            }
           </div>
           <div className={`min-w-0 ${sidebarOpen ? 'block' : 'hidden'}`}>
-            <p className="truncate font-semibold">{user.name}</p>
-            <p className="truncate text-xs text-slate-300">{user.company}</p>
+            <p className="truncate font-semibold">{fullName}</p>
+            <p className="truncate text-xs text-slate-300 capitalize">{userRole.replace(/_/g, ' ')}</p>
           </div>
         </div>
         <button
@@ -399,9 +407,8 @@ export function AppShell({ title, subtitle, children }) {
             event.stopPropagation();
             logout();
           }}
-          className={`mt-4 flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/10 py-3 text-sm font-medium text-white transition hover:bg-white/20 ${
-            sidebarOpen ? 'px-4' : 'px-0'
-          }`}
+          className={`mt-4 flex w-full items-center justify-center rounded-2xl border border-white/10 bg-white/10 py-3 text-sm font-medium text-white transition hover:bg-white/20 ${sidebarOpen ? 'px-4' : 'px-0'
+            }`}
           title="Log Out"
         >
           <span className={sidebarOpen ? 'block' : 'hidden'}>Log Out</span>
@@ -427,11 +434,10 @@ export function AppShell({ title, subtitle, children }) {
             setSidebarOpen(true);
           }
         }}
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#0d2340_0%,#12335d_55%,#1f548d_100%)] p-4 text-white shadow-[0_28px_70px_rgba(7,19,39,0.35)] transition-all duration-300 ${
-          sidebarOpen
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#0d2340_0%,#12335d_55%,#1f548d_100%)] p-4 text-white shadow-[0_28px_70px_rgba(7,19,39,0.35)] transition-all duration-300 ${sidebarOpen
             ? 'w-[286px] translate-x-0'
             : '-translate-x-full w-[286px] lg:w-[92px] lg:translate-x-0'
-        }`}
+          }`}
       >
         <div className={`mb-4 flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
           <div className={`text-xs font-semibold uppercase tracking-[0.22em] text-slate-300 ${sidebarOpen ? 'block' : 'hidden'}`}>Navigation</div>
@@ -454,37 +460,41 @@ export function AppShell({ title, subtitle, children }) {
           className={`min-h-screen transition-[padding-left] duration-300 ${sidebarOpen ? 'lg:pl-[298px]' : 'lg:pl-[104px]'}`}
         >
           <div className="flex min-h-screen flex-1 flex-col overflow-hidden rounded-[28px] border border-white/65 bg-white/84 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl">
-          <header className="border-b border-[#d4e0ee] bg-[linear-gradient(180deg,#ffffff_0%,#f2f7fc_100%)] px-4 py-4 sm:px-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div>
-                <div className="mb-2 flex flex-wrap items-center gap-3">
-                  <button
-                    onClick={() => setSidebarOpen((current) => !current)}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-[#d4e0ee] bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                  >
-                    <BrandMark size="sm" tone="light" />
-                  </button>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#143a6a,#245c9d)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white">
-                    {pageCopy[user.role]}
+            <header className="border-b border-[#d4e0ee] bg-[linear-gradient(180deg,#ffffff_0%,#f2f7fc_100%)] px-4 py-4 sm:px-6">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div>
+                  <div className="mb-2 flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => setSidebarOpen((current) => !current)}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-[#d4e0ee] bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    >
+                      <BrandMark size="sm" tone="light" />
+                    </button>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#143a6a,#245c9d)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white">
+                      {roleLabel}
+                    </div>
+                  </div>
+                  <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#13355e] sm:text-3xl">{title}</h1>
+                  {subtitle ? <p className="mt-1 max-w-3xl text-sm text-slate-600">{subtitle}</p> : null}
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl border border-[#d4e0ee] bg-white px-3 py-2 shadow-sm">
+                  {/* Profile avatar — photo or gradient initial */}
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#143a6a,#245c9d)]">
+                    {user?.profileImage
+                      ? <img src={user.profileImage} alt={fullName} className="h-full w-full object-cover" />
+                      : <span className="flex h-full w-full items-center justify-center text-sm font-bold text-white">{userInitial}</span>
+                    }
+                  </div>
+                  <div className="hidden text-left sm:block">
+                    <p className="text-sm font-semibold text-[#153763]">{fullName}</p>
+                    <p className="text-xs text-slate-500 capitalize">{userRole.replace(/_/g, ' ')}</p>
                   </div>
                 </div>
-                <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#13355e] sm:text-3xl">{title}</h1>
-                {subtitle ? <p className="mt-1 max-w-3xl text-sm text-slate-600">{subtitle}</p> : null}
               </div>
+            </header>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-[#d4e0ee] bg-white px-3 py-2 shadow-sm">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#143a6a,#245c9d)] text-sm font-semibold text-white">
-                  {user.avatar}
-                </div>
-                <div className="hidden text-left sm:block">
-                  <p className="text-sm font-semibold text-[#153763]">{user.name}</p>
-                  <p className="text-xs text-slate-500">{user.title}</p>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+            <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">{children}</main>
           </div>
         </div>
       </div>

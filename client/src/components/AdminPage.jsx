@@ -3,7 +3,7 @@
  *
  * Tabs:
  *  Users     → list all users, toggle active/inactive
- *  Companies → list all companies, set verification status
+ *  Companies → list all companies with documents + set verification status
  *  Deals     → read-only monitor of all deals
  *  RFQs      → read-only monitor of all RFQs
  *
@@ -13,7 +13,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   Users, Building2, Briefcase, FileText,
   Loader2, AlertCircle, CheckCircle2,
-  XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw
+  XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw, ExternalLink, File
 } from 'lucide-react';
 import { AppShell, MetricCard } from './ui';
 import {
@@ -36,9 +36,11 @@ const fmtPrice = (p) => p != null
 
 function VerifBadge({ status }) {
   const map = {
-    verified: { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ShieldCheck,  label: 'Verified' },
-    pending:  { cls: 'bg-amber-50  text-amber-700  border-amber-100',    icon: ShieldAlert, label: 'Pending' },
-    rejected: { cls: 'bg-rose-50   text-rose-700   border-rose-100',     icon: ShieldX,     label: 'Rejected' },
+    draft:     { cls: 'bg-slate-50   text-slate-600  border-slate-200',  icon: FileText,    label: 'Draft' },
+    submitted: { cls: 'bg-sky-50     text-sky-700    border-sky-200',     icon: ShieldAlert, label: 'Submitted' },
+    pending:   { cls: 'bg-amber-50   text-amber-700  border-amber-100',   icon: ShieldAlert, label: 'Pending' },
+    verified:  { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ShieldCheck,  label: 'Verified' },
+    rejected:  { cls: 'bg-rose-50    text-rose-700   border-rose-100',    icon: ShieldX,     label: 'Rejected' },
   };
   const s = map[status] || map.pending;
   const Icon = s.icon;
@@ -174,57 +176,147 @@ function CompaniesTab() {
 
   return (
     <Panel title={`Companies — ${total} total`}>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {companies.map((c) => (
-          <div key={c._id} className="rounded-[22px] bg-[#f5f9fd] p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-slate-900">{c.name}</p>
-                  <VerifBadge status={c.verificationStatus} />
-                </div>
-                <p className="mt-1 text-sm text-slate-500">{c.country || '—'}</p>
-                <p className="mt-0.5 text-xs text-slate-400">Registered: {fmtDate(c.createdAt)}</p>
-                {actionErr[c._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[c._id]}</p>}
-              </div>
-              {/* Verification actions */}
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {c.verificationStatus !== 'verified' && (
-                  <button
-                    onClick={() => handleVerify(c._id, 'verified')}
-                    disabled={updating === c._id}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
-                  >
-                    {updating === c._id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
-                    Verify
-                  </button>
-                )}
-                {c.verificationStatus !== 'rejected' && (
-                  <button
-                    onClick={() => handleVerify(c._id, 'rejected')}
-                    disabled={updating === c._id}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
-                  >
-                    <ShieldX className="h-3 w-3" /> Reject
-                  </button>
-                )}
-                {c.verificationStatus !== 'pending' && (
-                  <button
-                    onClick={() => handleVerify(c._id, 'pending')}
-                    disabled={updating === c._id}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-60"
-                  >
-                    <RefreshCcw className="h-3 w-3" /> Reset
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <CompanyCard
+            key={c._id}
+            company={c}
+            updating={updating}
+            actionErr={actionErr[c._id]}
+            onVerify={handleVerify}
+          />
         ))}
       </div>
     </Panel>
   );
 }
+
+// ─── Expandable company card ──────────────────────────────────────────────────
+
+function CompanyCard({ company: c, updating, actionErr, onVerify }) {
+  const [open, setOpen] = useState(false);
+
+  const InfoRow = ({ label, value }) =>
+    value ? (
+      <div className="min-w-0 pr-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}: </span>
+        <span className="text-[11px] text-slate-700 truncate">{value}</span>
+      </div>
+    ) : null;
+
+  return (
+    <div className={`overflow-hidden rounded-[20px] border transition-all ${open ? 'border-[#245c9d]/30 bg-white shadow-md' : 'border-slate-200 bg-[#f5f9fd]'}`}>
+
+      {/* Collapsed header */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] text-xs font-black text-white">
+          {(c.name || '?').slice(0, 2).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="truncate font-semibold text-slate-900">{c.name}</p>
+          <p className="text-xs text-slate-400">{c.country || '—'}{c.city ? `, ${c.city}` : ''}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <VerifBadge status={c.verificationStatus} />
+          <svg className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded body */}
+      {open && (
+        <div className="border-t border-slate-100 px-4 pb-3 pt-3 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-4">
+            
+            {(c.logo || c.coverImage) && (
+              <div className="shrink-0 flex flex-col gap-2">
+                {c.logo && <img src={c.logo} alt="Logo" className="h-12 w-12 rounded object-cover border border-slate-200 bg-white" />}
+              </div>
+            )}
+
+            <div className="flex-1 min-w-0 space-y-2.5">
+              {c.description && (
+                <p className="text-[11px] text-slate-600 leading-snug">{c.description}</p>
+              )}
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-1 mt-1">
+                <InfoRow label="Type"       value={c.companyType} />
+                <InfoRow label="Industry"   value={c.industry} />
+                <InfoRow label="Location"   value={[c.city, c.country].filter(Boolean).join(', ')} />
+                <InfoRow label="Employees"  value={c.numberOfEmployees} />
+                <InfoRow label="Est."       value={c.yearEstablished} />
+                <InfoRow label="Registered" value={fmtDate(c.createdAt)} />
+                <InfoRow label="Plan"       value={c.subscriptionPlan} />
+                {c.website && <InfoRow label="Web" value={<a href={c.website} target="_blank" rel="noreferrer" className="text-[#245c9d] hover:underline decoration-1">{c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>} />}
+              </div>
+
+              {/* compact Tags */}
+              {(c.mainProducts?.length > 0 || c.exportMarkets?.length > 0) && (
+                <div className="text-[10px] leading-tight space-y-0.5">
+                  {c.mainProducts?.length > 0 && <p><span className="font-bold text-slate-400 uppercase tracking-wider">Products:</span> <span className="text-slate-600">{c.mainProducts.join(', ')}</span></p>}
+                  {c.exportMarkets?.length > 0 && <p><span className="font-bold text-slate-400 uppercase tracking-wider">Markets:</span> <span className="text-slate-600">{c.exportMarkets.join(', ')}</span></p>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Documents */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+              Verification Documents ({c.documents?.length || 0})
+            </p>
+            {c.documents?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {c.documents.map((doc, i) => (
+                  <a key={i} href={doc.url} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#d8e2ef] bg-[#f4f8fc] px-2.5 py-1 text-[11px] font-semibold text-[#245c9d] hover:bg-[#edf5ff] transition">
+                    <File className="h-3 w-3" />
+                    {doc.name || `Document ${i + 1}`}
+                    <ExternalLink className="h-3 w-3 opacity-50" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400">No documents uploaded.</p>
+            )}
+          </div>
+
+          {actionErr && <p className="text-xs font-medium text-rose-600">{actionErr}</p>}
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+            {c.verificationStatus !== 'verified' && (
+              <button onClick={() => onVerify(c._id, 'verified')} disabled={updating === c._id}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60">
+                {updating === c._id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
+                Verify
+              </button>
+            )}
+            {c.verificationStatus !== 'rejected' && (
+              <button onClick={() => onVerify(c._id, 'rejected')} disabled={updating === c._id}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60">
+                <ShieldX className="h-3 w-3" /> Reject
+              </button>
+            )}
+            {c.verificationStatus !== 'pending' && (
+              <button onClick={() => onVerify(c._id, 'pending')} disabled={updating === c._id}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition hover:bg-amber-100 disabled:opacity-60">
+                <RefreshCcw className="h-3 w-3" /> Reset to Pending
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 // ─── Deals monitor tab ────────────────────────────────────────────────────────
 

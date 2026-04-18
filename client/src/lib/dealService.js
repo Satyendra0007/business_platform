@@ -4,6 +4,7 @@
  * GET    /api/deals              → getDeals(params)
  * GET    /api/deals/:id          → getDealById(id)
  * PATCH  /api/deals/:id/status   → advanceDealStatus(id, status, notes?)
+ * PATCH  /api/deals/:id/shipment → updateDealShipment(id, data)
  *
  * Messages (per-deal chat):
  * GET    /api/messages?dealId=   → getMessages(dealId, params)
@@ -46,6 +47,19 @@ export const getDealById = async (id) => {
 };
 
 /**
+ * Update core trade details of a deal during negotiation.
+ * @param {string} id
+ * @param {object} data
+ */
+export const updateDeal = async (id, data) => {
+  try {
+    const { data: res } = await api.put(`/deals/${id}`, data);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to update deal.'); }
+};
+
+/**
  * Advance the deal to the next lifecycle stage.
  * @param {string} id
  * @param {string} status  — target stage e.g. 'negotiation', 'agreement'
@@ -57,6 +71,19 @@ export const advanceDealStatus = async (id, status, notes = '') => {
     if (res.success) return res.data;
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to advance deal status.'); }
+};
+
+/**
+ * Update shipment progress for the assigned shipping agent.
+ * @param {string} id
+ * @param {{ status?: string, notes?: string }} data
+ */
+export const updateDealShipment = async (id, data) => {
+  try {
+    const { data: res } = await api.patch(`/deals/${id}/shipment`, data);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to update shipment.'); }
 };
 
 // ─── Messages ─────────────────────────────────────────────────────────────────

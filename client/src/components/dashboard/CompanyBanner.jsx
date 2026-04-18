@@ -82,7 +82,10 @@ export default function CompanyBanner() {
   // ── Verified ──────────────────────────────────────────────────────────────────
   if (status === 'verified') {
     return (
-      <div className="flex items-center gap-4 overflow-hidden rounded-[26px] border border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4,#ecfdf5)] px-5 py-3.5 shadow-sm">
+      <button
+        onClick={() => navigate(`/company/${company._id}`)}
+        className="flex w-full items-center gap-4 overflow-hidden rounded-[26px] border border-emerald-200 bg-[linear-gradient(135deg,#f0fdf4,#ecfdf5)] px-5 py-3.5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5 text-left"
+      >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
           <ShieldCheck className="h-5 w-5" />
         </div>
@@ -93,14 +96,18 @@ export default function CompanyBanner() {
         <div className="flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
           <ShieldCheck className="h-3 w-3" /> Verified
         </div>
-      </div>
+        <ArrowRight className="h-4 w-4 text-emerald-600 opacity-60 shrink-0" />
+      </button>
     );
   }
 
   // ── Rejected ──────────────────────────────────────────────────────────────────
   if (status === 'rejected') {
     return (
-      <div className="flex flex-col gap-4 overflow-hidden rounded-[26px] border border-rose-200 bg-[linear-gradient(135deg,#fff5f5,#fef2f2)] p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <button
+        onClick={() => navigate(`/company/${company._id}`)}
+        className="flex w-full flex-col gap-4 overflow-hidden rounded-[26px] border border-rose-200 bg-[linear-gradient(135deg,#fff5f5,#fef2f2)] p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between transition hover:shadow-md hover:-translate-y-0.5 text-left"
+      >
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
             <ShieldX className="h-5 w-5" />
@@ -108,30 +115,37 @@ export default function CompanyBanner() {
           <div>
             <p className="font-bold text-slate-900">{company.name} — Verification Rejected</p>
             <p className="mt-0.5 text-sm text-slate-600">
-              Your company verification was rejected. Please contact support or resubmit with correct documents.
+              Your company verification was rejected. Click to view details and resubmit documents.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
-          <ShieldX className="h-3 w-3" /> Rejected
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
+            <ShieldX className="h-3 w-3" /> Rejected
+          </div>
+          <ArrowRight className="h-4 w-4 text-rose-500 opacity-60" />
         </div>
-      </div>
+      </button>
     );
   }
 
-  // ── Pending (default) ─────────────────────────────────────────────────────────
+  // ── Pending / Draft / Submitted (default) ────────────────────────────────────
   return (
-    <div className="flex items-center gap-4 overflow-hidden rounded-[26px] border border-sky-100 bg-[linear-gradient(135deg,#f0f8ff,#e8f4fd)] px-5 py-3.5 shadow-sm">
+    <button
+      onClick={() => navigate(`/company/${company._id}`)}
+      className="flex w-full items-center gap-4 overflow-hidden rounded-[26px] border border-sky-100 bg-[linear-gradient(135deg,#f0f8ff,#e8f4fd)] px-5 py-3.5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5 text-left"
+    >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
         <ShieldCheck className="h-5 w-5" />
       </div>
       <div className="flex-1">
         <p className="text-sm font-bold text-slate-800">{company.name}</p>
-        <p className="text-xs text-slate-500">Admin will verify your company. Verification unlocks product listings.</p>
+        <p className="text-xs text-slate-500">Click to view your company profile — admin review in progress.</p>
       </div>
       <div className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-        <Clock className="h-3 w-3" /> Pending
+        <Clock className="h-3 w-3" /> {status === 'submitted' ? 'Submitted' : status === 'draft' ? 'Draft' : 'Pending'}
       </div>
-    </div>
+      <ArrowRight className="h-4 w-4 text-sky-500 opacity-60 shrink-0" />
+    </button>
   );
 }

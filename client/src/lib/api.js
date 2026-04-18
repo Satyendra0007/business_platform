@@ -53,12 +53,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401 globally
+// Response interceptor: handle 401 globally — but NOT on auth routes.
+// A 401 from /auth/login means "wrong credentials" (public route).
+// A 401 from any other route means the session expired → auto-logout.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Auto-logout: clear session and redirect to login
+    const isAuthRoute = error.config?.url?.startsWith('/auth/');
+    if (error.response?.status === 401 && !isAuthRoute) {
+      // Session expired — clear local state and force a fresh login
       clearSession();
       window.location.href = '/login';
     }

@@ -117,12 +117,15 @@ export default function ProductCard({ product }) {
           >
             View
           </button>
-          <button
-            onClick={() => navigate(user ? `/request-quote/${product._id}` : '/login')}
-            className="rounded-xl border border-[#d8e2ef] px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
-            Quote
-          </button>
+          {/* Quote button — buyers only (public visitors shown login redirect) */}
+          {(!user || user.roles?.includes('buyer')) && (
+            <button
+              onClick={() => navigate(user ? `/request-quote/${product._id}` : '/login')}
+              className="rounded-xl border border-[#d8e2ef] px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Quote
+            </button>
+          )}
         </div>
       </div>
     </article>

@@ -39,7 +39,6 @@ router.get(
 // View all bids submitted for a shipping request
 router.get(
   '/bids/:requestId',
-  requireParticipantRole,
   getShippingBids
 );
 

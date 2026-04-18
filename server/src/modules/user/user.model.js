@@ -23,7 +23,11 @@ const userSchema = new mongoose.Schema({
   
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   isEmailVerified: { type: Boolean, default: false },
-  
+
+  // Profile image — Cloudinary URL supplied by the frontend after direct upload.
+  // We store only the URL string; the server never handles raw file bytes.
+  profileImage: { type: String },
+
   // IMPROVEMENT 4: Active status flag to allow Admins to suspend/ban accounts cleanly
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });

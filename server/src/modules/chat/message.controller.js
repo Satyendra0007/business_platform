@@ -19,11 +19,18 @@ const isDealParticipant = (deal, user) => {
   );
 };
 
+const isShippingAgentUser = (user) =>
+  user.roles?.includes('shipping_agent') && !user.roles?.includes('admin');
+
 // ─── SEND MESSAGE ────────────────────────────────────────────────────────────
 // @route   POST /api/messages
 // @access  Private (Deal participants only)
 const sendMessage = async (req, res) => {
   try {
+    if (isShippingAgentUser(req.user)) {
+      return res.status(403).json({ success: false, message: 'Shipping agents cannot access commercial deal chat.' });
+    }
+
     const data = matchedData(req, { locations: ['body'] });
     const { dealId, text, receiverId, type, attachments } = data;
 
@@ -91,6 +98,10 @@ const sendMessage = async (req, res) => {
 // @access  Private (Deal participants only)
 const getMessages = async (req, res) => {
   try {
+    if (isShippingAgentUser(req.user)) {
+      return res.status(403).json({ success: false, message: 'Shipping agents cannot access commercial deal chat.' });
+    }
+
     const { dealId, page = 1, limit = 20 } = req.query;
 
     // dealId is mandatory — messages have no meaning without a deal context

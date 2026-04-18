@@ -43,6 +43,15 @@ export const createRFQ = async (data) => {
   } catch (error) { handleError(error, 'Failed to create RFQ.'); }
 };
 
+// ─── Update (buyer) ───────────────────────────────────────────────────────────
+
+export const updateRFQ = async (id, data) => {
+  try {
+    const res = await api.put(`/rfq/${id}`, data);
+    return normalise(res, 'Failed to update RFQ').data;
+  } catch (error) { handleError(error, 'Failed to update RFQ.'); }
+};
+
 // ─── List — buyer view ────────────────────────────────────────────────────────
 
 /**

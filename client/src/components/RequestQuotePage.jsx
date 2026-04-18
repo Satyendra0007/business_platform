@@ -21,6 +21,7 @@ import { AppShell } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { getProductById } from '../lib/productService';
 import { createRFQ } from '../lib/rfqService';
+import { DocumentUploader } from '../components/company/CompanyUploaders';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ const INITIAL_FORM = {
   incoterm:          '',
   specifications:    '',
   remarks:           '',
+  attachments:       [],
 };
 
 const INCOTERMS = ['EXW', 'FOB', 'CIF', 'CFR', 'DAP', 'DDP', 'FCA', 'CPT', 'CIP'];
@@ -112,6 +114,7 @@ export default function RequestQuotePage() {
         ...(form.incoterm           && { incoterm:           form.incoterm }),
         ...(form.specifications     && { specifications:     form.specifications.trim() }),
         ...(form.remarks            && { remarks:            form.remarks.trim() }),
+        ...(form.attachments.length > 0 && { attachments:    form.attachments.map(a => a.url) }),
       });
       setSuccess(true);
     } catch (err) {
@@ -347,6 +350,15 @@ export default function RequestQuotePage() {
                     className={inputCls}
                   />
                 </Field>
+
+                {/* Attachments */}
+                <div className="pt-2">
+                  <span className="mb-2 block text-sm font-semibold text-slate-700">Attachments (optional)</span>
+                  <DocumentUploader
+                    documents={form.attachments}
+                    onChange={(docs) => set('attachments', docs)}
+                  />
+                </div>
               </div>
 
               {/* Actions */}

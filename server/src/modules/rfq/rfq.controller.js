@@ -13,6 +13,11 @@ const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 // @access  Private (Buyer Company Users only)
 const createRFQ = async (req, res) => {
   try {
+    // Only buyers are allowed to raise RFQs
+    if (!req.user.roles?.includes('buyer')) {
+      return res.status(403).json({ success: false, message: 'Only buyers can create RFQs.' });
+    }
+
     if (!req.user.companyId) {
       return res.status(403).json({ success: false, message: 'You must be linked to a Company to create an RFQ.' });
     }
@@ -240,6 +245,14 @@ const convertRFQtoDeal = async (req, res) => {
 
     if (rfq.status !== 'open' && rfq.status !== 'in_progress') {
       return res.status(400).json({ success: false, message: `RFQ with status '${rfq.status}' cannot be converted.` });
+    }
+
+    // SAFETY CHECK: Ensure target supplier and valid required data
+    if (!rfq.supplierCompanyId) {
+      return res.status(400).json({ success: false, message: 'Supplier must be selected before converting to a Deal.' });
+    }
+    if (!rfq.quantity || !rfq.productName) {
+      return res.status(400).json({ success: false, message: 'RFQ is missing required basic data (quantity or product name).' });
     }
 
     // IMPROVEMENT 4: Block duplicate conversion — one RFQ can only yield one Deal

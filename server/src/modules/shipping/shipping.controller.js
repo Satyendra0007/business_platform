@@ -125,9 +125,15 @@ const getShippingBids = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shipping request not found.' });
     }
 
-    // Verify deal participation
+    // Verify deal participation or agent role
     const deal = await Deal.findById(shippingRequest.dealId).lean();
-    if (!deal || !isDealParticipant(deal, req.user)) {
+    if (!deal) {
+      return res.status(404).json({ success: false, message: 'Deal not found.' });
+    }
+    const isParticipant = isDealParticipant(deal, req.user);
+    const isAgentUser = req.user.roles?.includes('shipping_agent');
+
+    if (!isParticipant && !isAgentUser) {
       return res.status(403).json({ success: false, message: 'Not authorized to view bids on this request.' });
     }
 
@@ -141,6 +147,7 @@ const getShippingBids = async (req, res) => {
     const [bids, total] = await Promise.all([
       ShippingBid.find(query)
         .select('-__v')
+        .populate('agentId', 'firstName lastName email')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: 1 })

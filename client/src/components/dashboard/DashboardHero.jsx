@@ -14,6 +14,8 @@ export default function DashboardHero({ tiles }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  console.log(user)
+
   const thirdIcon = user?.roles?.includes('shipping_agent') ? ShipWheel : BadgeDollarSign;
   const tileIcons = [Boxes, FolderKanban, thirdIcon];
 
@@ -21,10 +23,10 @@ export default function DashboardHero({ tiles }) {
     user?.roles?.includes('shipping_agent')
       ? 'Transport Command Center'
       : user?.roles?.includes('supplier')
-      ? 'Supplier Opportunities'
-      : user?.roles?.includes('admin')
-      ? 'Platform Operations'
-      : 'Trade Opportunities';
+        ? 'Supplier Opportunities'
+        : user?.roles?.includes('admin')
+          ? 'Platform Operations'
+          : 'Trade Opportunities';
 
   const subtitle =
     user?.roles?.includes('shipping_agent')

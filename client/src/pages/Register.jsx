@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ArrowRight, Building2, CheckCircle2, Eye, EyeOff, Lock, Mail,
-  Phone, UserRound, Globe, Zap, Shield, AlertCircle, Loader2
+  Phone, UserRound, Globe, Zap, Shield, AlertCircle, Loader2, ImagePlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Reveal } from '../components/ui';
@@ -29,6 +29,45 @@ function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  // ── Profile image (optional Cloudinary upload) ──────────────────────────────
+  const [profileImage, setProfileImage]       = useState('');   // final HTTPS URL
+  const [imagePreview, setImagePreview]       = useState('');   // local blob for preview
+  const [imageUploading, setImageUploading]   = useState(false);
+  const [imageError, setImageError]           = useState('');
+  const fileInputRef = useRef(null);
+
+  const CLOUD_NAME    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Local preview immediately
+    setImagePreview(URL.createObjectURL(file));
+    setImageError('');
+    setImageUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', UPLOAD_PRESET);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: fd }
+      );
+      if (!res.ok) throw new Error('Upload failed');
+      const json = await res.json();
+      setProfileImage(json.secure_url);   // HTTPS URL stored for submission
+    } catch {
+      setImageError('Image upload failed. You can still register without a photo.');
+      setProfileImage('');
+    } finally {
+      setImageUploading(false);
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -58,10 +97,12 @@ function RegisterPage() {
     try {
       await register({
         firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
+        lastName:  lastName.trim(),
+        email:     email.trim(),
         password,
-        role: selectedRole,
+        role:      selectedRole,
+        // Only include when actually uploaded; omitting keeps backend validation clean
+        ...(profileImage ? { profileImage } : {}),
       });
       setSubmitted(true);
       setTimeout(() => navigate('/login'), 3000);
@@ -103,7 +144,7 @@ function RegisterPage() {
   // ─── Registration Form ────────────────────────────────────────────────────
   return (
     <div className="min-h-screen overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(236,181,58,0.18),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.16),transparent_22%),linear-gradient(180deg,#eff4fb_0%,#f8fafc_42%,#edf3fb_100%)] px-3 py-2 sm:px-4 sm:py-3 lg:px-8">
-      <div className="mx-auto grid max-w-[1520px] rounded-[28px] border border-white/70 bg-white/70 shadow-[0_32px_100px_rgba(15,23,42,0.16)] backdrop-blur-xl lg:h-[calc(100vh-1rem)] lg:overflow-hidden lg:rounded-[38px] lg:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto grid max-w-[1520px] rounded-[28px] border border-white/70 bg-white/70 shadow-[0_32px_100px_rgba(15,23,42,0.16)] backdrop-blur-xl lg:h-[calc(100vh-1rem)] lg:rounded-[38px] lg:grid-cols-[1fr_1.1fr]">
 
         {/* ─── Left Panel ─── */}
         <section className="relative hidden overflow-hidden bg-[#050E1C] p-10 text-white lg:flex lg:flex-col justify-center">
@@ -185,8 +226,8 @@ function RegisterPage() {
         </section>
 
         {/* ─── Right Panel (Form) ─── */}
-        <section className="flex min-h-full items-center justify-center bg-white px-6 py-12 lg:h-full lg:overflow-y-auto lg:px-12">
-          <div className="w-full max-w-[480px]">
+        <section className="flex min-h-full flex-col overflow-y-auto bg-white px-6 py-10 lg:h-full lg:px-12">
+          <div className="mx-auto my-auto w-full max-w-[480px]">
             <div className="mb-8">
               <p className="text-sm font-bold uppercase tracking-widest text-[#245c9d]">Create Account</p>
               <h2 className="mt-2 text-3xl font-display font-black tracking-tight text-slate-900">Join the Workspace.</h2>
@@ -319,6 +360,57 @@ function RegisterPage() {
                   </button>
                 </div>
               </label>
+
+              {/* ── Profile Photo (optional) ─────────────────────────────── */}
+              <div>
+                <span className="mb-2 block text-sm font-bold text-slate-700">
+                  Profile Photo <span className="text-slate-400 font-normal">(optional)</span>
+                </span>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3.5 transition hover:border-[#245c9d] hover:bg-[#f8fbff]"
+                >
+                  {/* Preview or placeholder */}
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="h-12 w-12 rounded-full object-cover ring-2 ring-[#245c9d]/20"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                      <ImagePlus className="h-5 w-5" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    {imageUploading ? (
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading…
+                      </div>
+                    ) : profileImage ? (
+                      <p className="truncate text-sm font-semibold text-emerald-600">✓ Photo uploaded</p>
+                    ) : (
+                      <p className="text-sm text-slate-500">Click to choose a photo</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-0.5">JPG, PNG or WebP · max 5 MB</p>
+                  </div>
+                </div>
+
+                {/* Hidden native file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+
+                {imageError && (
+                  <p className="mt-2 text-xs font-medium text-amber-600">{imageError}</p>
+                )}
+              </div>
 
               <div className="pt-4">
                 <button

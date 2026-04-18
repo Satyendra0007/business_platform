@@ -278,7 +278,7 @@ function DealFreightCard({ deal, navigate }) {
                   return (
                     <div
                       key={bid._id}
-                      className={`rounded-[24px] border p-5 transition ${isAccepted ? 'border-emerald-200 bg-emerald-50 ring-4 ring-emerald-50' : 'border-[#d8e2ef] bg-white hover:border-slate-300'}`}
+                      className={`rounded-[24px] border p-5 transition ${isAccepted ? 'border-emerald-200 bg-emerald-50 ring-4 ring-emerald-50' : bid.status === 'rejected' ? 'border-[#e2ebf4] bg-slate-50 opacity-60' : 'border-[#d8e2ef] bg-white hover:border-slate-300'}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -287,7 +287,9 @@ function DealFreightCard({ deal, navigate }) {
                               <ShipWheel className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-slate-800">Shipping Agent</p>
+                              <p className="text-sm font-bold text-slate-800">
+                                {bid.agentId?.firstName} {bid.agentId?.lastName}
+                              </p>
                               <p className="text-[10px] text-slate-400">Submitted {fmtDate(bid.createdAt)}</p>
                             </div>
                           </div>
@@ -345,22 +347,34 @@ function DealFreightCard({ deal, navigate }) {
 // SHIPPING AGENT VIEW
 // ══════════════════════════════════════════════════════════════════════════════
 
-function AgentView() {
+function AgentView({ user }) {
   const [requests,  setRequests]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
   const [drafts,    setDrafts]    = useState({});   // requestId → form data
   const [submitting,setSubmitting]= useState(null);
-  const [submitted, setSubmitted] = useState({});   // requestId → bid
+  const [bidsByReq, setBidsByReq] = useState({});   // requestId → array of bids
   const [actionError, setActionError] = useState({});
 
   useEffect(() => {
     setLoading(true);
     listOpenRequests()
-      .then((r) => setRequests(r.requests))
+      .then(async (r) => {
+        setRequests(r.requests);
+        const map = {};
+        await Promise.all(
+          r.requests.map(async (req) => {
+            try {
+              const { bids } = await getShippingBids(req._id);
+              map[req._id] = bids || [];
+            } catch (err) { /* ignore */ }
+          })
+        );
+        setBidsByReq(map);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   const updateDraft = (reqId, field, val) =>
     setDrafts((d) => ({ ...d, [reqId]: { ...d[reqId], [field]: val } }));
@@ -379,7 +393,11 @@ function AgentView() {
         validity:          draft.validity      || undefined,
         notes:             draft.notes         || undefined,
       });
-      setSubmitted((s) => ({ ...s, [reqId]: bid }));
+      // Automatically push the new bid to the array to avoid refresh needed
+      setBidsByReq((prev) => ({
+        ...prev,
+        [reqId]: [...(prev[reqId] || []), bid]
+      }));
       setDrafts((d) => ({ ...d, [reqId]: {} }));
     } catch (err) {
       setActionError((e) => ({ ...e, [reqId]: err.message }));
@@ -417,27 +435,30 @@ function AgentView() {
   return (
     <div className="space-y-5">
       {requests.map((req) => {
-        const draft = drafts[req._id] || {};
-        const alreadySubmitted = submitted[req._id];
+        const bids = bidsByReq[req._id] || [];
+        const myBid = bids.find((b) => b.agentId?._id === user?._id || b.agentId === user?._id);
+        const draft = drafts?.[req._id] || {};
+        const isClosed = req.status === 'closed';
+
         return (
           <article key={req._id} className="overflow-hidden rounded-[32px] border border-[#d8e2ef] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.07)]">
             {/* Header */}
-            <div className="flex items-center gap-4 border-b border-slate-100 bg-[linear-gradient(180deg,#fff,#f8fbff)] px-6 py-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#173b67,#245c9d)] text-white">
+            <div className={`flex items-center gap-4 border-b px-6 py-5 ${isClosed ? 'border-slate-200 bg-slate-50' : 'border-slate-100 bg-[linear-gradient(180deg,#fff,#f8fbff)]'}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] text-white ${isClosed ? 'bg-slate-300' : 'bg-[linear-gradient(135deg,#173b67,#245c9d)]'}`}>
                 <ShipWheel className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Open Freight Tender</p>
                 <p className="font-bold text-slate-900">{req.origin} → {req.destination}</p>
               </div>
-              <span className="ml-auto rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700">
-                Open
+              <span className={`ml-auto rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${isClosed ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-sky-50 text-sky-700 border-sky-100'}`}>
+                {isClosed ? 'Closed' : 'Open'}
               </span>
             </div>
 
             <div className="grid gap-6 p-6 lg:grid-cols-[0.85fr_1.15fr]">
               {/* Left — cargo details */}
-              <div className="space-y-4">
+              <div className={`space-y-4 ${isClosed ? 'opacity-60' : ''}`}>
                 <div className="rounded-[24px] border border-blue-100 bg-[#f4f9ff] p-5">
                   <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-[#245c9d]">Cargo Requirements</p>
                   <div className="space-y-3 text-sm">
@@ -459,12 +480,22 @@ function AgentView() {
 
               {/* Right — bid form or success */}
               <div>
-                {alreadySubmitted ? (
-                  <div className="flex flex-col items-center gap-3 rounded-[24px] border border-emerald-200 bg-emerald-50 py-10 text-center">
-                    <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-                    <p className="font-bold text-emerald-800">Bid Submitted!</p>
-                    <p className="text-sm text-emerald-700">Price: {fmtPrice(alreadySubmitted.price)}</p>
-                    <p className="text-xs text-emerald-600">Awaiting buyer/supplier decision.</p>
+                {isClosed ? (
+                  <div className="flex flex-col items-center gap-3 rounded-[24px] border border-slate-200 bg-slate-50 py-10 text-center opacity-70">
+                    <CheckCircle2 className="h-10 w-10 text-slate-400" />
+                    <p className="font-bold text-slate-700">Tender Closed</p>
+                    <p className="text-sm text-slate-500">This shipping request is no longer accepting bids.</p>
+                  </div>
+                ) : myBid ? (
+                  <div className={`flex flex-col items-center gap-3 rounded-[24px] border py-10 text-center ${myBid.status === 'accepted' ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}>
+                    <CheckCircle2 className={`h-10 w-10 ${myBid.status === 'accepted' ? 'text-emerald-500' : 'text-[#245c9d]'}`} />
+                    <p className={`font-bold ${myBid.status === 'accepted' ? 'text-emerald-800' : 'text-slate-900'}`}>
+                      {myBid.status === 'accepted' ? 'Bid Accepted ✓' : 'Bid Submitted!'}
+                    </p>
+                    <p className={`text-sm ${myBid.status === 'accepted' ? 'text-emerald-700' : 'text-slate-700'}`}>Price: {fmtPrice(myBid.price)}</p>
+                    <p className={`text-xs ${myBid.status === 'accepted' ? 'text-emerald-600 font-semibold uppercase tracking-wider' : 'text-slate-500'}`}>
+                      {myBid.status === 'accepted' ? 'You have won this tender' : 'Awaiting buyer/supplier decision.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -600,7 +631,7 @@ export default function TransportBidsPage() {
 
         {/* Content */}
         {isAgent ? (
-          <AgentView />
+          <AgentView user={user} />
         ) : loading ? (
           <div className="space-y-4">
             {[1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-[28px] bg-slate-100" />)}
