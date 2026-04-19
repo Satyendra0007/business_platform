@@ -25,6 +25,7 @@ import DashboardHero     from './dashboard/DashboardHero';
 import OpenActivity      from './dashboard/OpenActivity';
 import { DealBoard, ShipmentTracker } from './dashboard/DealSummary';
 import { MilestoneTracker, QuickAccess } from './dashboard/Sidebar';
+import PremiumMembershipSection from './membership/PremiumMembershipSection';
 
 // ─── Tile builder — uses REAL stats from API ──────────────────────────────────
 
@@ -151,7 +152,7 @@ export default function DashboardPage() {
       title="Dashboard"
       subtitle="Browse products, manage RFQs, and keep every trade workflow aligned from inquiry to shipment."
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
 
         {/* Stats loading bar (only while first fetch is in flight) */}
         {!stats && !statsError && (
@@ -170,8 +171,11 @@ export default function DashboardPage() {
         {/* 1. Company status banner */}
         <CompanyBanner />
 
-        {/* 2. Dark hero with real metric tiles */}
-        <DashboardHero tiles={tiles} />
+        {/* 2. Top workspace stack */}
+        <section className="grid gap-4">
+          <DashboardHero tiles={tiles} compact />
+          <PremiumMembershipSection compact />
+        </section>
 
         {/* 3. Main content grid */}
         <section className="grid gap-6 xl:grid-cols-[1.38fr_0.62fr]">

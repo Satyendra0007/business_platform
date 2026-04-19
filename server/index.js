@@ -11,9 +11,26 @@ connectDB();
 const app = express();
 
 // Security & Middleware
-app.use(helmet()); // Secure HTTP headers
+// app.use(helmet()); // Secure HTTP headers
+// app.use(cors({
+//   origin: process.env.CORS_ORIGIN,
+//   credentials: true,
+// }));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173"
+];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: function (origin, callback) {
+    console.log("Incoming Origin:", origin);
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed: " + origin));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -50,7 +67,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: err.message || 'Server Error' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5004;
 
 app.listen(PORT, () => console.log(`Server running securely on port ${PORT}`));
 

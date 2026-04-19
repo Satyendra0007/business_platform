@@ -474,8 +474,12 @@ export function AppShell({ title, subtitle, children }) {
                       {roleLabel}
                     </div>
                   </div>
-                  <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#13355e] sm:text-3xl">{title}</h1>
-                  {subtitle ? <p className="mt-1 max-w-3xl text-sm text-slate-600">{subtitle}</p> : null}
+                  {title ? (
+                    <>
+                      <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[#13355e] sm:text-3xl">{title}</h1>
+                      {subtitle ? <p className="mt-1 max-w-3xl text-sm text-slate-600">{subtitle}</p> : null}
+                    </>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-3 rounded-2xl border border-[#d4e0ee] bg-white px-3 py-2 shadow-sm">

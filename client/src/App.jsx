@@ -24,6 +24,7 @@ import CreateProductPage from './pages/CreateProductPage';
 import EditProductPage from './pages/EditProductPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import EditCompanyPage from './pages/EditCompanyPage';
+import DealSupportPage from './components/DealSupportPage';
 import NotFound from './pages/NotFound';
 
 
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="/deal/:dealId"            element={<DealPage />} />
         <Route path="/deal/:dealId/edit"       element={<EditDealPage />} />
         <Route path="/transport-bids"          element={<TransportBidsPage />} />
+        <Route path="/deal-support"            element={<DealSupportPage />} />
         <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
       </Route>
 

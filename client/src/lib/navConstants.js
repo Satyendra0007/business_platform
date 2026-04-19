@@ -1,6 +1,6 @@
 import { LayoutDashboard, Package, ReceiptText, BriefcaseBusiness, ShieldCheck, ShipWheel } from 'lucide-react';
 
-export const privatePaths = ['/dashboard', '/request-quote', '/my-rfqs', '/incoming-rfqs', '/deals', '/deal', '/transport-bids', '/admin', '/supplier/products'];
+export const privatePaths = ['/dashboard', '/request-quote', '/my-rfqs', '/incoming-rfqs', '/deals', '/deal', '/transport-bids', '/deal-support', '/admin', '/supplier/products'];
 
 export const navByRole = {
   buyer: [
@@ -9,6 +9,7 @@ export const navByRole = {
     { label: 'My RFQs', path: '/my-rfqs' },
     { label: 'My Deals', path: '/deals' },
     { label: 'Transport Bids', path: '/transport-bids' },
+    { label: 'Deal Support', path: '/deal-support' },
   ],
   supplier: [
     { label: 'Dashboard',     path: '/dashboard' },
@@ -16,12 +17,14 @@ export const navByRole = {
     { label: 'Incoming RFQs', path: '/incoming-rfqs' },
     { label: 'My Deals',      path: '/deals' },
     { label: 'Transport Bids',path: '/transport-bids' },
+    { label: 'Deal Support',  path: '/deal-support' },
   ],
   shipping_agent: [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Transport Bids', path: '/transport-bids' },
     { label: 'Shipment Deals', path: '/deals' },
     { label: 'Products', path: '/products' },
+    { label: 'Deal Support', path: '/deal-support' },
   ],
   admin: [
     { label: 'Dashboard', path: '/dashboard' },
@@ -50,6 +53,7 @@ export function getNavIcon(path) {
   if (path === '/my-rfqs' || path === '/incoming-rfqs') return ReceiptText;
   if (path === '/transport-bids') return ShipWheel;
   if (path === '/deals' || path === '/deal') return BriefcaseBusiness;
+  if (path === '/deal-support') return ShieldCheck;
   if (path === '/admin') return ShieldCheck;
   return LayoutDashboard;
 }
