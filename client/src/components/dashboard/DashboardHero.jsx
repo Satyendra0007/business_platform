@@ -14,8 +14,6 @@ export default function DashboardHero({ tiles }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  console.log(user)
-
   const thirdIcon = user?.roles?.includes('shipping_agent') ? ShipWheel : BadgeDollarSign;
   const tileIcons = [Boxes, FolderKanban, thirdIcon];
 

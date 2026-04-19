@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // vite.config.js runs in Node, so process.env is available here.
 // Set VITE_API_TARGET in client/.env to point at your backend.
-const API_TARGET = process.env.VITE_API_TARGET || 'http://localhost:5004'
+const API_TARGET = process.env.VITE_API_BASE_URL
 
 // https://vite.dev/config/
 export default defineConfig({
