@@ -11,28 +11,12 @@ connectDB();
 const app = express();
 
 // Security & Middleware
-// app.use(helmet()); // Secure HTTP headers
-// app.use(cors({
-//   origin: process.env.CORS_ORIGIN,
-//   credentials: true,
-// }));
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173"
-];
-
+app.use(helmet()); // Secure HTTP headers
 app.use(cors({
-  origin: function (origin, callback) {
-    console.log("Incoming Origin:", origin);
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed: " + origin));
-    }
-  },
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 }));
+
 app.use(express.json());
 
 // API Rate Limiting (Security Rule)
