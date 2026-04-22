@@ -25,6 +25,10 @@ import EditProductPage from './pages/EditProductPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import EditCompanyPage from './pages/EditCompanyPage';
 import DealSupportPage from './components/DealSupportPage';
+import VerifyPhonePage from './pages/VerifyPhonePage';
+import PhoneVerifyPage from './pages/PhoneVerifyPage';
+import PricingPage     from './pages/PricingPage';
+import BillingSuccessPage from './pages/BillingSuccessPage';
 import NotFound from './pages/NotFound';
 
 
@@ -79,8 +83,12 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
+      {/* OTP verification — public, accessible right after registration */}
+      <Route path="/verify-phone" element={<VerifyPhonePage />} />
+
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/product/:productId" element={<ProductDetailPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
 
       {/* ── Authenticated ── */}
       <Route element={<RequireAuth />}>
@@ -97,6 +105,8 @@ export default function App() {
         <Route path="/transport-bids"          element={<TransportBidsPage />} />
         <Route path="/deal-support"            element={<DealSupportPage />} />
         <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
+        <Route path="/phone/verify"             element={<PhoneVerifyPage />} />
+        <Route path="/billing/success"          element={<BillingSuccessPage />} />
       </Route>
 
       {/* ── Admin only ── */}

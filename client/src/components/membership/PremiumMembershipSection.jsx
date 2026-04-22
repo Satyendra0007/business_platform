@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ArrowRight,
   BadgeCheck,
   Building2,
   FileText,
   Gavel,
+  Loader2,
   LockKeyhole,
   MessageSquare,
   Package,
@@ -13,6 +14,8 @@ import {
   Star,
   TrendingUp,
 } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { createCheckoutSession } from '../../lib/billingService';
 
 const plans = [
   {
@@ -111,6 +114,25 @@ const addOns = [
 ];
 
 export default function PremiumMembershipSection({ compact = false }) {
+  const { user } = useAuth();
+  const userPlan = user?.plan || 'free';
+
+  const [checkoutLoading, setCheckoutLoading] = useState(null); // planKey in progress
+  const [checkoutError,   setCheckoutError]   = useState('');
+
+  const handleUpgrade = async (planKey) => {
+    if (!user) { window.location.href = '/login'; return; }
+    try {
+      setCheckoutError('');
+      setCheckoutLoading(planKey);
+      const url = await createCheckoutSession(planKey);
+      window.location.href = url; // redirect to Stripe Checkout
+    } catch (err) {
+      console.error('[PricingSection] checkout error:', err);
+      setCheckoutError(err?.response?.data?.message || 'Could not start checkout. Try again.');
+      setCheckoutLoading(null);
+    }
+  };
   const shellClass = compact
     ? 'relative overflow-hidden rounded-[32px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] px-4 py-6 text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:px-5 sm:py-7 lg:px-6'
     : 'relative overflow-hidden rounded-[38px] border border-[#102a4a] bg-[linear-gradient(180deg,#071120_0%,#0a1930_45%,#07101d_100%)] px-5 py-10 text-white shadow-[0_30px_90px_rgba(3,7,20,0.45)] sm:px-7 sm:py-12 lg:px-10';
@@ -147,13 +169,13 @@ export default function PremiumMembershipSection({ compact = false }) {
             </div>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
                 <article
                   key={plan.name}
-                  className={`relative overflow-hidden rounded-[24px] border p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ${
+                  className={`relative h-full overflow-hidden rounded-[24px] border p-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)] ${
                     plan.highlighted
                       ? 'border-[#D8B35C]/35 bg-[linear-gradient(180deg,#0F2745_0%,#0B1E36_100%)]'
                       : 'border-slate-200 bg-white'
@@ -214,11 +236,44 @@ export default function PremiumMembershipSection({ compact = false }) {
                     <div className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold ${plan.highlighted ? 'border border-white/10 bg-white/5 text-slate-200' : 'border border-slate-200 bg-slate-50 text-slate-700'}`}>
                       Best for: <span className={plan.highlighted ? 'text-white' : 'text-[#0A2540]'}>{plan.bestFor}</span>
                     </div>
+
+                    {/* ── Checkout CTA (compact view) ── */}
+                    {plan.name !== 'Free' && (
+                      userPlan === plan.name.toLowerCase() ? (
+                        <div className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-black text-emerald-700">
+                          ✓ Current Plan
+                        </div>
+                      ) : (
+                        <button
+                          id={`pricing-compact-${plan.name.toLowerCase()}-btn`}
+                          onClick={() => handleUpgrade(plan.name.toLowerCase())}
+                          disabled={!!checkoutLoading}
+                          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-2.5 text-xs font-black transition hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed ${
+                            plan.highlighted
+                              ? 'bg-[#E5A93D] text-[#0A2540] hover:bg-[#d49530]'
+                              : 'bg-[#0A2540] text-white hover:bg-[#0d2d4d]'
+                          }`}
+                        >
+                          {checkoutLoading === plan.name.toLowerCase() ? (
+                            <><Loader2 className="h-3 w-3 animate-spin" /> Redirecting…</>
+                          ) : (
+                            <>Upgrade to {plan.name} <ArrowRight className="h-3 w-3" /></>
+                          )}
+                        </button>
+                      )
+                    )}
                   </div>
                 </article>
               );
             })}
           </div>
+
+          {/* Compact view checkout error */}
+          {checkoutError && (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-center text-xs font-semibold text-rose-600">
+              {checkoutError}
+            </p>
+          )}
 
           <div className="grid gap-3 2xl:grid-cols-[1fr_1fr] xl:grid-cols-2">
             <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
@@ -303,13 +358,13 @@ export default function PremiumMembershipSection({ compact = false }) {
             })}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid md:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
                 <article
                   key={plan.name}
-                  className={`relative overflow-hidden ${planShell} ${
+                  className={`relative h-full overflow-hidden ${planShell} ${
                     plan.highlighted
                       ? compact
                         ? 'border-[#D8B35C]/40 bg-[linear-gradient(180deg,#0F2745_0%,#0B1E36_100%)] ring-1 ring-[#D8B35C]/25'
@@ -384,12 +439,45 @@ export default function PremiumMembershipSection({ compact = false }) {
                     <div className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold ${compact ? 'border border-slate-200 bg-slate-50 text-slate-700' : 'border border-white/10 bg-white/5 text-slate-200'}`}>
                       Best for: <span className={compact ? 'text-[#0A2540]' : 'text-white'}>{plan.bestFor}</span>
                     </div>
+
+                    {/* ── Checkout CTA (full view) ── */}
+                    {plan.name !== 'Free' && (
+                      userPlan === plan.name.toLowerCase() ? (
+                        <div className="mt-4 flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 py-2.5 text-xs font-black text-emerald-300">
+                          ✓ Your Current Plan
+                        </div>
+                      ) : (
+                        <button
+                          id={`pricing-full-${plan.name.toLowerCase()}-btn`}
+                          onClick={() => handleUpgrade(plan.name.toLowerCase())}
+                          disabled={!!checkoutLoading}
+                          className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black transition hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed ${
+                            plan.highlighted
+                              ? 'bg-[#E5A93D] text-[#0A2540] hover:bg-[#d49530] shadow-[0_8px_24px_rgba(229,169,61,0.35)]'
+                              : 'bg-white/10 text-white hover:bg-white/15 border border-white/10'
+                          }`}
+                        >
+                          {checkoutLoading === plan.name.toLowerCase() ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting to Stripe…</>
+                          ) : (
+                            <>Upgrade to {plan.name} <ArrowRight className="h-4 w-4" /></>
+                          )}
+                        </button>
+                      )
+                    )}
                   </div>
                 </article>
               );
             })}
           </div>
         </div>
+
+        {/* Full view checkout error */}
+        {checkoutError && (
+          <p className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-3 text-center text-sm font-semibold text-rose-300">
+            {checkoutError}
+          </p>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <div className={`rounded-[28px] p-5 backdrop-blur ${compact ? 'border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]' : 'border border-white/10 bg-white/5'}`}>

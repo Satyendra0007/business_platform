@@ -160,7 +160,7 @@ export default function DealsPage() {
       setTotal(result.total);
       setTotalPages(result.totalPages);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

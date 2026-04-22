@@ -84,7 +84,7 @@ function ChatTab({ dealId, user }) {
       // API returns newest-first; reverse for chronological display
       setMessages([...result.messages].reverse());
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ function ChatTab({ dealId, user }) {
       setDraft('');
       setMessages((prev) => [...prev, msg]);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setSending(false);
     }
@@ -348,7 +348,7 @@ export default function DealPage() {
       const d = await getDealById(dealId);
       setDeal(d);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -373,7 +373,7 @@ export default function DealPage() {
       const updated = await advanceDealStatus(dealId, next);
       setDeal(updated);
     } catch (err) {
-      setAdvError(err.message);
+      setAdvError(err.response?.data?.message || err.message);
     } finally {
       setAdvancing(false);
     }
@@ -386,7 +386,7 @@ export default function DealPage() {
       const updated = await updateDealShipment(dealId, payload);
       setDeal((prev) => ({ ...prev, shipment: updated.shipment }));
     } catch (err) {
-      setShipmentError(err.message);
+      setShipmentError(err.response?.data?.message || err.message);
     } finally {
       setUpdatingShipment(false);
     }

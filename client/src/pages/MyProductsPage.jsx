@@ -49,7 +49,7 @@ export default function MyProductsPage() {
       const { products: list } = await getProducts({ companyId: user.companyId, limit: 50 });
       setProducts(list);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function MyProductsPage() {
       setProducts((prev) => prev.filter((p) => p._id !== product._id));
       showToast(`"${product.title}" archived successfully.`);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setDeleting(null);
     }

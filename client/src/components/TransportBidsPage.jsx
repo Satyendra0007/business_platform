@@ -41,9 +41,9 @@ const TRANSPORT_TYPES = ['sea', 'air', 'land'];
 
 function BidBadge({ status }) {
   const map = {
-    pending:  { cls: 'bg-sky-50 text-sky-700 border-sky-100',     label: 'Pending' },
+    pending: { cls: 'bg-sky-50 text-sky-700 border-sky-100', label: 'Pending' },
     accepted: { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Awarded ✓' },
-    rejected: { cls: 'bg-slate-50 text-slate-400 border-slate-200',  label: 'Rejected' },
+    rejected: { cls: 'bg-slate-50 text-slate-400 border-slate-200', label: 'Rejected' },
   };
   const s = map[status] || map.pending;
   return (
@@ -62,12 +62,12 @@ function BidBadge({ status }) {
  * Loads its own shipping request + bids.
  */
 function DealFreightCard({ deal, navigate }) {
-  const [request,   setRequest]   = useState(null);
-  const [bids,      setBids]      = useState([]);
-  const [loadingR,  setLoadingR]  = useState(true);
-  const [creating,  setCreating]  = useState(false);
+  const [request, setRequest] = useState(null);
+  const [bids, setBids] = useState([]);
+  const [loadingR, setLoadingR] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [accepting, setAccepting] = useState(null); // bidId being accepted
-  const [error,     setError]     = useState('');
+  const [error, setError] = useState('');
 
   // Request form state
   const [form, setForm] = useState({ origin: '', destination: '', cargoDetails: '', quantity: '', incoterm: '' });
@@ -84,7 +84,7 @@ function DealFreightCard({ deal, navigate }) {
         setBids(b);
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoadingR(false);
     }
@@ -100,17 +100,17 @@ function DealFreightCard({ deal, navigate }) {
     setError('');
     try {
       await createShippingRequest({
-        dealId:       deal._id,
-        origin:       form.origin.trim(),
-        destination:  form.destination.trim(),
+        dealId: deal._id,
+        origin: form.origin.trim(),
+        destination: form.destination.trim(),
         cargoDetails: form.cargoDetails.trim() || undefined,
-        quantity:     form.quantity ? Number(form.quantity) : undefined,
-        incoterm:     form.incoterm || undefined,
+        quantity: form.quantity ? Number(form.quantity) : undefined,
+        incoterm: form.incoterm || undefined,
       });
       setShowForm(false);
       await loadRequest();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setCreating(false);
     }
@@ -125,7 +125,7 @@ function DealFreightCard({ deal, navigate }) {
       await acceptBid(bidId);
       await loadRequest();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setAccepting(null);
     }
@@ -193,10 +193,10 @@ function DealFreightCard({ deal, navigate }) {
                 <p className="text-sm font-bold text-slate-800">New Freight Request</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {[
-                    { key: 'origin',      label: 'Origin *',      placeholder: 'e.g. Shanghai, CN' },
-                    { key: 'destination', label: 'Destination *',  placeholder: 'e.g. Jebel Ali, UAE' },
-                    { key: 'cargoDetails',label: 'Cargo Details',  placeholder: 'Description of goods' },
-                    { key: 'quantity',    label: 'Quantity',       placeholder: 'e.g. 500 MT', type: 'number' },
+                    { key: 'origin', label: 'Origin *', placeholder: 'e.g. Shanghai, CN' },
+                    { key: 'destination', label: 'Destination *', placeholder: 'e.g. Jebel Ali, UAE' },
+                    { key: 'cargoDetails', label: 'Cargo Details', placeholder: 'Description of goods' },
+                    { key: 'quantity', label: 'Quantity', placeholder: 'e.g. 500 MT', type: 'number' },
                   ].map(({ key, label, placeholder, type }) => (
                     <label key={key} className="block">
                       <span className="mb-1 block text-xs font-semibold text-slate-600">{label}</span>
@@ -218,7 +218,7 @@ function DealFreightCard({ deal, navigate }) {
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#245c9d]"
                   >
                     <option value="">Select…</option>
-                    {['FOB','CIF','EXW','DAP','DDP','CFR','FCA'].map(t => <option key={t} value={t}>{t}</option>)}
+                    {['FOB', 'CIF', 'EXW', 'DAP', 'DDP', 'CFR', 'FCA'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </label>
                 <div className="flex gap-3">
@@ -239,10 +239,10 @@ function DealFreightCard({ deal, navigate }) {
             {/* Request summary */}
             <div className="grid gap-4 sm:grid-cols-4">
               {[
-                { label: 'Origin',      value: request.origin,      icon: MapPin },
-                { label: 'Destination', value: request.destination,  icon: MapPin },
-                { label: 'Quantity',    value: request.quantity ? String(request.quantity) : '—', icon: Package },
-                { label: 'Incoterm',    value: request.incoterm || '—', icon: ShieldCheck },
+                { label: 'Origin', value: request.origin, icon: MapPin },
+                { label: 'Destination', value: request.destination, icon: MapPin },
+                { label: 'Quantity', value: request.quantity ? String(request.quantity) : '—', icon: Package },
+                { label: 'Incoterm', value: request.incoterm || '—', icon: ShieldCheck },
               ].map(({ label, value, icon: Icon }) => (
                 <div key={label} className="rounded-[18px] border border-[#e2ebf4] bg-[#f8fbff] p-3">
                   <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -348,11 +348,11 @@ function DealFreightCard({ deal, navigate }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function AgentView({ user }) {
-  const [requests,  setRequests]  = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
-  const [drafts,    setDrafts]    = useState({});   // requestId → form data
-  const [submitting,setSubmitting]= useState(null);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [drafts, setDrafts] = useState({});   // requestId → form data
+  const [submitting, setSubmitting] = useState(null);
   const [bidsByReq, setBidsByReq] = useState({});   // requestId → array of bids
   const [actionError, setActionError] = useState({});
 
@@ -372,7 +372,7 @@ function AgentView({ user }) {
         );
         setBidsByReq(map);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -387,11 +387,11 @@ function AgentView({ user }) {
     try {
       const bid = await submitBid({
         shippingRequestId: reqId,
-        price:             Number(draft.price),
-        transportType:     draft.transportType || undefined,
-        transitTime:       draft.transitTime   || undefined,
-        validity:          draft.validity      || undefined,
-        notes:             draft.notes         || undefined,
+        price: Number(draft.price),
+        transportType: draft.transportType || undefined,
+        transitTime: draft.transitTime || undefined,
+        validity: draft.validity || undefined,
+        notes: draft.notes || undefined,
       });
       // Automatically push the new bid to the array to avoid refresh needed
       setBidsByReq((prev) => ({
@@ -400,7 +400,7 @@ function AgentView({ user }) {
       }));
       setDrafts((d) => ({ ...d, [reqId]: {} }));
     } catch (err) {
-      setActionError((e) => ({ ...e, [reqId]: err.message }));
+      setActionError((e) => ({ ...e, [reqId]: err.response?.data?.message || err.message }));
     } finally {
       setSubmitting(null);
     }
@@ -437,7 +437,6 @@ function AgentView({ user }) {
       {requests.map((req) => {
         const bids = bidsByReq[req._id] || [];
         const myBid = bids.find((b) => b.agentId?._id === user?._id || b.agentId === user?._id);
-        const draft = drafts?.[req._id] || {};
         const isClosed = req.status === 'closed';
 
         return (
@@ -463,11 +462,11 @@ function AgentView({ user }) {
                   <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-[#245c9d]">Cargo Requirements</p>
                   <div className="space-y-3 text-sm">
                     {[
-                      { label: 'Route',    value: `${req.origin} → ${req.destination}`, icon: MapPin },
-                      { label: 'Cargo',    value: req.cargoDetails || '—',              icon: Package },
+                      { label: 'Route', value: `${req.origin} → ${req.destination}`, icon: MapPin },
+                      { label: 'Cargo', value: req.cargoDetails || '—', icon: Package },
                       { label: 'Quantity', value: req.quantity ? String(req.quantity) : '—', icon: Package },
-                      { label: 'Incoterm', value: req.incoterm || '—',                 icon: ShieldCheck },
-                      { label: 'Posted',   value: fmtDate(req.createdAt),              icon: CalendarDays },
+                      { label: 'Incoterm', value: req.incoterm || '—', icon: ShieldCheck },
+                      { label: 'Posted', value: fmtDate(req.createdAt), icon: CalendarDays },
                     ].map(({ label, value, icon: Icon }) => (
                       <div key={label} className="flex items-start gap-3">
                         <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#245c9d]" />
@@ -514,21 +513,21 @@ function AgentView({ user }) {
                           <span className="mb-1 block text-xs font-bold text-slate-600">Price (USD) *</span>
                           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-[#245c9d] focus-within:bg-white transition">
                             <BadgeDollarSign className="h-4 w-4 shrink-0 text-slate-400" />
-                            <input type="number" min="0" value={draft.price || ''} onChange={(e) => updateDraft(req._id, 'price', e.target.value)} placeholder="e.g. 4500" className="w-full bg-transparent text-sm outline-none" />
+                            <input type="number" min="0" value={drafts.price || ''} onChange={(e) => updateDraft(req._id, 'price', e.target.value)} placeholder="e.g. 4500" className="w-full bg-transparent text-sm outline-none" />
                           </div>
                         </label>
                         <label className="block">
                           <span className="mb-1 block text-xs font-bold text-slate-600">Transit Time</span>
                           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-[#245c9d] focus-within:bg-white transition">
                             <Clock3 className="h-4 w-4 shrink-0 text-slate-400" />
-                            <input value={draft.transitTime || ''} onChange={(e) => updateDraft(req._id, 'transitTime', e.target.value)} placeholder="e.g. 18-22 days" className="w-full bg-transparent text-sm outline-none" />
+                            <input value={drafts.transitTime || ''} onChange={(e) => updateDraft(req._id, 'transitTime', e.target.value)} placeholder="e.g. 18-22 days" className="w-full bg-transparent text-sm outline-none" />
                           </div>
                         </label>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="block">
                           <span className="mb-1 block text-xs font-bold text-slate-600">Transport Type</span>
-                          <select value={draft.transportType || ''} onChange={(e) => updateDraft(req._id, 'transportType', e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#245c9d]">
+                          <select value={drafts.transportType || ''} onChange={(e) => updateDraft(req._id, 'transportType', e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#245c9d]">
                             <option value="">Select…</option>
                             {TRANSPORT_TYPES.map(t => <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)} Freight</option>)}
                           </select>
@@ -537,13 +536,13 @@ function AgentView({ user }) {
                           <span className="mb-1 block text-xs font-bold text-slate-600">Validity Date</span>
                           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus-within:border-[#245c9d] focus-within:bg-white transition">
                             <CalendarDays className="h-4 w-4 shrink-0 text-slate-400" />
-                            <input type="date" value={draft.validity || ''} onChange={(e) => updateDraft(req._id, 'validity', e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+                            <input type="date" value={drafts.validity || ''} onChange={(e) => updateDraft(req._id, 'validity', e.target.value)} className="w-full bg-transparent text-sm outline-none" />
                           </div>
                         </label>
                       </div>
                       <label className="block">
                         <span className="mb-1 block text-xs font-bold text-slate-600">Notes / Inclusions</span>
-                        <textarea value={draft.notes || ''} onChange={(e) => updateDraft(req._id, 'notes', e.target.value)} rows={2} placeholder="Surcharges, door-to-door, customs handling…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#245c9d] resize-none" />
+                        <textarea value={drafts.notes || ''} onChange={(e) => updateDraft(req._id, 'notes', e.target.value)} rows={2} placeholder="Surcharges, door-to-door, customs handling…" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#245c9d] resize-none" />
                       </label>
                       <button
                         onClick={() => handleSubmitBid(req._id)}
@@ -570,13 +569,13 @@ function AgentView({ user }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export default function TransportBidsPage() {
-  const { user }  = useAuth();
-  const navigate  = useNavigate();
-  const isAgent   = user?.roles?.includes('shipping_agent');
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isAgent = user?.roles?.includes('shipping_agent');
 
-  const [deals,   setDeals]   = useState([]);
+  const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(!isAgent);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
 
   // Buyer/supplier: load deals in shipping_request stage
   useEffect(() => {
@@ -584,7 +583,7 @@ export default function TransportBidsPage() {
     setLoading(true);
     getDeals({ limit: 50 })
       .then((r) => setDeals(r.deals.filter((d) => d.status === 'shipping_request')))
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, [isAgent]);
 

@@ -37,7 +37,7 @@ const createCompany = async (req, res) => {
       res.status(400).json({ success: false, message: 'Invalid company data received' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error during company creation', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error during company creation' });
   }
 };
 
@@ -85,7 +85,7 @@ const updateCompany = async (req, res) => {
     res.json({ success: true, data: updatedCompany });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error during update', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error during update' });
   }
 };
 
@@ -102,7 +102,7 @@ const getCompanyById = async (req, res) => {
 
     res.json({ success: true, data: company });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error retrieving company', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error retrieving company' });
   }
 };
 
@@ -152,7 +152,7 @@ const getCompanies = async (req, res) => {
       data: companies
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error retrieving company list', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error retrieving company list' });
   }
 };
 

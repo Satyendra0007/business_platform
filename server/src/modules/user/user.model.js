@@ -21,6 +21,18 @@ const userSchema = new mongoose.Schema({
   // IMPROVEMENT 5: Role is an array to flexibly support "both" (e.g. ['buyer', 'supplier'])
   roles: [{ type: String, enum: ['buyer', 'supplier', 'admin', 'shipping_agent'] }],
   
+  // Phone number in E.164 format (e.g. +919876543210)
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    index: true
+  },
+
+  // Set to true once user completes Twilio OTP verification
+  isPhoneVerified: { type: Boolean, default: false },
+
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   isEmailVerified: { type: Boolean, default: false },
 
@@ -29,7 +41,24 @@ const userSchema = new mongoose.Schema({
   profileImage: { type: String },
 
   // IMPROVEMENT 4: Active status flag to allow Admins to suspend/ban accounts cleanly
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+
+  // Subscription plan — controls deal/chat/document limits.
+  // ONLY updated by the Stripe webhook — never directly from the frontend.
+  plan: {
+    type: String,
+    enum: ['free', 'business', 'premium'],
+    default: 'free'
+  },
+
+  // Stripe billing fields — populated by webhook only
+  stripeCustomerId:     { type: String, default: null },
+  stripeSubscriptionId: { type: String, default: null },
+  subscriptionStatus:   {
+    type: String,
+    enum: ['active', 'canceled', 'past_due', 'trialing', 'unpaid', null],
+    default: null
+  }
 }, { timestamps: true });
 
 // IMPROVEMENT 6: Critical pre-save hook that hashes passwords natively via bcryptjs

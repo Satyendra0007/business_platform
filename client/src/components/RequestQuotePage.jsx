@@ -83,7 +83,7 @@ export default function RequestQuotePage() {
     setLoadingProd(true);
     getProductById(productId)
       .then(setProduct)
-      .catch((err) => setProdError(err.message))
+      .catch((err) => setProdError(err.response?.data?.message || err.message))
       .finally(() => setLoadingProd(false));
   }, [productId]);
 
@@ -118,7 +118,7 @@ export default function RequestQuotePage() {
       });
       setSuccess(true);
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(err.response?.data?.message || err.message);
     } finally {
       setSubmitting(false);
     }

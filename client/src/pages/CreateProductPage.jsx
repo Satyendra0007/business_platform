@@ -22,7 +22,7 @@ export default function CreateProductPage() {
       setDone(true);
       setTimeout(() => navigate('/supplier/products'), 2200);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

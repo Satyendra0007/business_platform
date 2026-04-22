@@ -89,7 +89,7 @@ function UsersTab() {
     try {
       const r = await getUsers({ limit: 50 });
       setUsers(r.users); setTotal(r.total);
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.response?.data?.message || err.message); }
     finally { setLoading(false); }
   }, []);
 
@@ -101,7 +101,7 @@ function UsersTab() {
       const updated = await toggleUserStatus(id);
       setUsers((prev) => prev.map((u) => u._id === id ? { ...u, isActive: updated.isActive } : u));
     } catch (err) {
-      setActionErr((e) => ({ ...e, [id]: err.message }));
+      setActionErr((e) => ({ ...e, [id]: err.response?.data?.message || err.message }));
     } finally { setToggling(null); }
   };
 
@@ -155,7 +155,7 @@ function CompaniesTab() {
     try {
       const r = await getCompanies({ limit: 50 });
       setCompanies(r.companies); setTotal(r.total);
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.response?.data?.message || err.message); }
     finally { setLoading(false); }
   }, []);
 
@@ -167,7 +167,7 @@ function CompaniesTab() {
       const updated = await verifyCompany(id, newStatus);
       setCompanies((prev) => prev.map((c) => c._id === id ? { ...c, verificationStatus: updated.verificationStatus } : c));
     } catch (err) {
-      setActionErr((e) => ({ ...e, [id]: err.message }));
+      setActionErr((e) => ({ ...e, [id]: err.response?.data?.message || err.message }));
     } finally { setUpdating(null); }
   };
 
@@ -330,7 +330,7 @@ function DealsTab() {
     setLoading(true);
     getAdminDeals({ limit: 50 })
       .then((r) => { setDeals(r.deals); setTotal(r.total); })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -377,7 +377,7 @@ function RFQsTab() {
     setLoading(true);
     getAdminRFQs({ limit: 50 })
       .then((r) => { setRFQs(r.rfqs); setTotal(r.total); })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, []);
 

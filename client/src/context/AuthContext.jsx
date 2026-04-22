@@ -1,6 +1,6 @@
-import React, { createContext, useCallback, useState } from 'react';
+import React, { createContext, useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, saveUser, clearSession } from '../lib/api';
+import api, { getUser, saveUser, clearSession } from '../lib/api';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 export const AuthContext = createContext(null);
@@ -9,6 +9,35 @@ export const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getUser());
   const navigate = useNavigate();
+
+  const fetchUser = useCallback(async () => {
+    try {
+      if (!user) return; // Don't fetch if not logged in
+      const res = await api.get(`/auth/me?_t=${Date.now()}`);
+      
+      const freshUser = res.data?.data || res.data?.user || res.data;
+      if (freshUser) {
+        // Map plan to subscriptionPlan for the frontend, but keep original plan
+        freshUser.subscriptionPlan = freshUser.plan;
+        
+        // Preserve token if the server didn't return one
+        if (user?.token && !freshUser.token) {
+          freshUser.token = user.token;
+        }
+
+        saveUser(freshUser);
+        setUser(freshUser);
+      }
+    } catch (err) {
+      console.error('Failed to sync user data:', err);
+    }
+  }, [user]);
+
+  // Sync user data on mount
+  useEffect(() => {
+    fetchUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /** Called after a successful login API response. */
   const login = useCallback((userData) => {
@@ -26,15 +55,13 @@ export function AuthProvider({ children }) {
 
   /**
    * Call this after any operation that changes the user object
-   * (e.g. profile update, company link). Pass the updated user
-   * object directly to avoid a stale localStorage read.
    */
   const updateUser = useCallback((updatedUser) => {
     saveUser(updatedUser);
     setUser(updatedUser);
   }, []);
 
-  const value = { user, login, logout, updateUser };
+  const value = { user, login, logout, updateUser, fetchUser };
 
   return (
     <AuthContext.Provider value={value}>

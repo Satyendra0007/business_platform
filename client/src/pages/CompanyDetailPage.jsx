@@ -87,7 +87,7 @@ export default function CompanyDetailPage() {
     setLoading(true);
     getCompanyById(id)
       .then(setCompany)
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, [id]);
 

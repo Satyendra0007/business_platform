@@ -147,7 +147,7 @@ export default function CompanySetupPage() {
       updateUser(updatedUser);
       setStep(3); // success
     } catch (err) {
-      setApiError(err.message);
+      setApiError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

@@ -111,7 +111,7 @@ export default function EditCompanyPage() {
         setLogo(c.logo || '');
         setDocuments(Array.isArray(c.documents) ? c.documents : []);
       })
-      .catch((err) => setFetchErr(err.message))
+      .catch((err) => setFetchErr(err.response?.data?.message || err.message))
       .finally(() => setFetching(false));
   }, [id]);
 
@@ -147,7 +147,7 @@ export default function EditCompanyPage() {
       setSaved(true);
       setTimeout(() => navigate(`/company/${id}`), 1200);
     } catch (err) {
-      setSaveErr(err.message);
+      setSaveErr(err.response?.data?.message || err.message);
     } finally {
       setSaving(false);
     }

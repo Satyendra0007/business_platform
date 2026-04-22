@@ -71,7 +71,7 @@ export default function EditDealPage() {
           paymentTerms: data.paymentTerms || '',
         });
       })
-      .catch((err) => setConfigError(err.message))
+      .catch((err) => setConfigError(err.response?.data?.message || err.message))
       .finally(() => setLoadingConfig(false));
   }, [dealId, user]);
 
@@ -109,7 +109,7 @@ export default function EditDealPage() {
       await updateDeal(dealId, payload);
       navigate(`/deal/${dealId}`); // Navigate back to deal workspace on success
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(err.response?.data?.message || err.message);
     } finally {
       setSubmitting(false);
     }

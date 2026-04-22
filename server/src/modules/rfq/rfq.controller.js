@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const RFQ     = require('./rfq.model');
-const Deal    = require('../deal/deal.model');
+const RFQ = require('./rfq.model');
+const Deal = require('../deal/deal.model');
 const Product = require('../product/product.model');
 const { matchedData } = require('express-validator');
 
@@ -24,8 +24,8 @@ const createRFQ = async (req, res) => {
 
     const data = matchedData(req, { locations: ['body'] });
 
-    let productName      = data.productName;
-    let category         = data.category;
+    let productName = data.productName;
+    let category = data.category;
     let supplierCompanyId = data.supplierCompanyId; // may be explicitly passed or auto-resolved below
 
     // DUAL PRODUCT FLOW — path A: productId was provided
@@ -40,7 +40,7 @@ const createRFQ = async (req, res) => {
       }
       // Auto-fill name & category from the product catalogue
       productName = productName || product.title;
-      category    = category    || product.category;
+      category = category || product.category;
 
       // AUTO-ASSIGN SUPPLIER: product.companyId IS the supplier company — no manual step needed
       // Only override if the caller did not explicitly supply one
@@ -63,7 +63,7 @@ const createRFQ = async (req, res) => {
       category,
       supplierCompanyId,            // auto-resolved or caller-supplied
       buyerCompanyId: req.user.companyId,
-      buyerUserId:    req.user._id,
+      buyerUserId: req.user._id,
       // in_progress whenever a supplier is known (either auto-resolved via productId or manually passed)
       status: supplierCompanyId ? 'in_progress' : 'open'
     });
@@ -71,7 +71,7 @@ const createRFQ = async (req, res) => {
     res.status(201).json({ success: true, data: rfq });
   } catch (error) {
     console.error('[createRFQ ERROR]', error.message || error);
-    res.status(500).json({ success: false, message: 'Internal server error', error: error.message || error });
+    res.status(500).json({ success: false, message: 'Internal server error' || error });
   }
 };
 
@@ -89,14 +89,14 @@ const getRFQs = async (req, res) => {
       isDeleted: false,
       ...(isIncoming
         ? { supplierCompanyId: req.user.companyId }
-        : { buyerCompanyId:    req.user.companyId })
+        : { buyerCompanyId: req.user.companyId })
     };
 
     if (status) query.status = status;
 
     const limitValue = Math.min(parseInt(limit), 50);
-    const pageValue  = Math.max(parseInt(page), 1);
-    const skip       = (pageValue - 1) * limitValue;
+    const pageValue = Math.max(parseInt(page), 1);
+    const skip = (pageValue - 1) * limitValue;
 
     const [rfqs, total] = await Promise.all([
       RFQ.find(query)
@@ -139,10 +139,10 @@ const getRFQById = async (req, res) => {
     }
 
     // SECURITY: Only buyer or supplier company users can view this RFQ
-    const userCompany    = req.user.companyId?.toString();
-    const isBuyer        = rfq.buyerCompanyId?.toString()    === userCompany;
-    const isSupplier     = rfq.supplierCompanyId?.toString() === userCompany;
-    const isAdmin        = req.user.roles.includes('admin');
+    const userCompany = req.user.companyId?.toString();
+    const isBuyer = rfq.buyerCompanyId?.toString() === userCompany;
+    const isSupplier = rfq.supplierCompanyId?.toString() === userCompany;
+    const isAdmin = req.user.roles.includes('admin');
 
     if (!isBuyer && !isSupplier && !isAdmin) {
       return res.status(403).json({ success: false, message: 'Not authorized to view this RFQ.' });
@@ -271,26 +271,26 @@ const convertRFQtoDeal = async (req, res) => {
 
     // CREATE DEAL — map RFQ fields, preserving both company & user references
     const deal = await Deal.create({
-      buyerCompanyId:    rfq.buyerCompanyId,
+      buyerCompanyId: rfq.buyerCompanyId,
       supplierCompanyId: rfq.supplierCompanyId,
-      buyerUserId:       rfq.buyerUserId,
-      supplierUserId:    supplierUserId   || undefined,
-      productId:         rfq.productId    || undefined,
-      productName:       rfq.productName  || undefined,  // was missing — deal.productName was always blank
-      quantity:          rfq.quantity     || undefined,
-      price:             rfq.targetPrice  || undefined,
-      incoterm:          rfq.incoterm     || undefined,
-      status:            'inquiry',
+      buyerUserId: rfq.buyerUserId,
+      supplierUserId: supplierUserId || undefined,
+      productId: rfq.productId || undefined,
+      productName: rfq.productName || undefined,  // was missing — deal.productName was always blank
+      quantity: rfq.quantity || undefined,
+      price: rfq.targetPrice || undefined,
+      incoterm: rfq.incoterm || undefined,
+      status: 'inquiry',
       // Seed the timeline so the workspace always loads a non-empty history
       timeline: [{
-        stage:     'inquiry',
+        stage: 'inquiry',
         updatedAt: new Date(),
         updatedBy: req.user._id,
-        notes:     `Converted from RFQ #${rfq._id}`
+        notes: `Converted from RFQ #${rfq._id}`
       }],
       activityLog: [{
-        action:    `Deal created from RFQ #${rfq._id}`,
-        userId:    req.user._id,
+        action: `Deal created from RFQ #${rfq._id}`,
+        userId: req.user._id,
         timestamp: new Date()
       }]
     });

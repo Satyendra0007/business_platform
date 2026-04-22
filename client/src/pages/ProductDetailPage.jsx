@@ -104,7 +104,7 @@ function ProductDetailPage() {
     setError('');
     getProductById(productId)
       .then((data) => { if (!cancelled) { console.log(data); setProduct(data); setActiveImg(0); } })
-      .catch((err) => { if (!cancelled) setError(err.message); })
+      .catch((err) => { if (!cancelled) setError(err.response?.data?.message || err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [productId]);

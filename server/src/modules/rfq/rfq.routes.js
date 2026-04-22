@@ -4,11 +4,12 @@ const { createRFQ, getRFQs, getRFQById, updateRFQ, closeRFQ, convertRFQtoDeal, a
 const { createRFQValidation, updateRFQValidation } = require('./rfq.validator');
 const { validateRequest } = require('../../middleware/validate.middleware');
 const { protect } = require('../../middleware/auth.middleware');
+const { requirePhoneVerified } = require('../../middleware/otp.middleware');
 
 // All RFQ routes are protected — no public access
 router.use(protect);
 
-router.post('/', createRFQValidation, validateRequest, createRFQ);
+router.post('/', requirePhoneVerified, createRFQValidation, validateRequest, createRFQ);
 router.get('/', getRFQs);
 router.get('/:id', getRFQById);
 router.put('/:id', updateRFQValidation, validateRequest, updateRFQ);

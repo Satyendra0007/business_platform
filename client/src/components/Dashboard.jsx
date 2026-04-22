@@ -21,6 +21,8 @@ import {
 } from '../lib/tradafyData';
 
 import CompanyBanner     from './dashboard/CompanyBanner';
+import PhoneVerificationBanner from './dashboard/PhoneVerificationBanner';
+import PlanStatusBanner  from './plan/PlanStatusBanner';
 import DashboardHero     from './dashboard/DashboardHero';
 import OpenActivity      from './dashboard/OpenActivity';
 import { DealBoard, ShipmentTracker } from './dashboard/DealSummary';
@@ -126,7 +128,7 @@ export default function DashboardPage() {
     let cancelled = false;
     getDashboardStats()
       .then((data) => { if (!cancelled) setStats(data); })
-      .catch((err)  => { if (!cancelled) setStatsError(err.message); });
+      .catch((err)  => { if (!cancelled) setStatsError(err.response?.data?.message || err.message); });
     return () => { cancelled = true; };
   }, []);
 
@@ -170,6 +172,12 @@ export default function DashboardPage() {
 
         {/* 1. Company status banner */}
         <CompanyBanner />
+
+        {/* 1b. Phone verification banner — shown when phone not yet verified */}
+        <PhoneVerificationBanner />
+
+        {/* 1c. Plan status & usage meter */}
+        <PlanStatusBanner />
 
         {/* 2. Top workspace stack */}
         <section className="grid gap-4">

@@ -64,7 +64,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
       onConvert(rfq._id, result.deal._id);
       navigate(`/deal/${result.deal._id}`);
     } catch (err) {
-      setActionError(err.message);
+      setActionError(err.response?.data?.message || err.message);
     } finally {
       setConverting(false);
     }
@@ -78,7 +78,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
       await closeRFQ(rfq._id);
       onClose(rfq._id);
     } catch (err) {
-      setActionError(err.message);
+      setActionError(err.response?.data?.message || err.message);
     } finally {
       setClosing(false);
     }
@@ -239,7 +239,7 @@ export default function RFQListPage({ incoming = false }) {
       setTotal(result.total);
       setTotalPages(result.totalPages);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }

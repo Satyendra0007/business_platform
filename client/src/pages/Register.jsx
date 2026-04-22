@@ -21,6 +21,7 @@ function RegisterPage() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -78,10 +79,14 @@ function RegisterPage() {
     event.preventDefault();
     setError('');
 
-    const { firstName, lastName, email, password, confirmPassword } = formData;
+    const { firstName, lastName, email, password, confirmPassword, phone } = formData;
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !phone.trim()) {
       setError('Please fill in all required fields.');
+      return;
+    }
+    if (!/^\+[1-9]\d{6,14}$/.test(phone.trim())) {
+      setError('Phone must be in E.164 format (e.g. +919876543210). Include country code.');
       return;
     }
     if (password.length < 6) {
@@ -95,19 +100,29 @@ function RegisterPage() {
 
     setIsLoading(true);
     try {
-      await register({
+      const result = await register({
         firstName: firstName.trim(),
         lastName:  lastName.trim(),
         email:     email.trim(),
         password,
         role:      selectedRole,
-        // Only include when actually uploaded; omitting keeps backend validation clean
+        phone:     phone.trim(),
         ...(profileImage ? { profileImage } : {}),
       });
-      setSubmitted(true);
-      setTimeout(() => navigate('/login'), 3000);
+
+      // Both new users and existing-unverified users land here.
+      // result.phone is the canonical phone saved in the DB.
+      const phoneForOtp = result.phone || phone.trim();
+      navigate(`/verify-phone?phone=${encodeURIComponent(phoneForOtp)}`);
+
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      // EMAIL_ALREADY_VERIFIED — account exists and is fully active, stay on page
+      if (err.code === 'EMAIL_ALREADY_VERIFIED') {
+        setError(err.response?.data?.message || err.message || 'This email is already registered. Please log in instead.');
+        return;
+      }
+      // All other errors (network, validation, phone taken, etc.)
+      setError(err.response?.data?.message || err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -316,6 +331,27 @@ function RegisterPage() {
                     autoComplete="email"
                   />
                 </div>
+              </label>
+
+              {/* Phone Number */}
+              <label className="block">
+                <span className="mb-2 block text-sm font-bold text-slate-700">
+                  Phone Number <span className="text-slate-400 font-normal">(with country code)</span>
+                </span>
+                <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 focus-within:border-[#245c9d] focus-within:ring-4 focus-within:ring-[#245c9d]/10 transition-all">
+                  <Phone className="h-5 w-5 text-slate-400 shrink-0" />
+                  <input
+                    id="reg-phone"
+                    required
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                    placeholder="+919876543210"
+                    autoComplete="tel"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400">E.164 format — include + and country code (e.g. +91 for India, +1 for USA)</p>
               </label>
 
               {/* Password */}

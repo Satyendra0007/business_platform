@@ -20,7 +20,7 @@ export const createCompany = async (data) => {
     if (res.success) return res.data;
     throw new Error(res.message || 'Failed to create company');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to create company.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to create company.';
     throw new Error(msg);
   }
 };
@@ -36,7 +36,7 @@ export const getCompanyById = async (id) => {
     if (res.success) return res.data;
     throw new Error(res.message || 'Company not found');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to fetch company.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to fetch company.';
     throw new Error(msg);
   }
 };
@@ -53,7 +53,7 @@ export const updateMyCompany = async (id, data) => {
     if (res.success) return res.data;
     throw new Error(res.message || 'Failed to update company');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to update company.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to update company.';
     throw new Error(msg);
   }
 };

@@ -1,4 +1,4 @@
-const mongoose  = require('mongoose');
+const mongoose        = require('mongoose');
 const Deal            = require('../deal/deal.model');
 const ShippingRequest = require('./shippingRequest.model');
 const ShippingBid     = require('./shippingBid.model');
@@ -144,16 +144,27 @@ const getShippingBids = async (req, res) => {
 
     const query = { shippingRequestId: req.params.requestId, isDeleted: false };
 
-    const [bids, total] = await Promise.all([
+    // Fetch bids + total count in parallel — populated with agent plan for priority sort
+    const [rawBids, total] = await Promise.all([
       ShippingBid.find(query)
         .select('-__v')
-        .populate('agentId', 'firstName lastName email')
+        .populate('agentId', 'firstName lastName email plan')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: 1 })
         .lean(),
-      ShippingBid.countDocuments(query)
+      ShippingBid.countDocuments(query),
     ]);
+
+    // Premium priority: sort higher-plan agents to the top.
+    // Within the same priority, preserve original sort order (createdAt ASC).
+    const PRIORITY = { premium: 2, business: 1, free: 0 };
+    const bids = rawBids
+      .map((bid) => ({
+        ...bid,
+        agentPriority: PRIORITY[bid.agentId?.plan] ?? 0,
+      }))
+      .sort((a, b) => b.agentPriority - a.agentPriority);
 
     res.json({
       success: true,

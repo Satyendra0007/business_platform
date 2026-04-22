@@ -26,7 +26,7 @@ export const getProducts = async (params = {}) => {
     }
     throw new Error(res.message || 'Failed to load products');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to load products.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to load products.';
     throw new Error(msg);
   }
 };
@@ -42,7 +42,7 @@ export const getProductById = async (id) => {
     if (res.success) return res.data;
     throw new Error(res.message || 'Product not found');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to load product.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to load product.';
     throw new Error(msg);
   }
 };
@@ -58,7 +58,7 @@ export const createProduct = async (data) => {
     if (res.success) return res.data;
     throw new Error(res.message || 'Failed to create product');
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || 'Failed to create product.';
+    const msg = error.response?.data?.message || error.response?.data?.message || error.message || 'Failed to create product.';
     throw new Error(msg);
   }
 };

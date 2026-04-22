@@ -14,6 +14,7 @@ const { createRequestValidation, submitBidValidation } = require('./shipping.val
 const { validateRequest } = require('../../middleware/validate.middleware');
 const { protect } = require('../../middleware/auth.middleware');
 const { requireShippingAgent, requireParticipantRole } = require('../../middleware/shippingAgent.middleware');
+const { checkPhaseAccess } = require('../../middleware/plan.middleware');
 
 // All shipping routes require authentication
 router.use(protect);
@@ -24,6 +25,7 @@ router.use(protect);
 router.post(
   '/request',
   requireParticipantRole,
+  checkPhaseAccess('shipping'),     // Free Phase-3 users cannot raise shipping requests
   createRequestValidation,
   validateRequest,
   createShippingRequest
@@ -46,6 +48,7 @@ router.get(
 router.post(
   '/bid/:id/accept',
   requireParticipantRole,
+  checkPhaseAccess('shipping'),     // Free Phase-3 users cannot accept bids
   acceptBid
 );
 

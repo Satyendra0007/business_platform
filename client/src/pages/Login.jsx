@@ -65,7 +65,7 @@ function LoginPage() {
       // contextLogin() sets React state and navigates to /dashboard
       contextLogin(userData);
     } catch (err) {
-      setError(err.message || 'Invalid email or password. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }

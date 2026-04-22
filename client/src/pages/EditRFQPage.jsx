@@ -69,7 +69,7 @@ export default function EditRFQPage() {
           attachments: data.attachments ? data.attachments.map((url, i) => ({ url, name: `Attachment ${i + 1}`, type: url.split('.').pop() })) : []
         });
       })
-      .catch((err) => setConfigError(err.message))
+      .catch((err) => setConfigError(err.response?.data?.message || err.message))
       .finally(() => setLoadingConfig(false));
   }, [rfqId, user?.companyId]);
 
@@ -110,7 +110,7 @@ export default function EditRFQPage() {
       await updateRFQ(rfqId, payload);
       navigate('/my-rfqs'); // Navigate back on success
     } catch (err) {
-      setSubmitError(err.message);
+      setSubmitError(err.response?.data?.message || err.message);
     } finally {
       setSubmitting(false);
     }

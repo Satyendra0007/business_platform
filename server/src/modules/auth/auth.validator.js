@@ -7,6 +7,11 @@ const registerValidation = [
   check('email', 'Please include a valid email').isEmail().normalizeEmail(),
   check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
   check('role', 'Role is required').notEmpty(),
+  // Phone must be in E.164 format: +<country_code><number>, e.g. +919876543210
+  check('phone', 'Phone number is required')
+    .notEmpty()
+    .matches(/^\+[1-9]\d{6,14}$/)
+    .withMessage('Phone must be in E.164 format (e.g. +919876543210)'),
   // profileImage is a Cloudinary URL sent by the frontend after direct upload.
   // It is fully optional; omitting it causes no validation error.
   check('profileImage')

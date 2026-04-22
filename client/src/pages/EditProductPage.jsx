@@ -35,7 +35,7 @@ export default function EditProductPage() {
           setProduct(data);
         }
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.response?.data?.message || err.message))
       .finally(() => setLoading(false));
   }, [productId, user?.companyId]);
 
@@ -46,7 +46,7 @@ export default function EditProductPage() {
       setDone(true);
       setTimeout(() => navigate('/supplier/products'), 2200);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setSaving(false);
     }

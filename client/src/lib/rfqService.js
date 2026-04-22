@@ -16,7 +16,7 @@ import api from './api';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function handleError(error, fallback) {
-  const msg = error.response?.data?.message || error.message || fallback;
+  const msg = error.response?.data?.message || error.response?.data?.message || error.message || fallback;
   throw new Error(msg);
 }
 

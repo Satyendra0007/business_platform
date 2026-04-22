@@ -13,9 +13,16 @@ const app = express();
 // Security & Middleware
 app.use(helmet()); // Secure HTTP headers
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: process.env.FRONTEND_URL,
   credentials: true,
 }));
+
+// ── CRITICAL: Stripe webhook MUST be registered BEFORE express.json() ─────────
+// Stripe signature verification requires the raw (unparsed) request body.
+// Placing this after express.json() would break verification and return 400.
+const { webhookRouter } = require('./src/modules/billing/billing.routes');
+app.use('/api/billing', webhookRouter);
+// ──────────────────────────────────────────────────────────────────────────────
 
 app.use(express.json());
 
@@ -39,6 +46,10 @@ app.use('/api/messages', require('./src/modules/chat/message.routes'));
 app.use('/api/shipping', require('./src/modules/shipping/shipping.routes'));
 app.use('/api/admin', require('./src/modules/admin/admin.routes'));
 app.use('/api/dashboard', require('./src/modules/dashboard/dashboard.routes'));
+
+// Billing — JSON routes (checkout session creation, status)
+const { billingRouter } = require('./src/modules/billing/billing.routes');
+app.use('/api/billing', billingRouter);
 
 
 app.get('/', (req, res) => {
