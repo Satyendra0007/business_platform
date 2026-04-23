@@ -3,8 +3,6 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
-  ChevronRight,
-  Globe,
   Ship,
   MapPin,
   Bell,
@@ -21,28 +19,79 @@ import productSugarGemini from '../assets/product-sugar-gemini.png';
 import productOliveGemini from '../assets/product-olive-gemini.png';
 import productHealthBeautyA from '../assets/product-health-beauty-a.png';
 import productHealthBeautyB from '../assets/product-health-beauty-b.png';
-import productElectronicsBulk from '../assets/product-electronics-bulk.png';
-import productApparelBulk from '../assets/product-apparel-bulk.png';
-import productMetalsBulk from '../assets/product-metals-bulk.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
-import productAgriBulk from '../assets/product-agri-bulk.png';
+import productBelgianJonagoldApples from '../assets/product-belgian-jonagold-apples.jpg';
+import productBelgianPears from '../assets/product-belgian-pears.jpg';
+import productIR64ParboiledRice from '../assets/product-ir64-parboiled-rice.jpg';
+import productFreshEggs from '../assets/product-fresh-eggs.jpg';
+import productHalalLambCarcass from '../assets/product-halal-lamb-carcass.jpg';
+import productClinker from '../assets/product-clinker.jpg';
 import { PublicLayout, Reveal, Marquee } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import LandingCountdownBanner from '../components/landing/LandingCountdownBanner';
 
 const featuredProducts = [
-  { id: 'sunflower-oil', name: 'Sunflower Oil', category: 'Food & Agriculture', img: productOilBulk, price: '$850 / MT', origin: 'Ukraine', moq: '500 MT' },
-  { id: 'sugar-icumsa-45', name: 'Refined Sugar ICUMSA 45', category: 'Food & Agriculture', img: productSugarGemini, price: '$500 / MT', origin: 'Brazil', moq: '12,500 MT' },
-  { id: 'agri-commodities', name: 'Agri Commodities Pack', category: 'Food & Agriculture', img: productAgriBulk, price: '$620 / MT', origin: 'India', moq: '800 MT' },
-  { id: 'steel-pipes', name: 'Industrial Steel Pipes', category: 'Metals & Construction', img: productPipesBulk, price: '$1,200 / MT', origin: 'Germany', moq: '1,000 MT' },
-  { id: 'metals-alloys', name: 'Metals & Alloy Inventory', category: 'Metals & Construction', img: productMetalsBulk, price: '$1,480 / MT', origin: 'Turkey', moq: '2,000 MT' },
-  { id: 'heavy-machinery', name: 'Heavy Machinery Systems', category: 'Industrial Equipment', img: productHeavyMachineryBulk, price: '$18,000 / unit', origin: 'Japan', moq: '10 Units' },
-  { id: 'consumer-electronics', name: 'Consumer Electronics Lots', category: 'Electronics', img: productElectronicsBulk, price: '$95 / unit', origin: 'Shenzhen', moq: '2,500 Units' },
-  { id: 'bulk-apparel', name: 'Bulk Apparel & Fabrics', category: 'Textiles & Apparel', img: productApparelBulk, price: '$14 / piece', origin: 'Bangladesh', moq: '20,000 Pieces' },
-  { id: 'homeware-export', name: 'Homeware Export Collection', category: 'Home & Kitchen', img: productHomewareBulk, price: '$22 / set', origin: 'Vietnam', moq: '3,000 Sets' },
-  { id: 'personal-care-bulk', name: 'Personal Care Bulk Essentials', category: 'Health & Beauty', img: productHealthBeautyB, price: '$4.80 / unit', origin: 'UAE', moq: '10,000 Units' },
-  { id: 'olive-oil', name: 'Extra Virgin Olive Oil', category: 'Food & Agriculture', img: productOliveGemini, price: '$3,200 / MT', origin: 'Spain', moq: '100 MT' },
+  {
+    id: 'belgian-jonagold-apples',
+    name: 'Belgian Jonagold Apples',
+    category: 'Food & Agriculture',
+    img: productBelgianJonagoldApples,
+    price: 'On request',
+    origin: 'Belgium',
+    moq: '1 container',
+    highlights: ['70-85 mm caliber', '18 kg cartons or bulk bins']
+  },
+  {
+    id: 'belgian-conference-pears',
+    name: 'Belgian Pears',
+    category: 'Food & Agriculture',
+    img: productBelgianPears,
+    price: 'On request',
+    origin: 'Belgium',
+    moq: '1 container',
+    highlights: ['55-75 mm caliber', '12.5 kg export cartons']
+  },
+  {
+    id: 'ir64-parboiled-rice',
+    name: 'IR64 Parboiled Rice',
+    category: 'Food & Agriculture',
+    img: productIR64ParboiledRice,
+    price: 'On request',
+    origin: 'India',
+    moq: '500 MT',
+    highlights: ['5% max broken', '50 kg PP bags or bulk']
+  },
+  {
+    id: 'fresh-eggs',
+    name: 'Fresh Eggs',
+    category: 'Food & Agriculture',
+    img: productFreshEggs,
+    price: 'On request',
+    origin: 'Belgium / Netherlands',
+    moq: '1 pallet',
+    highlights: ['Grade A export quality', '30 egg trays or 360/carton']
+  },
+  {
+    id: 'halal-lamb-carcass',
+    name: 'Halal Lamb Carcass',
+    category: 'Food & Agriculture',
+    img: productHalalLambCarcass,
+    price: 'On request',
+    origin: 'Kenya / India',
+    moq: '500 KG',
+    highlights: ['9-12 kg carcasses', 'Halal certified and chilled']
+  },
+  {
+    id: 'clinker',
+    name: 'Clinker',
+    category: 'Chemicals',
+    img: productClinker,
+    price: 'On request',
+    origin: 'India / Vietnam / Middle East',
+    moq: '10,000 MT',
+    highlights: ['Bulk vessel supply', 'Suitable for OPC grinding']
+  },
 ];
 
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
@@ -177,7 +226,6 @@ const DashboardMock = () => (
 );
 
 function LandingPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const reviews = [
@@ -281,66 +329,85 @@ function LandingPage() {
 
   return (
     <PublicLayout>
-      <div className="space-y-10 pb-20 sm:space-y-14 sm:pb-24 lg:space-y-16 lg:pb-32">
+      <div className="space-y-8 pb-16 sm:space-y-10 sm:pb-20 lg:space-y-12 lg:pb-24">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
-        <section className="relative flex min-h-[55vh] lg:min-h-[60vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-8 pb-24 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-28 lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
+        <section className="relative flex min-h-[32vh] lg:min-h-[36vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-4 pb-8 text-white shadow-2xl sm:px-6 sm:pt-5 sm:pb-10 lg:rounded-[40px] lg:px-20 lg:pt-5 lg:pb-10"
           style={{
             background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.22),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.2),transparent_26%)] pointer-events-none" />
-          <Reveal effect="up">
-            <div className="relative max-w-4xl space-y-4 sm:space-y-6">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
-                <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
-                <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
-              </div>
-              <h1 className="text-4xl font-black leading-[0.95] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
-                Stop losing deals to <br className="hidden sm:block" />
-                <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
-              </h1>
-              <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
-                "Trade smarter. Close faster."
-              </p>
-              <div className="flex flex-col gap-2.5 text-sm font-bold sm:gap-4 sm:text-base lg:text-lg">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Centralized communication</span>
+          <div className="relative grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <Reveal effect="up">
+              <div className="relative max-w-4xl space-y-2.5 sm:space-y-3">
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
+                  <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
+                  <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Full deal visibility</span>
+                <h1 className="text-4xl font-black leading-[0.88] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[3.6rem]">
+                  Stop losing deals to <br className="hidden sm:block" />
+                  <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
+                </h1>
+                <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-[1.2rem]">
+                  "Trade smarter. Close faster."
+                </p>
+                <div className="flex flex-col gap-1.5 text-sm font-bold sm:gap-2 sm:text-base lg:text-[0.95rem]">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Centralized communication</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Full deal visibility</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Integrated shipping & documents</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Integrated shipping & documents</span>
+                <div className="flex flex-col gap-2.5 pt-0 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-1.5">
+                  <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:px-8 sm:py-4">
+                    <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
+                    <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
+                  </button>
+                  <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:px-10 sm:py-4">
+                    <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
+                    <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2 border-t border-white/10 pt-1 text-[13px] font-bold text-slate-200/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5 sm:pt-2">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 fill-[#E5A93D] text-[#E5A93D]" />
+                    4.9/5 team satisfaction
+                  </div>
+                  <div>92% faster document alignment</div>
+                  <div>Used across 30+ trade corridors</div>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-5">
-                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:px-8 sm:py-4">
-                  <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
-                  <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
-                </button>
-                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:px-10 sm:py-4">
-                  <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
-                  <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
-                </button>
+            </Reveal>
+
+            <Reveal delay={180} effect="up">
+              <div className="lg:pl-1 xl:pl-3">
+                <LandingCountdownBanner
+                  title="20 hours left to feature the latest export drop"
+                  message="A limited-time alert banner is shown here on the landing hero, highlighting the same curated product set with the platform's navy and gold theme."
+                  posterImages={[
+                    { src: productBelgianJonagoldApples, alt: 'Belgian Jonagold apples' },
+                    { src: productBelgianPears, alt: 'Belgian pears' },
+                    { src: productIR64ParboiledRice, alt: 'IR64 parboiled rice' },
+                    { src: productFreshEggs, alt: 'Fresh eggs' },
+                    { src: productHalalLambCarcass, alt: 'Halal lamb carcass' },
+                    { src: productClinker, alt: 'Clinker' },
+                  ]}
+                />
               </div>
-              <div className="flex flex-col gap-2 border-t border-white/10 pt-4 text-[13px] font-bold text-slate-200/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 sm:pt-5">
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 fill-[#E5A93D] text-[#E5A93D]" />
-                  4.9/5 team satisfaction
-                </div>
-                <div>92% faster document alignment</div>
-                <div>Used across 30+ trade corridors</div>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
 
           {/* Stats Bar */}
-          <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-8 sm:right-8 lg:bottom-5 lg:left-16 lg:right-16">
+          <div className="absolute bottom-0 left-4 right-4 sm:bottom-0.5 sm:left-8 sm:right-8 lg:bottom-1 lg:left-16 lg:right-16">
             <Reveal delay={400} effect="zoom">
               <div className="relative mx-auto grid max-w-4xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
                 <div className="absolute left-1/4 top-0 h-px w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
@@ -360,7 +427,7 @@ function LandingPage() {
         </section>
 
         {/* --- SECTION 2: DISCOVER OPPORTUNITIES (MOVED & BACKGROUND APPLIED) --- */}
-        <section className="relative overflow-hidden rounded-[30px] px-4 py-7 text-white shadow-2xl sm:px-6 sm:py-8 lg:rounded-[36px] lg:px-14 lg:py-9"
+        <section className="relative overflow-hidden rounded-[30px] px-4 py-5 text-white shadow-2xl sm:px-6 sm:py-6 lg:rounded-[36px] lg:px-14 lg:py-7"
           style={{
             background: `linear-gradient(rgba(10, 31, 56, 0.85), rgba(20, 58, 106, 0.7)), url(${bgNegotiation})`,
             backgroundSize: 'cover',
@@ -370,9 +437,9 @@ function LandingPage() {
           <div className="pointer-events-none absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
           <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 animate-float-slow rounded-full bg-[#E5A93D]/20 blur-[100px]" />
           <div className="relative grid gap-5 xl:grid-cols-[0.9fr_1.1fr] items-center">
-            <div className="space-y-4.5">
+            <div className="space-y-3.5">
               <Reveal effect="right">
-                <div className="space-y-2.5">
+                  <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.22em] text-sky-100">
                     Market Clarity
                   </div>
@@ -400,7 +467,7 @@ function LandingPage() {
                   </Reveal>
                 ))}
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-1">
                 {[
                   { value: '150+', label: 'Verified suppliers' },
                   { value: '32', label: 'Trade corridors' },
@@ -414,7 +481,7 @@ function LandingPage() {
               </div>
             </div>
             <Reveal delay={600} effect="zoom">
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <DashboardMock />
                 <div className="grid gap-2 sm:grid-cols-3">
                   {[
@@ -433,53 +500,84 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 3: MARKETPLACE CTA --- */}
-        <section className="px-0 pt-1 pb-10 sm:px-1 lg:px-16">
+        {/* --- SECTION 3: FEATURED PRODUCTS --- */}
+        <section className="px-0 pt-0 pb-8 sm:px-1 lg:px-16">
           <Reveal effect="up">
-            <div className="relative overflow-hidden rounded-[36px] border border-blue-100 bg-[linear-gradient(135deg,#f0f7ff,#e8f2ff)] px-8 py-12 text-center shadow-[0_24px_60px_rgba(20,58,106,0.10)] lg:px-16 lg:py-16">
+            <div className="relative overflow-hidden rounded-[36px] border border-blue-100 bg-[linear-gradient(135deg,#f0f7ff,#e8f2ff)] px-5 py-6 shadow-[0_24px_60px_rgba(20,58,106,0.10)] sm:px-6 lg:px-8 lg:py-7">
               <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#245c9d]/10 blur-[80px]" />
               <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-[#E5A93D]/10 blur-[60px]" />
 
-              <div className="relative">
+              <div className="relative mx-auto max-w-6xl text-left">
                 <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#143A6A] shadow-sm">
-                  <Globe className="h-3.5 w-3.5" /> Direct Bulk Sourcing
+                  <FileCheck className="h-3.5 w-3.5" /> Featured Export Products
                 </div>
-                <h2 className="mt-5 text-3xl font-black tracking-tight text-[#0A2540] md:text-4xl lg:text-[2.6rem]">
-                  Bulk Shipping
-                  <span className="block text-[#143A6A]/40">Live Marketplace</span>
+                <h2 className="mt-4 text-2xl font-black tracking-tight text-[#0A2540] md:text-[2.5rem]">
+                  Export-ready products for immediate shipment
                 </h2>
-                <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                  Real products from verified suppliers — search, filter by sector, and open a deal workspace instantly.
+                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+                  Fresh produce, rice, eggs, lamb, and clinker from trusted origins, ready to be presented on the landing page without changing anything else in the app.
                 </p>
 
-                <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <button
-                    onClick={() => navigate('/products')}
-                    className="group relative flex items-center gap-2 overflow-hidden rounded-2xl border border-blue-900 bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-8 py-3.5 text-sm font-black text-white shadow-[0_10px_30px_rgba(20,58,106,0.3)] transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(20,58,106,0.5)]"
-                  >
-                    <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] group-hover:animate-[shimmer_1.5s_infinite]" />
-                    <span className="relative z-10 flex items-center gap-2">VIEW LIVE MARKETPLACE <ArrowRight className="h-4 w-4 text-sky-400 transition-transform group-hover:translate-x-1" /></span>
-                  </button>
-                  <button
-                    onClick={() => navigate(user ? '/dashboard' : '/register')}
-                    className="rounded-2xl border border-blue-200 bg-white px-8 py-3.5 text-sm font-bold text-[#143A6A] shadow-sm transition hover:-translate-y-0.5 hover:bg-blue-50"
-                  >
-                    {user ? 'Go to Dashboard' : 'Start Free'}
-                  </button>
-                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {featuredProducts.map((product, index) => (
+                    <Reveal key={product.id} delay={120 + index * 60} effect="up">
+                      <article className="group flex h-full min-h-[330px] flex-col overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_16px_36px_rgba(20,58,106,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_48px_rgba(20,58,106,0.14)]">
+                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-36">
+                          <img
+                            src={product.img}
+                            alt={product.name}
+                            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute left-4 top-4 rounded-full bg-white/92 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#143A6A] shadow-sm backdrop-blur">
+                            {product.category}
+                          </div>
+                          <div className="absolute right-4 top-4 rounded-full bg-[#0A2540]/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur">
+                            Export ready
+                          </div>
+                        </div>
 
-                {/* Stat pills */}
-                <div className="mx-auto mt-8 flex flex-wrap justify-center gap-3">
-                  {[
-                    { value: '12+', label: 'High-trust sectors' },
-                    { value: '40K+', label: 'Units listed' },
-                    { value: '28', label: 'Export destinations' },
-                    { value: '1', label: 'Shared workspace' },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-2xl border border-blue-100 bg-white px-4 py-2.5 shadow-sm">
-                      <div className="text-base font-black text-[#0A2540]">{s.value}</div>
-                      <div className="mt-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">{s.label}</div>
-                    </div>
+                        <div className="flex flex-1 flex-col p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="line-clamp-2 text-[15px] font-black leading-5 tracking-tight text-[#0A2540]">{product.name}</h3>
+                              <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                                <MapPin className="h-3.5 w-3.5 text-[#245c9d]" />
+                                <span>{product.origin}</span>
+                              </div>
+                            </div>
+                            <div className="rounded-2xl bg-[#edf5ff] px-2 py-1.5 text-right">
+                              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Availability</div>
+                              <div className="mt-0.5 text-[11px] font-black text-[#143A6A]">On request</div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            {product.highlights.map((highlight) => (
+                              <div key={highlight} className="flex items-center gap-2 rounded-2xl bg-slate-50 px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-slate-700">
+                                <FileCheck className="h-3.5 w-3.5 flex-none text-[#E5A93D]" />
+                                <span>{highlight}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className="mt-3 line-clamp-2 text-[11px] font-medium leading-5 text-slate-500">
+                            {product.name} is presented here with the supplied export details and product imagery for the landing page showcase.
+                          </p>
+
+                          <div className="mt-auto flex items-center gap-3 pt-4">
+                            <button
+                              onClick={() => navigate('/products')}
+                              className="rounded-2xl bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(20,58,106,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(20,58,106,0.3)]"
+                            >
+                              View
+                            </button>
+                            <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                              Min order: {product.moq}
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    </Reveal>
                   ))}
                 </div>
               </div>
@@ -488,12 +586,12 @@ function LandingPage() {
         </section>
 
         {/* --- SECTION 6: MOVING REVIEWS --- */}
-        <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-10 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-14 animate-float-slow">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-8 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-10 animate-float-slow">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(229,169,61,0.08),transparent_40%)] pointer-events-none" />
           <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent animate-shimmer" />
 
           <Reveal effect="up">
-            <div className="relative mx-auto mb-10 max-w-4xl px-4 text-center sm:px-6 lg:px-16">
+            <div className="relative mx-auto mb-8 max-w-4xl px-4 text-center sm:px-6 lg:px-16">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.2)] backdrop-blur transition-all duration-700 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)]">
                 Trusted by Trade Leaders
               </div>
