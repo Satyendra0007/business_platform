@@ -15,7 +15,7 @@
 body {
   background-color: var(--color-neutral-bg);
   color: var(--color-marine-blue);
-  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Aptos", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   margin: 0;
 }
 
@@ -24,7 +24,7 @@ body {
 }
 
 .font-display {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-family: "Aptos Display", "Avenir Next Condensed", "Helvetica Neue", Georgia, serif;
 }
 
 @keyframes inUp {

@@ -31,9 +31,25 @@ import { useAuth } from '../hooks/useAuth';
 import { getDashboardStats } from '../lib/dashboardService';
 import { getPlan, isUnlimited, formatLimit } from '../lib/plans.config';
 import { getCompanyById } from '../lib/companyService';
+import { getProducts } from '../lib/productService';
 import { formatDate, getDealsForUser, getRFQsForUser, getStatusSteps, getTransportBidOpportunities } from '../lib/tradafyData';
 import { getProductVisual } from '../lib/productVisuals';
-import { navByRole, getNavIcon } from '../lib/navConstants';
+import { navByRole } from '../lib/navConstants';
+import CompanyBanner from './dashboard/CompanyBanner';
+import PhoneVerificationBanner from './dashboard/PhoneVerificationBanner';
+
+const SIDEBAR_ICON_BY_PATH = {
+  '/dashboard': LayoutDashboard,
+  '/products': Package,
+  '/supplier/products': Package,
+  '/my-rfqs': ReceiptText,
+  '/incoming-rfqs': ReceiptText,
+  '/transport-bids': ShipWheel,
+  '/deals': BriefcaseBusiness,
+  '/deal': BriefcaseBusiness,
+  '/deal-support': ShieldCheck,
+  '/admin': ShieldCheck,
+};
 
 function classNames(...parts) {
   return parts.filter(Boolean).join(' ');
@@ -130,25 +146,87 @@ function getDealProgressDeal(role, deals, bidOpportunities) {
   return deals[0] || bidOpportunities[0] || null;
 }
 
+function formatProductPrice(price, unit) {
+  if (price == null) return 'Price on request';
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(price);
+  return unit ? `${formatted} / ${unit}` : formatted;
+}
+
 function SidebarLink({ item, active, onNavigate, collapsed }) {
-  const Icon = getNavIcon(item.path);
+  const Icon = SIDEBAR_ICON_BY_PATH[item.path] || LayoutDashboard;
   return (
-    <button
-      onClick={() => onNavigate(item.path)}
-      className={classNames(
-        'flex w-full items-center rounded-2xl py-3 text-left transition',
+      <button
+        onClick={() => onNavigate(item.path)}
+        className={classNames(
+        'flex w-full items-center rounded-2xl text-left transition',
         active
           ? 'bg-white text-[#173c68] shadow-[0_10px_24px_rgba(255,255,255,0.16)]'
           : 'text-slate-200 hover:bg-white/10 hover:text-white',
-        collapsed ? 'justify-center px-0' : 'gap-3 px-3'
-      )}
-      title={item.label}
-    >
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+        collapsed ? 'justify-center px-0 py-3' : 'gap-3 px-3 py-3'
+        )}
+        title={item.label}
+      >
+      <div className={classNames('flex h-9 w-9 items-center justify-center rounded-xl transition', active ? 'bg-[#173c68] text-white' : 'bg-white/10 text-white')}>
         <Icon className="h-4.5 w-4.5" />
       </div>
       <span className={classNames('font-medium', collapsed ? 'hidden' : 'block')}>{item.label}</span>
     </button>
+  );
+}
+
+function DashboardProductCard({ product, navigate }) {
+  const visual = product.images?.[0] || getProductVisual().image;
+  return (
+    <article className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[16px] bg-slate-100">
+        <img src={visual} alt={product.title} className="h-full w-full object-cover" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#edf5ff] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#245c9d]">
+            {product.category || 'Product'}
+          </span>
+          <span className="text-[10px] font-semibold text-slate-400">
+            {product.countryOfOrigin ? `Origin: ${product.countryOfOrigin}` : 'Verified listing'}
+          </span>
+        </div>
+
+        <h4 className="mt-1 line-clamp-1 text-sm font-bold text-[#143a6a]">
+          {product.title}
+        </h4>
+        <p className="mt-0.5 text-[11px] text-slate-500">
+          {formatProductPrice(product.price, product.unit)}
+          {product.leadTime ? ` · ${product.leadTime}` : ''}
+        </p>
+      </div>
+
+      <button
+        onClick={() => navigate(`/product/${product._id}`)}
+        className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
+      >
+        Start Deal
+        <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+    </article>
+  );
+}
+
+function DashboardProductSkeleton() {
+  return (
+    <div className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_10px_26px_rgba(15,23,42,0.05)]">
+      <div className="h-16 w-16 shrink-0 animate-pulse rounded-[16px] bg-slate-100" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-3 w-20 animate-pulse rounded-full bg-slate-100" />
+        <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-100" />
+        <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+      </div>
+      <div className="h-9 w-24 animate-pulse rounded-2xl bg-slate-100" />
+    </div>
   );
 }
 
@@ -216,86 +294,105 @@ function DealCard({ deal, navigate, activeStepIndex }) {
   const lastUpdate = deal.timeline?.[deal.timeline.length - 1]?.date || deal.deliveryDate;
 
   return (
-    <article className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
-      <div className="px-3 pt-3">
-        <div className={classNames('inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]', statusTone)}>
-          {statusLabel}
-        </div>
-      </div>
-
-      <div className="grid gap-4 px-4 pb-4 pt-3 sm:grid-cols-[84px_1fr] sm:items-start">
+    <article className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_22px_48px_rgba(15,23,42,0.10)]">
+      <div className="relative h-24 overflow-hidden bg-slate-100 sm:h-28">
         <img
           src={visual.image}
           alt={deal.productName}
-          className="h-20 w-20 rounded-[16px] object-cover shadow-sm ring-1 ring-slate-100"
+          className="h-full w-full object-cover transition duration-700 hover:scale-[1.03]"
         />
-
-        <div className="min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="truncate text-base font-bold text-[#143a6a]">{deal.productName}</h3>
-              <p className="mt-1 text-xs text-slate-500">
-                {deal.quantity}  {deal.price}
-              </p>
-            </div>
-            <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-              Verified
-            </span>
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,37,64,0.10),rgba(10,37,64,0.55))]" />
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+          <div className={classNames('inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] backdrop-blur', statusTone)}>
+            {statusLabel}
           </div>
+        </div>
+        <div className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#143a6a] shadow-sm backdrop-blur">
+          Verified
+        </div>
+      </div>
 
-          <p className="mt-2 text-sm text-slate-600">Supplier: {deal.supplierCompany}</p>
-
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span>{lastUpdate ? `Last update: ${formatDate(lastUpdate)}` : 'Last update: Today'}</span>
-            <span>{deal.deliveryLocation}</span>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-[1.02rem] font-bold text-[#143a6a]">{deal.productName}</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              {deal.quantity || '—'} {deal.price || '—'}
+            </p>
           </div>
+          <button
+            onClick={() => navigate(`/deal/${deal.id}`)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
+          >
+            Open
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
-          <div className="mt-3 grid grid-cols-4 gap-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 px-3 py-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Supplier</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">{deal.supplierCompany}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-50 px-3 py-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Destination</p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">{deal.deliveryLocation}</p>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+            Last update: {lastUpdate ? formatDate(lastUpdate) : 'Today'}
+          </span>
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+            Next: {deal.status === 'shipping'
+              ? 'Track shipment'
+              : deal.status === 'transport-bidding'
+                ? 'Review documents'
+                : 'Reply to supplier'}
+          </span>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+            <span>Progress</span>
+            <span>{Math.max(1, activeStepIndex + 1)} / {getStatusSteps().length}</span>
+          </div>
+          <div className="mt-2 flex gap-1.5">
             {getStatusSteps().map((step, index) => {
               const completed = activeStepIndex > index;
               const active = activeStepIndex === index;
               return (
-                <div key={step.key} className="flex flex-col items-center gap-1">
-                  <div
-                    className={classNames(
-                      'flex h-8 w-8 items-center justify-center rounded-full border text-[10px] font-black',
-                      completed
-                        ? 'border-emerald-300 bg-emerald-500 text-white'
-                        : active
-                          ? 'border-[#245c9d] bg-[#173b67] text-white'
-                          : 'border-slate-200 bg-slate-50 text-slate-400'
-                    )}
-                  >
-                    {index + 1}
-                  </div>
-                  <div
-                    className={classNames(
-                      'h-1.5 w-full rounded-full',
-                      completed ? 'bg-emerald-400' : active ? 'bg-[#245c9d]' : 'bg-slate-200'
-                    )}
-                  />
-                </div>
+                <div
+                  key={step.key}
+                  className={classNames(
+                    'h-2 flex-1 rounded-full',
+                    completed ? 'bg-emerald-400' : active ? 'bg-[#245c9d]' : 'bg-slate-200'
+                  )}
+                />
               );
             })}
           </div>
-
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <div className="text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Your next step</p>
-              <p className="font-semibold text-slate-900">
-                {deal.status === 'shipping'
-                  ? 'Track shipment'
-                  : deal.status === 'transport-bidding'
-                    ? 'Review documents'
-                    : 'Reply to supplier message'}
-              </p>
-            </div>
-            <button
-              onClick={() => navigate(`/deal/${deal.id}`)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2.5 text-sm font-bold text-white transition hover:translate-y-[-1px] hover:shadow-[0_12px_24px_rgba(36,92,157,0.25)]"
-            >
-              Open deal
-            </button>
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {getStatusSteps().map((step, index) => {
+              const completed = activeStepIndex > index;
+              const active = activeStepIndex === index;
+              return (
+                <div
+                  key={step.key}
+                  className={classNames(
+                    'rounded-xl border px-2 py-1 text-center text-[9px] font-bold uppercase tracking-[0.14em]',
+                    completed
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : active
+                        ? 'border-[#c8d8ea] bg-[#eef5ff] text-[#173b67]'
+                        : 'border-slate-200 bg-slate-50 text-slate-400'
+                  )}
+                >
+                  {step.label}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -303,7 +400,8 @@ function DealCard({ deal, navigate, activeStepIndex }) {
   );
 }
 
-function QuickActionCard({ label, icon: Icon, path, navigate }) {
+function QuickActionCard({ label, icon, path, navigate }) {
+  const ActionIcon = icon;
   return (
     <button
       onClick={() => navigate(path)}
@@ -311,7 +409,7 @@ function QuickActionCard({ label, icon: Icon, path, navigate }) {
     >
       <span className="flex items-center gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#edf5ff] text-[#245c9d]">
-          <Icon className="h-4 w-4" />
+          <ActionIcon className="h-4 w-4" />
         </span>
         {label}
       </span>
@@ -352,8 +450,12 @@ function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState('');
   const [company, setCompany] = useState(null);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [featuredProductsLoading, setFeaturedProductsLoading] = useState(true);
+  const [featuredProductsError, setFeaturedProductsError] = useState('');
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -384,6 +486,24 @@ function DashboardPage() {
       cancelled = true;
     };
   }, [user?.companyId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProducts({ limit: 3 })
+      .then((res) => {
+        if (!cancelled) setFeaturedProducts((res.products || []).slice(0, 3));
+      })
+      .catch((error) => {
+        if (!cancelled) setFeaturedProductsError(error.message || 'Failed to load featured products.');
+      })
+      .finally(() => {
+        if (!cancelled) setFeaturedProductsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const rfqs = getRFQsForUser(user);
   const deals = getDealsForUser(user);
@@ -435,11 +555,17 @@ function DashboardPage() {
   }, [deals, search]);
 
   const quickActions = [
-    { label: 'Create new RFQ', icon: ReceiptText, path: '/request-quote' },
+    { label: 'Create new Deal Request', icon: ReceiptText, path: '/deal-request' },
     { label: 'Browse products', icon: Package, path: '/products' },
     { label: 'Request shipping', icon: ShipWheel, path: '/transport-bids' },
     { label: 'Invite a supplier', icon: Users, path: '/company/setup' },
   ];
+
+  if (role === 'supplier') {
+    quickActions.unshift(
+      { label: 'Add product', icon: Package, path: '/supplier/products/create' }
+    );
+  }
 
   const dealMessages = useMemo(() => {
     const feed = deals.flatMap((deal) =>
@@ -490,6 +616,13 @@ function DashboardPage() {
         : 'bg-sky-50 text-sky-700 border-sky-200';
 
   const supportAvatars = ['AR', 'MS', 'LR'];
+  const handleSidebarNavigate = (path) => {
+    if (path === '/dashboard') {
+      setSidebarCollapsed((current) => !current);
+      return;
+    }
+    navigate(path);
+  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(30,64,175,0.10),_transparent_28%),linear-gradient(180deg,#eef3fa_0%,#f6f9fd_48%,#edf2f8_100%)] text-slate-900">
@@ -504,29 +637,35 @@ function DashboardPage() {
 
       <aside
         className={classNames(
-          'fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col overflow-hidden bg-[linear-gradient(180deg,#0d2340_0%,#12335d_55%,#1f548d_100%)] p-4 text-white shadow-[0_28px_70px_rgba(7,19,39,0.35)] transition-transform duration-300',
+          'fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden bg-[linear-gradient(180deg,#0d2340_0%,#12335d_55%,#1f548d_100%)] text-white shadow-[0_28px_70px_rgba(7,19,39,0.35)] transition-all duration-300',
+          sidebarCollapsed ? 'w-[92px] p-3 lg:w-[92px]' : 'w-[280px] p-4 lg:w-[280px]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         <div className="mb-4 flex items-center justify-between">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Navigation</div>
+          <div className={classNames('text-xs font-semibold uppercase tracking-[0.22em] text-slate-300', sidebarCollapsed ? 'hidden lg:block' : 'block')}>
+            Navigation
+          </div>
           <button
-            onClick={() => setSidebarOpen((current) => !current)}
+            onClick={() => setSidebarCollapsed((current) => !current)}
             className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-white transition hover:bg-white/20"
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {sidebarOpen ? 'Close' : 'Open'}
+            {sidebarCollapsed ? 'Open' : 'Close'}
           </button>
         </div>
 
         <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-3 py-3 text-left transition hover:bg-white/10"
+          onClick={() => handleSidebarNavigate('/dashboard')}
+          className={classNames(
+            'flex items-center rounded-2xl border border-white/10 bg-white/6 text-left transition hover:bg-white/10',
+            sidebarCollapsed ? 'justify-center gap-0 px-2 py-3' : 'gap-3 px-3 py-3'
+          )}
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
             <img src={tradafyLogo} alt="Tradafy" className="h-9 w-9 object-contain" />
           </div>
-          <div>
+          <div className={classNames(sidebarCollapsed ? 'hidden' : 'block')}>
             <div className="text-lg font-semibold tracking-[0.2em]">TRADAFY</div>
             <div className="text-xs text-slate-300">{roleLabel(role)}</div>
           </div>
@@ -538,15 +677,15 @@ function DashboardPage() {
               key={item.path}
               item={item}
               active={isActive(pathname, item.path)}
-              onNavigate={navigate}
-              collapsed={false}
+              onNavigate={handleSidebarNavigate}
+              collapsed={sidebarCollapsed}
             />
           ))}
 
         </div>
 
         <div className="mt-auto space-y-3">
-          <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+          <div className={classNames('rounded-[24px] border border-white/10 bg-white/6 p-4', sidebarCollapsed ? 'hidden lg:block' : 'block')}>
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
                 <Headphones className="h-5 w-5" />
@@ -566,16 +705,16 @@ function DashboardPage() {
 
           <div className="flex justify-center">
             <button
-              onClick={() => setSidebarOpen((current) => !current)}
+              onClick={() => setSidebarCollapsed((current) => !current)}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white transition hover:bg-white/20"
             >
-              <ChevronDown className={classNames('h-4 w-4 transition-transform', sidebarOpen ? 'rotate-180' : '')} />
+              <ChevronDown className={classNames('h-4 w-4 transition-transform', sidebarCollapsed ? 'rotate-90' : 'rotate-180')} />
             </button>
           </div>
         </div>
       </aside>
 
-      <div className="min-h-screen lg:pl-[280px]">
+      <div className={classNames('min-h-screen transition-all duration-300', sidebarCollapsed ? 'lg:pl-[92px]' : 'lg:pl-[280px]')}>
         <div className="mx-auto min-h-screen max-w-[1680px] px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
           <div className="min-h-screen overflow-hidden rounded-[28px] border border-white/70 bg-white/88 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl">
             <header className="border-b border-[#d4e0ee] bg-[linear-gradient(180deg,#ffffff_0%,#f2f7fc_100%)] px-4 py-4 sm:px-6">
@@ -589,7 +728,7 @@ function DashboardPage() {
                     Menu
                   </button>
                   <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => handleSidebarNavigate('/dashboard')}
                     className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#143a6a,#245c9d)] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.24em] text-white"
                   >
                     SUPER WORKSPACE
@@ -654,6 +793,11 @@ function DashboardPage() {
                   Could not load live stats: {statsError}
                 </div>
               ) : null}
+
+              <div className="space-y-4">
+                <CompanyBanner />
+                <PhoneVerificationBanner />
+              </div>
 
               <section className="grid gap-4 xl:grid-cols-[1fr_760px]">
                 <div>
@@ -785,27 +929,33 @@ function DashboardPage() {
               <section className="grid gap-4 xl:grid-cols-[1.34fr_0.66fr]">
                 <div>
                   <div className="mb-3 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-[#143a6a] sm:text-xl">Active Deals</h2>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#143a6a] sm:text-xl">Featured Products</h2>
+                      <p className="mt-0.5 text-sm text-slate-500">Top listings ready to start a deal.</p>
+                    </div>
                     <button
-                      onClick={() => navigate('/deals')}
+                      onClick={() => navigate('/products')}
                       className="text-sm font-medium text-[#245c9d] transition hover:text-[#173b67]"
                     >
-                      View all deals
+                      View all products
                     </button>
                   </div>
-                  <div className="grid gap-4 xl:grid-cols-3">
-                    {activeDeals.length > 0 ? (
-                      activeDeals.map((deal) => (
-                        <DealCard
-                          key={deal.id}
-                          deal={deal}
-                          navigate={navigate}
-                          activeStepIndex={Math.max(0, steps.findIndex((step) => step.key === deal.status))}
-                        />
+                  <div className="space-y-3">
+                    {featuredProductsLoading ? (
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <DashboardProductSkeleton key={index} />
+                      ))
+                    ) : featuredProductsError ? (
+                      <div className="rounded-[20px] border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                        {featuredProductsError}
+                      </div>
+                    ) : featuredProducts.length > 0 ? (
+                      featuredProducts.map((product) => (
+                        <DashboardProductCard key={product._id} product={product} navigate={navigate} />
                       ))
                     ) : (
-                      <div className="rounded-[22px] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm xl:col-span-3">
-                        No active deals match your search right now.
+                      <div className="rounded-[20px] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+                        No featured products are available right now.
                       </div>
                     )}
                   </div>

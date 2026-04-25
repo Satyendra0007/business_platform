@@ -263,7 +263,7 @@ export default function RFQListPage({ incoming = false }) {
 
   return (
     <AppShell
-      title={incoming ? 'Incoming RFQs' : 'My RFQs'}
+      title={incoming ? 'Incoming RFQs' : 'Deal Support'}
       subtitle={
         incoming
           ? 'RFQs from buyers targeting your company. Buyers must convert an RFQ before deal collaboration starts.'

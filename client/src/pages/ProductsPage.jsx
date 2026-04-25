@@ -14,7 +14,9 @@
  *  Pagination   → always-visible count + page buttons when >1 page
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { AppShell, PublicLayout } from '../components/ui';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getProducts, getCategories } from '../lib/productService';
 import ProductHero from '../components/products/ProductHero';
@@ -25,6 +27,7 @@ const LIMIT = 10;
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // ── Products state ─────────────────────────────────────────────────────────
   const [products, setProducts] = useState([]);
@@ -141,7 +144,24 @@ export default function ProductsPage() {
       title="Products"
       subtitle="Browse verified listings with search and filters, then start an RFQ directly from the product that fits."
     >
-      {content}
+      <div className="space-y-5">
+        {user?.roles?.includes('supplier') && (
+          <div className="flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Product tools</p>
+              <h2 className="mt-1 text-[1.1rem] font-bold text-[#143a6a]">Create a new product listing</h2>
+            </div>
+            <button
+              onClick={() => navigate('/supplier/products/create')}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </button>
+          </div>
+        )}
+        {content}
+      </div>
     </AppShell>
   );
 }

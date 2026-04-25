@@ -135,7 +135,7 @@ export default function EditRFQPage() {
           <Package className="h-12 w-12 text-rose-200" />
           <p className="max-w-md text-lg font-bold text-slate-800">{configError || 'RFQ not found'}</p>
           <button onClick={() => navigate('/my-rfqs')} className="flex items-center gap-2 rounded-2xl bg-[#0A2540] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#143a6a]">
-            <ArrowLeft className="h-4 w-4" /> Back to My RFQs
+            <ArrowLeft className="h-4 w-4" /> Back to Deal Support
           </button>
         </div>
       </AppShell>

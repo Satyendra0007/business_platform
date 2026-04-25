@@ -12,6 +12,7 @@ import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 
 import RequestQuotePage from './components/RequestQuotePage';
+import DealRequestPage from './pages/DealRequestPage';
 import RFQListPage from './components/RFQListPage';
 import EditRFQPage from './pages/EditRFQPage';
 import DealsPage from './components/DealsPage';
@@ -25,6 +26,13 @@ import EditProductPage from './pages/EditProductPage';
 import CompanyDetailPage from './pages/CompanyDetailPage';
 import EditCompanyPage from './pages/EditCompanyPage';
 import DealSupportPage from './components/DealSupportPage';
+import DealVerificationPage from './pages/DealVerificationPage';
+import DealSupportLegalReviewPage from './pages/DealSupportLegalReviewPage';
+import DealSupportLegalSupportPage from './pages/DealSupportLegalSupportPage';
+import DealSupportTradifyLabelPage from './pages/DealSupportTradifyLabelPage';
+import DealSupportCustomServicePage from './pages/DealSupportCustomServicePage';
+import DealSupportCredibilityPage from './pages/DealSupportCredibilityPage';
+import DealSupportPrivateLabelingPage from './pages/DealSupportPrivateLabelingPage';
 import VerifyPhonePage from './pages/VerifyPhonePage';
 import PhoneVerifyPage from './pages/PhoneVerifyPage';
 import PricingPage     from './pages/PricingPage';
@@ -92,6 +100,7 @@ export default function App() {
 
       {/* ── Authenticated ── */}
       <Route element={<RequireAuth />}>
+        <Route path="/deal-request" element={<DealRequestPage />} />
         <Route path="/dashboard"              element={<DashboardPage />} />
         <Route path="/company/setup"           element={<CompanySetupPage />} />
         <Route path="/company/:id"             element={<CompanyDetailPage />} />
@@ -107,6 +116,13 @@ export default function App() {
         <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
         <Route path="/phone/verify"             element={<PhoneVerifyPage />} />
         <Route path="/billing/success"          element={<BillingSuccessPage />} />
+        <Route path="/deal-support/verification" element={<DealVerificationPage />} />
+        <Route path="/deal-support/legal-review" element={<DealSupportLegalReviewPage />} />
+        <Route path="/deal-support/legal-support" element={<DealSupportLegalSupportPage />} />
+        <Route path="/deal-support/tradify-label" element={<DealSupportTradifyLabelPage />} />
+        <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
+        <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
+        <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
       </Route>
 
       {/* ── Admin only ── */}

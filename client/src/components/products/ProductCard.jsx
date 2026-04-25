@@ -115,7 +115,7 @@ export default function ProductCard({ product }) {
             onClick={() => navigate(`/product/${product._id}`)}
             className="rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
           >
-            View
+            Start Deal
           </button>
           {/* Quote button — buyers only (public visitors shown login redirect) */}
           {(!user || user.roles?.includes('buyer')) && (

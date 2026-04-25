@@ -32,7 +32,7 @@ export const dealSupportSections = [
     icon: ShieldCheck,
     badge: 'Trust Layer',
     cards: [
-      { component: GetVerifiedCard, actionKey: 'company-setup' },
+      { component: GetVerifiedCard, actionKey: 'verification-form' },
       { component: GetVerifiedTradifyLabelCard, actionKey: 'tradify-label' },
     ],
   },
@@ -74,6 +74,12 @@ export function getDealSupportAction(actionKey) {
         kind: 'navigate',
         to: '/company/setup',
       };
+    case 'verification-form':
+      return {
+        label: 'Get verification',
+        kind: 'navigate',
+        to: '/deal-support/verification',
+      };
     case 'business-growth':
       return {
         label: 'Browse products',
@@ -82,45 +88,39 @@ export function getDealSupportAction(actionKey) {
       };
     case 'legal-review':
       return {
-        label: 'Request review',
-        kind: 'mailto',
-        subject: 'Legal document review request',
-        body: 'Hi Tradify team,\n\nI would like to request a legal document review for an active deal.',
+        label: 'Open review form',
+        kind: 'navigate',
+        to: '/deal-support/legal-review',
       };
     case 'legal-support':
       return {
-        label: 'Contact legal desk',
-        kind: 'mailto',
-        subject: 'Legal support request',
-        body: 'Hi Tradify team,\n\nI need legal support for an active trade workflow.',
+        label: 'Open legal support',
+        kind: 'navigate',
+        to: '/deal-support/legal-support',
       };
     case 'tradify-label':
       return {
-        label: 'Start verification',
-        kind: 'mailto',
-        subject: 'Tradify label verification request',
-        body: 'Hi Tradify team,\n\nI would like to start Tradify label verification for my company.',
+        label: 'Open label form',
+        kind: 'navigate',
+        to: '/deal-support/tradify-label',
       };
     case 'custom-service':
       return {
-        label: 'Assign manager',
-        kind: 'mailto',
-        subject: 'Custom service contact request',
-        body: 'Hi Tradify team,\n\nI would like a dedicated service manager for an active deal.',
+        label: 'Open service form',
+        kind: 'navigate',
+        to: '/deal-support/custom-service',
       };
     case 'credibility-report':
       return {
-        label: 'Request report',
-        kind: 'mailto',
-        subject: 'Credibility report request',
-        body: 'Hi Tradify team,\n\nI would like to request a credibility report for an active deal.',
+        label: 'Open report form',
+        kind: 'navigate',
+        to: '/deal-support/credibility-report',
       };
     case 'private-labeling':
       return {
-        label: 'Contact us',
-        kind: 'mailto',
-        subject: 'Private labeling support request',
-        body: 'Hi Tradify team,\n\nI would like to explore private labeling support for my business.',
+        label: 'Open support form',
+        kind: 'navigate',
+        to: '/deal-support/private-labeling',
       };
     default:
       return null;

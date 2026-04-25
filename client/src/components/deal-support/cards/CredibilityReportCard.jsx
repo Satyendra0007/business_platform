@@ -2,7 +2,7 @@ import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import DealSupportCardShell from '../DealSupportCardShell';
 
-export default function CredibilityReportCard({ action }) {
+export default function CredibilityReportCard({ action, compact = false, onOpenForm }) {
   return (
     <DealSupportCardShell
       icon={BarChart3}
@@ -11,7 +11,9 @@ export default function CredibilityReportCard({ action }) {
       cta="Request Report"
       pricing="From €250"
       marker="COFAS"
+      compact={compact}
       action={action}
+      onOpenForm={onOpenForm}
     />
   );
 }

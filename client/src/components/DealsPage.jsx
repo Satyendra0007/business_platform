@@ -127,10 +127,10 @@ function EmptyState({ navigate, isShippingAgent }) {
       </div>
       {!isShippingAgent && (
         <button
-          onClick={() => navigate('/my-rfqs')}
+          onClick={() => navigate('/deal-support')}
           className="flex items-center gap-2 rounded-2xl bg-[#0A2540] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#143a6a]"
         >
-          View My RFQs <ArrowRight className="h-4 w-4" />
+          Open Deal Support <ArrowRight className="h-4 w-4" />
         </button>
       )}
     </div>
@@ -143,6 +143,7 @@ export default function DealsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isShippingAgent = user?.roles?.includes('shipping_agent');
+  const isSupplier = user?.roles?.includes('supplier');
 
   const [deals, setDeals] = useState([]);
   const [total, setTotal] = useState(0);
@@ -170,7 +171,7 @@ export default function DealsPage() {
 
   return (
     <AppShell
-      title="Deals"
+      title={isShippingAgent ? 'Shipment Deals' : 'Deal Request'}
       subtitle={
         isShippingAgent
           ? 'Assigned shipment workspaces only. Open awarded deals to track freight progress without exposing unrelated trades.'
@@ -178,6 +179,22 @@ export default function DealsPage() {
       }
     >
       <div className="space-y-5">
+        {isSupplier && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_16px_44px_rgba(15,23,42,0.05)]">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Workspace tools</p>
+              <h3 className="mt-1 text-[1.15rem] font-bold text-[#143a6a]">Quick product action</h3>
+            </div>
+            <button
+              onClick={() => navigate('/supplier/products/create')}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            >
+              <Package className="h-4 w-4" />
+              Add Product
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
             <AlertCircle className="h-5 w-5 shrink-0 text-rose-500" />

@@ -190,10 +190,10 @@ export default function RequestQuotePage() {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => navigate('/my-rfqs')}
+              onClick={() => navigate('/deal-support')}
               className="rounded-2xl bg-[#0A2540] px-6 py-3 text-sm font-bold text-white hover:bg-[#143a6a]"
             >
-              View My RFQs
+              Open Deal Support
             </button>
             <button
               onClick={() => navigate('/products')}

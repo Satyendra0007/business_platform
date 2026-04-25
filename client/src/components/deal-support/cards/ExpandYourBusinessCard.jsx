@@ -2,7 +2,7 @@ import React from 'react';
 import { Users } from 'lucide-react';
 import DealSupportCardShell from '../DealSupportCardShell';
 
-export default function ExpandYourBusinessCard({ action }) {
+export default function ExpandYourBusinessCard({ action, compact = false, onOpenForm }) {
   return (
     <DealSupportCardShell
       icon={Users}
@@ -11,7 +11,9 @@ export default function ExpandYourBusinessCard({ action }) {
       cta="Get Started"
       pricing="From €250"
       marker="PRO"
+      compact={compact}
       action={action}
+      onOpenForm={onOpenForm}
     />
   );
 }

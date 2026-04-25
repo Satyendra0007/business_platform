@@ -1,21 +1,20 @@
 import { LayoutDashboard, Package, ReceiptText, BriefcaseBusiness, ShieldCheck, ShipWheel } from 'lucide-react';
 
-export const privatePaths = ['/dashboard', '/request-quote', '/my-rfqs', '/incoming-rfqs', '/deals', '/deal', '/transport-bids', '/deal-support', '/admin', '/supplier/products'];
+export const privatePaths = ['/dashboard', '/deal-request', '/request-quote', '/my-rfqs', '/incoming-rfqs', '/deals', '/deal', '/transport-bids', '/deal-support', '/admin', '/supplier/products'];
 
 export const navByRole = {
   buyer: [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Products', path: '/products' },
-    { label: 'My RFQs', path: '/my-rfqs' },
-    { label: 'My Deals', path: '/deals' },
-    { label: 'Transport Bids', path: '/transport-bids' },
     { label: 'Deal Support', path: '/deal-support' },
+    { label: 'Deal Request', path: '/deals' },
+    { label: 'Transport Bids', path: '/transport-bids' },
   ],
   supplier: [
     { label: 'Dashboard',     path: '/dashboard' },
     { label: 'Products',      path: '/products' },
     { label: 'Incoming RFQs', path: '/incoming-rfqs' },
-    { label: 'My Deals',      path: '/deals' },
+    { label: 'Deal Request',  path: '/deals' },
     { label: 'Transport Bids',path: '/transport-bids' },
     { label: 'Deal Support',  path: '/deal-support' },
   ],

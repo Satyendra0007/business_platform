@@ -3,7 +3,7 @@
  * Right sidebar column — deal milestone tracker + quick access links.
  */
 import React from 'react';
-import { ArrowRight, BadgeDollarSign, FileText, Package, PackageCheck, ShipWheel } from 'lucide-react';
+import { ArrowRight, BadgeDollarSign, FileText, Package, PackageCheck, ShipWheel, Plus } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -63,8 +63,16 @@ export function QuickAccess() {
       path: role === 'supplier' ? '/supplier/products' : '/products',
       style: { background: 'linear-gradient(135deg,#1d4d86,#2b66ad)' },
     },
+    ...(role === 'supplier'
+      ? [{
+          label: 'Add Product',
+          icon: Plus,
+          path: '/supplier/products/create',
+          style: { background: 'linear-gradient(135deg,#0f2846,#173b67)' },
+        }]
+      : []),
     {
-      label: 'Live Deals',
+      label: 'Deal Request',
       icon: ShipWheel,
       path: '/deals',
       style: { background: 'linear-gradient(135deg,#173b67,#245c9d)' },
@@ -76,9 +84,9 @@ export function QuickAccess() {
       style: { background: 'linear-gradient(135deg,#295f99,#3f79b8)' },
     },
     {
-      label: role === 'supplier' ? 'Review RFQs' : role === 'admin' ? 'Control Center' : 'My RFQs',
+      label: role === 'supplier' ? 'Review RFQs' : role === 'admin' ? 'Control Center' : 'Deal Support',
       icon: PackageCheck,
-      path: role === 'supplier' ? '/incoming-rfqs' : role === 'admin' ? '/admin' : '/my-rfqs',
+      path: role === 'supplier' ? '/incoming-rfqs' : role === 'admin' ? '/admin' : '/deal-support',
       style: { background: 'linear-gradient(135deg,#346aa5,#4b84c2)' },
     },
   ];
