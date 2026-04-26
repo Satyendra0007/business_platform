@@ -3,7 +3,7 @@
  * Right sidebar column — deal milestone tracker + quick access links.
  */
 import React from 'react';
-import { ArrowRight, BadgeDollarSign, FileText, Package, PackageCheck, ShipWheel, Plus } from 'lucide-react';
+import { ArrowRight, BadgeDollarSign, BriefcaseBusiness, FileText, Package, PackageCheck, Plus } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -71,12 +71,14 @@ export function QuickAccess() {
           style: { background: 'linear-gradient(135deg,#0f2846,#173b67)' },
         }]
       : []),
-    {
-      label: 'Deal Request',
-      icon: ShipWheel,
-      path: '/deals',
-      style: { background: 'linear-gradient(135deg,#173b67,#245c9d)' },
-    },
+    ...(role === 'supplier'
+      ? []
+      : [{
+          label: 'Deals',
+          icon: BriefcaseBusiness,
+          path: '/deals',
+          style: { background: 'linear-gradient(135deg,#173b67,#245c9d)' },
+        }]),
     {
       label: role === 'shipping_agent' ? 'Bid On Lanes' : 'Transport Bids',
       icon: BadgeDollarSign,
@@ -84,9 +86,9 @@ export function QuickAccess() {
       style: { background: 'linear-gradient(135deg,#295f99,#3f79b8)' },
     },
     {
-      label: role === 'supplier' ? 'Review RFQs' : role === 'admin' ? 'Control Center' : 'Deal Support',
+      label: role === 'admin' ? 'Control Center' : 'Deal Support',
       icon: PackageCheck,
-      path: role === 'supplier' ? '/incoming-rfqs' : role === 'admin' ? '/admin' : '/deal-support',
+      path: role === 'admin' ? '/admin' : '/deal-support',
       style: { background: 'linear-gradient(135deg,#346aa5,#4b84c2)' },
     },
   ];
@@ -98,7 +100,9 @@ export function QuickAccess() {
         <h3 className="mt-2 text-[1.4rem] font-semibold tracking-[-0.02em] text-[#143a6a]">Quick access</h3>
       </div>
       <div className="mt-5 space-y-3">
-        {links.map(({ label, icon: Icon, path, style }) => (
+        {links.map(({ label, icon, path, style }) => {
+          const LinkIcon = icon;
+          return (
           <button
             key={label}
             onClick={() => navigate(path)}
@@ -106,12 +110,13 @@ export function QuickAccess() {
             className="flex w-full items-center justify-between rounded-[18px] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
           >
             <span className="flex items-center gap-2">
-              <Icon className="h-4 w-4" />
+              <LinkIcon className="h-4 w-4" />
               {label}
             </span>
             <ArrowRight className="h-4 w-4 opacity-70" />
           </button>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

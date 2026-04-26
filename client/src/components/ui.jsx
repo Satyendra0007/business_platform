@@ -155,7 +155,7 @@ export function Footer() {
             <h4 className="text-white font-bold text-sm uppercase tracking-widest">Solutions</h4>
             <ul className="space-y-4 text-sm">
               <li><button onClick={() => navigate('/products')} className="hover:text-white transition-colors">Bulk Marketplace</button></li>
-              <li><button className="hover:text-white transition-colors cursor-not-allowed">Logistics Hub</button></li>
+              <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Users</button></li>
               <li><button className="hover:text-white transition-colors cursor-not-allowed">Deal Management</button></li>
               <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Suppliers</button></li>
             </ul>
@@ -183,7 +183,7 @@ export function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold">Email</p>
-                  <p className="text-sm text-white font-semibold">global@tradafy.app</p>
+                  <p className="text-sm text-white font-semibold">Start@tradafy.eu</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -192,7 +192,7 @@ export function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold">Headquarters</p>
-                  <p className="text-sm text-white font-semibold">Dubai International Financial Centre</p>
+                  <p className="text-sm text-white font-semibold">Belgium , Brussels</p>
                 </div>
               </div>
             </div>

@@ -428,8 +428,8 @@ function LandingPage() {
               </Reveal>
               <div className="grid gap-2.5 sm:grid-cols-2">
                 {[
-                  { title: 'Without structure', tone: 'text-rose-200', icon: XCircle, items: ['Scattered emails', 'Lost documents', 'Slow approvals'] },
-                  { title: 'With TRADAFY', tone: 'text-emerald-300', icon: CheckCircle2, items: ['One shared workspace', 'Transport bidding built in', 'Real-time shipment context'] }
+                  { title: 'Without Tradafy', tone: 'text-rose-200', icon: XCircle, items: ['Lost deals', 'Miscommunication', 'Delays'] },
+                  { title: 'With TRADAFY', tone: 'text-emerald-300', icon: CheckCircle2, items: ['Structured deals', 'Real-time coordination', 'Faster execution'] }
                 ].map((group, index) => (
                   <Reveal key={group.title} delay={200 + index * 160} effect="up">
                     <div className="rounded-[22px] border border-white/10 bg-white/10 p-3.5 backdrop-blur-md shadow-xl">

@@ -122,7 +122,7 @@ function buildOverviewMetrics(role, stats, summary) {
       action: '/deals',
     },
     {
-      label: role === 'shipping_agent' ? 'Transport Tenders' : 'RFQs Sent',
+      label: role === 'shipping_agent' ? 'Transport Tenders' : 'Deal Requests Sent',
       value:
         role === 'shipping_agent'
           ? stats?.transportTenders ?? summary.transportTenders
@@ -987,8 +987,8 @@ function DashboardPage() {
               <section className="grid gap-4 xl:grid-cols-[1.05fr_1.1fr_0.95fr]">
                 <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <h3 className="text-[1.1rem] font-bold text-[#143a6a]">RFQ Overview</h3>
-                    <button className="text-sm font-medium text-[#245c9d]">View all RFQs</button>
+                    <h3 className="text-[1.1rem] font-bold text-[#143a6a]">Deal Request Overview</h3>
+                    <button className="text-sm font-medium text-[#245c9d]">View all Deal Requests</button>
                   </div>
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     {overviewCards.map((card) => {
@@ -1002,7 +1002,7 @@ function DashboardPage() {
                           <div className="mt-4 flex items-center justify-between gap-3">
                             <div>
                               <p className="text-3xl font-black text-[#0A2540]">{card.value}</p>
-                              <p className="mt-1 text-xs text-slate-500">RFQs</p>
+                              <p className="mt-1 text-xs text-slate-500">Deal Requests</p>
                             </div>
                             <div className={classNames('flex h-12 w-12 items-center justify-center rounded-2xl', card.tone)}>
                               <Icon className="h-5 w-5" />

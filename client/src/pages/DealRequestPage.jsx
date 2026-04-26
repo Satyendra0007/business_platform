@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { AppShell } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
-import { createRFQ } from '../lib/rfqService';
+import { createRFQ, getIncomingRFQs } from '../lib/rfqService';
 
 const CATEGORY_OPTIONS = [
   'Food & Agriculture',
@@ -86,6 +86,40 @@ function Select(props) {
   );
 }
 
+function SupplierRequestCard({ rfq, navigate }) {
+  const createdDate = rfq.createdAt
+    ? new Date(rfq.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '—';
+
+  const canOpenDeal = Boolean(rfq.dealId);
+
+  return (
+    <article className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-[1rem] font-bold text-[#143a6a]">{rfq.productName || 'Deal Request'}</h3>
+            <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-sky-700">
+              Deal Request
+            </span>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {rfq.category || 'Category pending'} · {rfq.quantity ? String(rfq.quantity) : 'Quantity pending'} · {createdDate}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => (canOpenDeal ? navigate(`/deal/${rfq.dealId}`) : navigate('/deal-support'))}
+          className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3.5 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
+        >
+          {canOpenDeal ? 'Open Deal' : 'Review'}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export default function DealRequestPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -94,8 +128,12 @@ export default function DealRequestPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [incomingLoading, setIncomingLoading] = useState(true);
+  const [incomingError, setIncomingError] = useState('');
 
   const canCreate = user?.roles?.includes('buyer');
+  const isSupplier = user?.roles?.includes('supplier');
 
   const requestSummary = useMemo(() => {
     return [
@@ -106,10 +144,97 @@ export default function DealRequestPage() {
     ];
   }, [form]);
 
+  const loadIncomingRequests = useCallback(() => {
+    if (!isSupplier) return;
+    let cancelled = false;
+    setIncomingLoading(true);
+    setIncomingError('');
+    getIncomingRFQs({ page: 1, limit: 6 })
+      .then((result) => {
+        if (!cancelled) setIncomingRequests(result.rfqs || []);
+      })
+      .catch((err) => {
+        if (!cancelled) setIncomingError(err.response?.data?.message || err.message || 'Failed to load deal requests.');
+      })
+      .finally(() => {
+        if (!cancelled) setIncomingLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSupplier]);
+
+  useEffect(() => {
+    if (!isSupplier) return undefined;
+    return loadIncomingRequests();
+  }, [isSupplier, loadIncomingRequests]);
+
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError('');
   };
+
+  if (isSupplier) {
+    const openCount = incomingRequests.filter((request) => !request.dealId).length;
+    const convertedCount = incomingRequests.filter((request) => request.dealId).length;
+
+    return (
+      <AppShell
+        title="Deal Request"
+        subtitle="Incoming deal requests from buyers targeting your company."
+      >
+        <div className="space-y-5">
+          <section className="grid gap-3 sm:grid-cols-3">
+            {[
+              { label: 'Total Requests', value: incomingRequests.length },
+              { label: 'Open Requests', value: openCount },
+              { label: 'Converted', value: convertedCount },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
+                <p className="mt-2 text-3xl font-black text-[#0A2540]">{item.value}</p>
+              </div>
+            ))}
+          </section>
+
+          {incomingError && (
+            <div className="flex items-center gap-3 rounded-[24px] border border-rose-100 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+              {incomingError}
+              <button onClick={loadIncomingRequests} className="ml-auto text-xs font-semibold underline hover:no-underline">
+                Retry
+              </button>
+            </div>
+          )}
+
+          {incomingLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
+              ))}
+            </div>
+          ) : incomingRequests.length > 0 ? (
+            <div className="space-y-3">
+              {incomingRequests.map((request) => (
+                <SupplierRequestCard key={request._id} rfq={request} navigate={navigate} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4 rounded-[30px] border border-dashed border-slate-200 bg-white py-20 text-center">
+              <Package className="h-12 w-12 text-slate-200" />
+              <div>
+                <p className="text-xl font-bold text-slate-700">No incoming deal requests yet</p>
+                <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                  Buyers have not sent any deal requests to your company yet.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </AppShell>
+    );
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -205,10 +330,10 @@ export default function DealRequestPage() {
               { icon: FileText, label: 'Commercial scope', copy: 'Add product name, category, and quantity.' },
               { icon: Globe, label: 'Logistics context', copy: 'Set destination, incoterm, and timing.' },
               { icon: ShieldCheck, label: 'Professional routing', copy: 'The request can be reviewed in Deal Support.' },
-            ].map(({ icon: Icon, label, copy }) => (
+            ].map(({ icon, label, copy }) => (
               <div key={label} className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-                  <Icon className="h-4.5 w-4.5 text-white" />
+                  {React.createElement(icon, { className: 'h-4.5 w-4.5 text-white' })}
                 </div>
                 <div>
                   <p className="font-bold text-white">{label}</p>

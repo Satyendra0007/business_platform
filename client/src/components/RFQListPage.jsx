@@ -1,5 +1,5 @@
 /**
- * RFQListPage.jsx — Buyer (My RFQs) and Supplier (Incoming RFQs) views.
+ * RFQListPage.jsx — Buyer (My RFQs) and Supplier (Deal Requests) views.
  *
  * Prop: incoming {bool} — when true, shows supplier's incoming RFQs
  *
@@ -8,7 +8,7 @@
  *  Supplier → GET /api/rfq?incoming=true        (supplierCompanyId = user.companyId)
  *
  * Note: The backend getRFQs currently filters by buyerCompanyId only.
- * Incoming RFQs (supplier view) would need a dedicated backend query — for now
+ * Incoming deal requests (supplier view) would need a dedicated backend query — for now
  * we show an appropriate empty-state message.
  */
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,7 +18,6 @@ import {
   Clock, XCircle, RefreshCcw, ArrowRight, Package
 } from 'lucide-react';
 import { AppShell } from './ui';
-import { useAuth } from '../hooks/useAuth';
 import { getMyRFQs, getIncomingRFQs, convertRFQToDeal, closeRFQ } from '../lib/rfqService';
 import Pagination from './common/Pagination';
 
@@ -56,7 +55,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
   const isConverted = rfq.status === 'converted';
 
   const handleConvert = async () => {
-    if (!window.confirm('Convert this RFQ into a live Deal workspace?')) return;
+    if (!window.confirm('Convert this deal request into a live Deal workspace?')) return;
     setConverting(true);
     setActionError('');
     try {
@@ -71,7 +70,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
   };
 
   const handleClose = async () => {
-    if (!window.confirm('Close this RFQ? It cannot be reopened.')) return;
+    if (!window.confirm('Close this deal request? It cannot be reopened.')) return;
     setClosing(true);
     setActionError('');
     try {
@@ -97,7 +96,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
             <FileText className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">RFQ</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{incoming ? 'Deal Request' : 'RFQ'}</p>
             <p className="font-bold text-slate-800">{rfq.productName || '—'}</p>
           </div>
         </div>
@@ -122,12 +121,12 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
       {/* Supplier note */}
       <div className="mx-6 mb-5 rounded-[20px] bg-[#f5f9fd] px-4 py-3 text-xs leading-5 text-slate-500">
         {incoming
-          ? 'This buyer is requesting your product. Coordinate offline — the deal chat opens after the buyer converts this RFQ.'
+          ? 'This buyer is requesting your product. Coordinate offline — the deal chat opens after the buyer converts this deal request.'
           : isConverted
-          ? 'This RFQ has been converted into a live deal workspace.'
+          ? 'This deal request has been converted into a live deal workspace.'
           : rfq.status === 'closed'
-          ? 'This RFQ was closed and cannot be converted.'
-          : 'RFQ is still a request only. Convert it when you\'re ready to negotiate.'}
+          ? 'This deal request was closed and cannot be converted.'
+          : 'This deal request is still a request only. Convert it when you\'re ready to negotiate.'}
       </div>
 
       {/* Error */}
@@ -164,7 +163,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
             onClick={() => onEdit(rfq)}
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
-            Edit RFQ
+            Edit Request
           </button>
         )}
 
@@ -175,7 +174,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit }) {
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
           >
             {closing ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-            {closing ? 'Closing…' : 'Close RFQ'}
+            {closing ? 'Closing…' : 'Close Request'}
           </button>
         )}
       </div>
@@ -193,12 +192,12 @@ function EmptyState({ incoming, navigate }) {
       </div>
       <div>
         <p className="text-xl font-bold text-slate-700">
-          {incoming ? 'No incoming RFQs yet' : 'No RFQs submitted yet'}
+          {incoming ? 'No incoming deal requests yet' : 'No deal requests submitted yet'}
         </p>
         <p className="mt-2 max-w-sm text-sm text-slate-500">
           {incoming
-            ? 'RFQs from buyers targeting your company will appear here once submitted.'
-            : 'Browse the product catalog and submit your first quote request to a supplier.'}
+            ? 'Deal requests from buyers targeting your company will appear here once submitted.'
+            : 'Browse the product catalog and submit your first deal request to a supplier.'}
         </p>
       </div>
       {!incoming && (
@@ -218,7 +217,6 @@ function EmptyState({ incoming, navigate }) {
 const LIMIT = 10;
 
 export default function RFQListPage({ incoming = false }) {
-  const { user }   = useAuth();
   const navigate   = useNavigate();
 
   const [rfqs,       setRFQs]      = useState([]);
@@ -263,11 +261,11 @@ export default function RFQListPage({ incoming = false }) {
 
   return (
     <AppShell
-      title={incoming ? 'Incoming RFQs' : 'Deal Support'}
+      title={incoming ? 'Deal Request' : 'Deal Support'}
       subtitle={
         incoming
-          ? 'RFQs from buyers targeting your company. Buyers must convert an RFQ before deal collaboration starts.'
-          : 'Track your quote requests. Convert an open RFQ into a live deal workspace when you\'re ready to negotiate.'
+          ? 'Deal requests from buyers targeting your company. Buyers must convert a deal request before deal collaboration starts.'
+          : 'Track your deal requests. Convert an open request into a live deal workspace when you\'re ready to negotiate.'
       }
     >
       <div className="space-y-5">
@@ -323,7 +321,7 @@ export default function RFQListPage({ incoming = false }) {
               {/* Show empty message if filter matches nothing but rfqs exist */}
               {rfqs.filter(r => filter === 'all' || r.status === filter).length === 0 && (
                 <div className="rounded-[28px] border border-dashed border-slate-200 py-16 text-center text-sm font-medium text-slate-500">
-                  No RFQs match the selected filter.
+                  No deal requests match the selected filter.
                 </div>
               )}
             </div>

@@ -6,7 +6,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { formatDate } from '../../lib/tradafyData';
 
 function ActivityCard({ card, index }) {
   const navigate = useNavigate();
@@ -66,7 +65,7 @@ function EmptyActivity({ role }) {
         <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
           {role === 'shipping_agent'
             ? 'No transport tenders are open right now. Newly agreed deals will appear here automatically for freight bidding.'
-            : 'There are no live requests yet. Create or convert an RFQ to populate this operations panel.'}
+            : 'There are no live requests yet. Create or convert a deal request to populate this operations panel.'}
         </p>
       </div>
     </div>
@@ -79,7 +78,7 @@ export default function OpenActivity({ requestCards }) {
   const role = user?.roles?.[0] || user?.role;
 
   const viewAllPath =
-    role === 'shipping_agent' ? '/transport-bids' : role === 'supplier' ? '/incoming-rfqs' : '/deals';
+    role === 'shipping_agent' ? '/transport-bids' : role === 'supplier' ? '/deal-request' : '/deals';
 
   return (
     <section className="rounded-[28px] border border-[#d8e2ef] bg-white p-6 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
@@ -87,7 +86,11 @@ export default function OpenActivity({ requestCards }) {
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">Open Activity</p>
           <h3 className="mt-2 text-2xl font-bold tracking-tight text-[#143a6a]">
-            {role === 'shipping_agent' ? 'Open Transport Tenders' : 'Open Shipping Requests'}
+            {role === 'shipping_agent'
+              ? 'Open Transport Tenders'
+              : role === 'supplier'
+                ? 'Open Deal Requests'
+                : 'Open Shipping Requests'}
           </h3>
         </div>
         <button
