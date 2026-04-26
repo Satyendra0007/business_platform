@@ -1140,7 +1140,7 @@ function DashboardPage() {
                     <div>
                       <p className="font-bold text-slate-900">Increase success rate</p>
                       <p className="text-sm text-slate-600">
-                        Deals with Tradafication close 3x faster and with 70% less risk.
+                        Deals with Tradafication close 3x faster and with 99% less risk.
                       </p>
                     </div>
                   </div>

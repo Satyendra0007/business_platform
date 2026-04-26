@@ -83,13 +83,13 @@ export default function GetVerifiedTradifyLabelCard({ compact = false, action, o
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[0.96rem] font-semibold tracking-[-0.02em] text-slate-800">Get Verified - Tradify Label</h3>
+              <h3 className="text-[0.96rem] font-semibold tracking-[-0.02em] text-slate-800">Get Tradified - Tradafy Label</h3>
               <span className="rounded-full border border-amber-100 bg-amber-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-amber-700">
                 Premium
               </span>
             </div>
             <p className="mt-1 text-[0.78rem] leading-5 text-slate-500">
-              Apply for the Tradify label with a polished compliance and brand verification request.
+              Apply for the Tradafy label with a polished compliance and brand verification request.
             </p>
             <button
               type="button"

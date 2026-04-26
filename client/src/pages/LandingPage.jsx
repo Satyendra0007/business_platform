@@ -38,6 +38,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'Belgium',
     moq: '1 container',
+    badges: ['Urgent deal'],
     highlights: ['70-85 mm caliber', '18 kg cartons or bulk bins']
   },
   {
@@ -48,6 +49,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'Belgium',
     moq: '1 container',
+    badges: ['Active deal'],
     highlights: ['55-75 mm caliber', '12.5 kg export cartons']
   },
   {
@@ -58,6 +60,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'India',
     moq: '500 MT',
+    badges: ['High demand'],
     highlights: ['5% max broken', '50 kg PP bags or bulk']
   },
   {
@@ -68,6 +71,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'Belgium / Netherlands',
     moq: '1 pallet',
+    badges: ['Life Opportunities'],
     highlights: ['Grade A export quality', '30 egg trays or 360/carton']
   },
   {
@@ -78,6 +82,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'Kenya / India',
     moq: '500 KG',
+    badges: ['Three Recent requests'],
     highlights: ['9-12 kg carcasses', 'Halal certified and chilled']
   },
   {
@@ -88,9 +93,27 @@ const featuredProducts = [
     price: 'On request',
     origin: 'India / Vietnam / Middle East',
     moq: '10,000 MT',
+    badges: ['Top listing', 'Priorotise Supplier'],
     highlights: ['Bulk vessel supply', 'Suitable for OPC grinding']
   },
 ];
+
+const productBadgeStyles = {
+  'Urgent deal':
+    'border border-rose-200 bg-gradient-to-r from-rose-500 to-orange-400 text-white shadow-[0_10px_24px_rgba(244,63,94,0.22)]',
+  'Active deal':
+    'border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_10px_24px_rgba(16,185,129,0.12)]',
+  'High demand':
+    'border border-amber-200 bg-amber-50 text-amber-800 shadow-[0_10px_24px_rgba(245,158,11,0.14)]',
+  'Life Opportunities':
+    'border border-sky-200 bg-sky-50 text-sky-700 shadow-[0_10px_24px_rgba(14,165,233,0.12)]',
+  'Three Recent requests':
+    'border border-cyan-200 bg-cyan-50 text-cyan-700 shadow-[0_10px_24px_rgba(6,182,212,0.12)]',
+  'Top listing':
+    'border border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]',
+  'Priorotise Supplier':
+    'border border-violet-200 bg-violet-50 text-violet-700 shadow-[0_10px_24px_rgba(139,92,246,0.12)]'
+};
 
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
 
@@ -330,7 +353,7 @@ function LandingPage() {
       <div className="space-y-10 pb-20 sm:space-y-14 sm:pb-24 lg:space-y-16 lg:pb-32">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
-        <section className="relative flex min-h-[55vh] lg:min-h-[60vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-8 pb-24 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-28 lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
+        <section className="relative flex min-h-[55vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-7 pb-10 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-12 lg:min-h-[60vh] lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
           style={{
             background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
             backgroundSize: 'cover',
@@ -338,17 +361,17 @@ function LandingPage() {
           }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.22),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.2),transparent_26%)] pointer-events-none" />
           <Reveal effect="up">
-            <div className="relative max-w-4xl space-y-4 sm:space-y-6">
+            <div className="relative max-w-4xl space-y-4 sm:space-y-6 lg:pr-6">
               <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
                 <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
                 <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
               </div>
-              <h1 className="text-4xl font-black leading-[0.95] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
-                Stop losing deals to <br className="hidden sm:block" />
+              <h1 className="max-w-3xl text-[2.35rem] font-black leading-[0.98] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
+                Stop losing deals due to <br className="hidden sm:block" />
                 <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
               </h1>
-              <p className="max-w-2xl text-lg font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
-                "Trade smarter. Close faster."
+              <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
+                Trade smarter. Close faster.
               </p>
               <div className="flex flex-col gap-2.5 text-sm font-bold sm:gap-4 sm:text-base lg:text-lg">
                 <div className="flex items-center gap-3">
@@ -365,11 +388,11 @@ function LandingPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-5">
-                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:px-8 sm:py-4">
+                <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:w-auto sm:px-8 sm:py-4">
                   <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
                   <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
                 </button>
-                <button onClick={() => navigate('/login')} className="group relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:px-10 sm:py-4">
+                <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:w-auto sm:px-10 sm:py-4">
                   <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
                   <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
                 </button>
@@ -386,7 +409,7 @@ function LandingPage() {
           </Reveal>
 
           {/* Stats Bar */}
-          <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-8 sm:right-8 lg:bottom-5 lg:left-16 lg:right-16">
+          <div className="relative mt-8 left-0 right-0 sm:mt-10 lg:absolute lg:bottom-5 lg:left-16 lg:right-16 lg:mt-0">
             <Reveal delay={400} effect="zoom">
               <div className="relative mx-auto grid max-w-4xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
                 <div className="absolute left-1/4 top-0 h-px w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
@@ -395,9 +418,9 @@ function LandingPage() {
                   { label: 'Bids Won', value: '8' },
                   { label: 'Shipments in Transit', value: '12' },
                 ].map((s, i) => (
-                  <div key={i} className="flex flex-col justify-center items-start rounded-[20px] border-b border-slate-100/50 px-5 py-2.5 last:border-b-0 md:border-b-0 md:border-r md:px-8 md:py-3.5 md:last:border-r-0 transition-colors cursor-default hover:bg-slate-50/50">
+                  <div key={i} className="flex flex-col items-start justify-center rounded-[20px] border-b border-slate-100/50 px-4 py-2.5 last:border-b-0 md:border-b-0 md:border-r md:px-8 md:py-3.5 md:last:border-r-0 transition-colors cursor-default hover:bg-slate-50/50">
                     <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#245c9d] mb-0.5">{s.label}</span>
-                    <span className="text-3xl font-black text-[#0A2540] tracking-tight leading-none">{s.value}</span>
+                    <span className="text-2xl font-black text-[#0A2540] tracking-tight leading-none sm:text-3xl">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -528,6 +551,17 @@ function LandingPage() {
                               <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Availability</div>
                               <div className="mt-0.5 text-[11px] font-black text-[#143A6A]">On request</div>
                             </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {product.badges.map((badge) => (
+                              <span
+                                key={badge}
+                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.16em] ${productBadgeStyles[badge]}`}
+                              >
+                                {badge}
+                              </span>
+                            ))}
                           </div>
 
                           <div className="mt-3 grid gap-2 sm:grid-cols-2">

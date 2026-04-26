@@ -77,20 +77,20 @@ export default function GetVerifiedCard({ compact = false, onOpenVerification })
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[0.96rem] font-semibold tracking-[-0.02em] text-slate-800">Get Verified</h3>
+              <h3 className="text-[0.96rem] font-semibold tracking-[-0.02em] text-slate-800">Get Tradified</h3>
               <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em] text-sky-700">
                 Company Form
               </span>
             </div>
             <p className="mt-1 text-[0.78rem] leading-5 text-slate-500">
-              Open the full verification form on a dedicated page.
+              Open the full Tradaficaton form on a dedicated page.
             </p>
             <button
               type="button"
               onClick={onOpenVerification}
               className="mt-2.5 inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#3d6fae,#467bb6)] px-3.5 py-1.5 text-[0.82rem] font-semibold text-white shadow-[0_10px_18px_rgba(61,111,174,0.2)] transition hover:opacity-95"
             >
-              Get verification
+              Get Tradafication
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
