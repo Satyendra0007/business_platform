@@ -4,37 +4,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-export function fmtPrice(price, unit) {
-  if (price == null) return '—';
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', maximumFractionDigits: 2,
-  }).format(price);
-  return unit ? `${formatted} / ${unit}` : formatted;
-}
-
-const ACCENT_MAP = {
-  'Food & Agriculture':       'from-emerald-400/20 to-emerald-600/10',
-  'Metals & Mining':          'from-slate-400/20 to-slate-600/10',
-  'Energy & Petrochemicals':  'from-amber-400/20 to-amber-600/10',
-  'Industrial Equipment':     'from-sky-400/20 to-sky-600/10',
-  'Electronics & Technology': 'from-violet-400/20 to-violet-600/10',
-  'Textiles & Apparel':       'from-pink-400/20 to-pink-600/10',
-  'Chemicals':                'from-lime-400/20 to-lime-600/10',
-  'Shipping & Logistics':     'from-blue-400/20 to-blue-600/10',
-};
-
-const EMOJI_MAP = {
-  'Food & Agriculture': '🌾', 'Metals & Mining': '⚙️',
-  'Energy & Petrochemicals': '🛢️', 'Industrial Equipment': '🏭',
-  'Electronics & Technology': '💡', 'Textiles & Apparel': '🧵',
-  'Chemicals': '🧪', 'Shipping & Logistics': '🚢',
-};
-
-export function categoryAccent(cat = '') { return ACCENT_MAP[cat] || 'from-slate-300/20 to-slate-400/10'; }
-export function categoryEmoji(cat = '')  { return EMOJI_MAP[cat]  || '📦'; }
+import { categoryAccent, categoryEmoji, fmtPrice } from './productCardUtils';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -67,7 +37,7 @@ export default function ProductCard({ product }) {
   return (
     <article className="group overflow-hidden rounded-[26px] border border-[#d8e2ef] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] transition hover:-translate-y-1.5 hover:shadow-[0_24px_56px_rgba(15,23,42,0.12)]">
       {/* Thumbnail */}
-      <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${accent} p-3`}>
+      <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${accent} p-3 sm:h-36 sm:p-3`}>
         {image ? (
           <img
             src={image}
@@ -79,27 +49,27 @@ export default function ProductCard({ product }) {
             <span className="text-4xl font-black text-slate-300/60">{initials}</span>
           </div>
         )}
-        <div className="absolute left-5 top-5 rounded-full bg-white/92 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm">
+        <div className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] rounded-full bg-white/92 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm sm:left-5 sm:top-5 sm:max-w-none sm:text-[10px]">
           {categoryEmoji(product.category)} {product.category || 'Product'}
         </div>
       </div>
 
       {/* Body */}
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="w-fit rounded-full bg-[#edf5ff] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#245c9d]">
+      <div className="p-3.5 sm:p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-fit rounded-full bg-[#edf5ff] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#245c9d] sm:text-[10px]">
             {product.category || '—'}
           </div>
-          <div className="text-xs font-semibold text-[#143a6a]">
+          <div className="text-xs font-semibold text-[#143a6a] sm:text-right">
             {fmtPrice(product.price, product.unit)}
           </div>
         </div>
 
-        <h2 className="mt-3 line-clamp-2 text-base font-semibold leading-5 tracking-tight text-slate-950">
+        <h2 className="mt-3 line-clamp-2 text-[15px] font-semibold leading-5 tracking-tight text-slate-950 sm:text-base">
           {product.title}
         </h2>
 
-        <p className="mt-1 truncate text-xs text-slate-500">
+        <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-500 sm:truncate sm:text-xs">
           {product.countryOfOrigin ? `Origin: ${product.countryOfOrigin}` : 'Tradafy Verified Supplier'}
         </p>
 
@@ -110,10 +80,10 @@ export default function ProductCard({ product }) {
         )}
 
         {/* Actions */}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <button
             onClick={() => navigate(`/product/${product._id}`)}
-            className="rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+            className="w-full rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 sm:w-auto"
           >
             Start Deal
           </button>
@@ -121,7 +91,7 @@ export default function ProductCard({ product }) {
           {(!user || user.roles?.includes('buyer')) && (
             <button
               onClick={() => navigate(user ? `/request-quote/${product._id}` : '/login')}
-              className="rounded-xl border border-[#d8e2ef] px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="w-full rounded-xl border border-[#d8e2ef] px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
             >
               Quote
             </button>

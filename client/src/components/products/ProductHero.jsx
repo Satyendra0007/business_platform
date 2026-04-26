@@ -44,16 +44,16 @@ export default function ProductHero({
               </span>
               Live Marketplace
             </div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white lg:text-3xl">
+            <h2 className="mt-3 text-[1.5rem] font-bold tracking-tight text-white sm:text-2xl lg:text-3xl">
               Products With Deal-Ready Context
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
               Search trusted export listings, filter by sector, and start an RFQ instantly.
             </p>
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-8">
+          <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center sm:gap-8">
             <div>
               <div className="text-xl font-bold text-white">
                 {loading && total === 0 ? (
@@ -79,7 +79,7 @@ export default function ProductHero({
 
         {/* Right — search + category pills */}
         <div className="w-full xl:w-[480px] xl:shrink-0">
-          <div className="rounded-[20px] border border-white/5 bg-white/5 p-3 shadow-inner backdrop-blur-sm">
+          <div className="rounded-[20px] border border-white/5 bg-white/5 p-3 shadow-inner backdrop-blur-sm sm:p-3.5">
             {/* Search */}
             <label className="flex items-center gap-2.5 rounded-[14px] bg-[#071120]/50 px-4 py-3 ring-1 ring-white/10 transition-all focus-within:ring-sky-500/50">
               <Search className="h-4 w-4 shrink-0 text-slate-400" />
@@ -96,19 +96,15 @@ export default function ProductHero({
 
             {/* Category pills — from live DB */}
             {pills.length > 0 ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <div className="mt-3 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                   Filter:
                 </span>
                 {pills.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => onCategory(cat === category ? '' : cat)}
-                    className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold tracking-wide transition ${
-                      category === cat
-                        ? 'bg-sky-500 text-white'
-                        : 'bg-white/5 text-slate-300 hover:bg-white/15'
-                    }`}
+                    className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-semibold tracking-wide transition ${category === cat ? 'bg-sky-500 text-white' : 'bg-white/5 text-slate-300 hover:bg-white/15'}`}
                   >
                     {cat}
                   </button>
@@ -116,7 +112,7 @@ export default function ProductHero({
                 {category && (
                   <button
                     onClick={() => onCategory('')}
-                    className="rounded-lg bg-rose-500/20 px-2.5 py-1 text-[10px] font-semibold text-rose-300 transition hover:bg-rose-500/30"
+                    className="shrink-0 rounded-lg bg-rose-500/20 px-2.5 py-1 text-[10px] font-semibold text-rose-300 transition hover:bg-rose-500/30"
                   >
                     ✕ Clear
                   </button>
@@ -124,12 +120,12 @@ export default function ProductHero({
               </div>
             ) : (
               // Still loading categories — show placeholder pills
-              <div className="mt-3 flex items-center gap-2 px-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <div className="mt-3 flex items-center gap-2 overflow-x-auto px-1 pb-1">
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                   Filter:
                 </span>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-6 w-20 animate-pulse rounded-lg bg-white/10" />
+                  <div key={i} className="h-6 w-20 shrink-0 animate-pulse rounded-lg bg-white/10" />
                 ))}
               </div>
             )}

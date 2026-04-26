@@ -10,6 +10,7 @@ import DashboardPage from './components/Dashboard';
 import CompanySetupPage from './pages/CompanySetupPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import PremiumPlansPage from './pages/PremiumPlansPage';
 
 import RequestQuotePage from './components/RequestQuotePage';
 import DealRequestPage from './pages/DealRequestPage';
@@ -97,6 +98,7 @@ export default function App() {
       <Route path="/products" element={<ProductsPage />} />
       <Route path="/product/:productId" element={<ProductDetailPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/premium-plans" element={<PremiumPlansPage />} />
 
       {/* ── Authenticated ── */}
       <Route element={<RequireAuth />}>

@@ -36,6 +36,7 @@ import { formatDate, getDealsForUser, getRFQsForUser, getStatusSteps, getTranspo
 import { getProductVisual } from '../lib/productVisuals';
 import { navByRole } from '../lib/navConstants';
 import CompanyBanner from './dashboard/CompanyBanner';
+import PremiumPlansBanner from './dashboard/PremiumPlansBanner';
 import PhoneVerificationBanner from './dashboard/PhoneVerificationBanner';
 
 const SIDEBAR_ICON_BY_PATH = {
@@ -48,6 +49,7 @@ const SIDEBAR_ICON_BY_PATH = {
   '/deals': BriefcaseBusiness,
   '/deal': BriefcaseBusiness,
   '/deal-support': ShieldCheck,
+  '/premium-plans': Sparkles,
   '/admin': ShieldCheck,
 };
 
@@ -64,6 +66,43 @@ function roleLabel(role) {
   if (role === 'shipping_agent') return 'Shipping Workspace';
   if (role === 'admin') return 'Admin Control';
   return 'Buyer Workspace';
+}
+
+function accountRoleLabel(role) {
+  if (role === 'supplier') return 'Supplier';
+  if (role === 'shipping_agent') return 'Shipping Agent';
+  if (role === 'admin') return 'Admin';
+  return 'Buyer';
+}
+
+function accountStatusLabel(role, verificationStatus, hasCompany) {
+  const entity = accountRoleLabel(role);
+
+  if (verificationStatus === 'verified') {
+    return `Verified ${entity}`;
+  }
+  if (verificationStatus === 'rejected') {
+    return `${entity} verification rejected`;
+  }
+  if (hasCompany) {
+    return 'Review in progress';
+  }
+  return 'Company profile missing';
+}
+
+function accountStatusMessage(role, verificationStatus, hasCompany) {
+  const entity = accountRoleLabel(role).toLowerCase();
+
+  if (verificationStatus === 'verified') {
+    return `Your ${entity} account is verified.`;
+  }
+  if (verificationStatus === 'rejected') {
+    return `Please update your company details to re-submit ${entity} verification.`;
+  }
+  if (hasCompany) {
+    return `Your ${entity} company status is being reviewed.`;
+  }
+  return 'Set up a company profile to unlock full access.';
 }
 
 function dealStageLabel(status) {
@@ -685,23 +724,35 @@ function DashboardPage() {
         </div>
 
         <div className="mt-auto space-y-3">
-          <div className={classNames('rounded-[24px] border border-white/10 bg-white/6 p-4', sidebarCollapsed ? 'hidden lg:block' : 'block')}>
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
-                <Headphones className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">Need help?</p>
-                <p className="mt-0.5 text-sm text-slate-300">We are here for you</p>
-              </div>
-            </div>
+          {sidebarCollapsed ? (
             <button
               onClick={() => navigate('/deal-support')}
-              className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-black text-[#0A2540] transition hover:bg-slate-100"
+              className="group flex w-full items-center justify-center rounded-[24px] border border-white/10 bg-white/8 px-3 py-3 text-white transition hover:bg-white/12 lg:py-3.5"
+              title="Contact support"
             >
-              Contact support
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 transition group-hover:bg-white/15">
+                <Headphones className="h-5 w-5" />
+              </div>
             </button>
-          </div>
+          ) : (
+            <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                  <Headphones className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Need help?</p>
+                  <p className="mt-0.5 text-sm text-slate-300">We are here for you</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/deal-support')}
+                className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-black text-[#0A2540] transition hover:bg-slate-100"
+              >
+                Contact support
+              </button>
+            </div>
+          )}
 
           <div className="flex justify-center">
             <button
@@ -793,6 +844,8 @@ function DashboardPage() {
                   Could not load live stats: {statsError}
                 </div>
               ) : null}
+
+              <PremiumPlansBanner />
 
               <div className="space-y-4">
                 <CompanyBanner />
@@ -1060,20 +1113,10 @@ function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-slate-900">
-                            {verificationStatus === 'verified'
-                              ? 'Verified Buyer'
-                              : verificationStatus === 'rejected'
-                                ? 'Verification rejected'
-                                : user?.companyId
-                                  ? 'Review in progress'
-                                  : 'Company profile missing'}
+                            {accountStatusLabel(role, verificationStatus, Boolean(user?.companyId))}
                           </p>
                           <p className="mt-0.5 text-xs text-slate-600">
-                            {verificationStatus === 'verified'
-                              ? 'Your account is verified.'
-                              : user?.companyId
-                                ? 'Your company status is being reviewed.'
-                                : 'Set up a company profile to unlock full access.'}
+                            {accountStatusMessage(role, verificationStatus, Boolean(user?.companyId))}
                           </p>
                         </div>
                       </div>

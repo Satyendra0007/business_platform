@@ -367,7 +367,7 @@ function LandingPage() {
                 <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
               </div>
               <h1 className="max-w-3xl text-[2.35rem] font-black leading-[0.98] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
-                Stop losing deals due to <br className="hidden sm:block" />
+                Stop losing deals to <br className="hidden sm:block" />
                 <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
               </h1>
               <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
@@ -520,34 +520,36 @@ function LandingPage() {
                   Fresh produce, rice, eggs, lamb, and clinker from trusted origins, ready to be presented on the landing page without changing anything else in the app.
                 </p>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {featuredProducts.map((product, index) => (
                     <Reveal key={product.id} delay={120 + index * 60} effect="up">
-                      <article className="group flex h-full min-h-[330px] flex-col overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_16px_36px_rgba(20,58,106,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_48px_rgba(20,58,106,0.14)]">
-                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-36">
+                      <article className="group flex h-full min-h-[300px] flex-col overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_16px_36px_rgba(20,58,106,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_48px_rgba(20,58,106,0.14)] sm:min-h-[320px]">
+                        <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-36">
                           <img
                             src={product.img}
                             alt={product.name}
                             className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                           />
-                          <div className="absolute left-4 top-4 rounded-full bg-white/92 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#143A6A] shadow-sm backdrop-blur">
-                            {product.category}
-                          </div>
-                          <div className="absolute right-4 top-4 rounded-full bg-[#0A2540]/85 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur">
-                            Export ready
+                          <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 sm:left-4 sm:top-4 sm:max-w-[calc(100%-2rem)] sm:flex-row sm:flex-wrap sm:items-start">
+                            <div className="w-fit rounded-full bg-white/92 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.14em] text-[#143A6A] shadow-sm backdrop-blur sm:px-3 sm:text-[10px]">
+                              {product.category}
+                            </div>
+                            <div className="w-fit rounded-full bg-[#0A2540]/85 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur sm:px-3 sm:text-[10px]">
+                              Export ready
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-1 flex-col p-4">
-                          <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                              <h3 className="line-clamp-2 text-[15px] font-black leading-5 tracking-tight text-[#0A2540]">{product.name}</h3>
+                              <h3 className="line-clamp-2 text-[15px] font-black leading-5 tracking-tight text-[#0A2540] sm:text-[15px]">{product.name}</h3>
                               <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                                 <MapPin className="h-3.5 w-3.5 text-[#245c9d]" />
                                 <span>{product.origin}</span>
                               </div>
                             </div>
-                            <div className="rounded-2xl bg-[#edf5ff] px-2 py-1.5 text-right">
+                            <div className="w-fit rounded-2xl bg-[#edf5ff] px-2 py-1.5 text-right">
                               <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Availability</div>
                               <div className="mt-0.5 text-[11px] font-black text-[#143A6A]">On request</div>
                             </div>
@@ -557,7 +559,7 @@ function LandingPage() {
                             {product.badges.map((badge) => (
                               <span
                                 key={badge}
-                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.16em] ${productBadgeStyles[badge]}`}
+                                className={`inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[8.25px] font-black uppercase tracking-[0.12em] sm:text-[8.5px] ${productBadgeStyles[badge]}`}
                               >
                                 {badge}
                               </span>
@@ -577,14 +579,14 @@ function LandingPage() {
                             {product.name} is presented here with the supplied export details and product imagery for the landing page showcase.
                           </p>
 
-                          <div className="mt-auto flex items-center gap-3 pt-4">
+                          <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:gap-3">
                             <button
                               onClick={() => navigate('/login')}
-                              className="rounded-2xl bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(20,58,106,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(20,58,106,0.3)]"
+                              className="w-full rounded-2xl bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(20,58,106,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(20,58,106,0.3)] sm:w-auto"
                             >
                               Start Deal
                             </button>
-                            <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                            <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 sm:whitespace-nowrap">
                               Min order: {product.moq}
                             </div>
                           </div>

@@ -105,9 +105,9 @@ const premiumIncludes = [
 ];
 
 const addOns = [
-  'Legal Review: EUR 250',
+  'Legal Review: EUR 49',
   'Legal Support (Lawyer): Custom',
-  'Credibility Report: EUR 250',
+  'Credibility Report: EUR 49',
   'Business Expansion Support: Custom',
   'Private Labeling: Custom',
   'Offline Verification / Trust Label: EUR 1,000',
@@ -121,12 +121,12 @@ export default function PremiumMembershipSection({ compact = false }) {
   const [checkoutError,   setCheckoutError]   = useState('');
 
   const handleUpgrade = async (planKey) => {
-    if (!user) { window.location.href = '/login'; return; }
+    if (!user) { window.location.assign('/login'); return; }
     try {
       setCheckoutError('');
       setCheckoutLoading(planKey);
       const url = await createCheckoutSession(planKey);
-      window.location.href = url; // redirect to Stripe Checkout
+      window.location.assign(url); // redirect to Stripe Checkout
     } catch (err) {
       console.error('[PricingSection] checkout error:', err);
       setCheckoutError(err?.response?.data?.message || 'Could not start checkout. Try again.');
@@ -140,9 +140,6 @@ export default function PremiumMembershipSection({ compact = false }) {
   const cardShell = compact
     ? 'rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]'
     : 'rounded-[26px] border border-white/10 bg-white/5 p-4 backdrop-blur premium-shadow';
-  const planShell = compact
-    ? 'relative overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_40px_rgba(15,23,42,0.10)]'
-    : 'relative overflow-hidden rounded-[30px] border p-5 shadow-[0_24px_60px_rgba(3,7,20,0.28)]';
   const textMuted = compact ? 'text-slate-600' : 'text-slate-300';
 
   if (compact) {
@@ -315,164 +312,160 @@ export default function PremiumMembershipSection({ compact = false }) {
       <div className={`pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full blur-[90px] ${compact ? 'bg-[#245c9d]/10' : 'bg-[#245c9d]/20'}`} />
       <div className={`pointer-events-none absolute right-[-5rem] top-10 h-80 w-80 rounded-full blur-[110px] ${compact ? 'bg-[#E5A93D]/8' : 'bg-[#E5A93D]/12'}`} />
 
-      <div className="relative flex flex-col gap-6">
+      <div className="relative flex flex-col gap-4">
         <div className="max-w-3xl">
           <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] backdrop-blur ${compact ? 'border-slate-200 bg-white text-[#245c9d]' : 'border-white/10 bg-white/8 text-sky-100/80'}`}>
             TRADAFY Pricing Overview
           </div>
-          <h2 className={`mt-3 font-black tracking-tight sm:text-4xl ${compact ? 'text-[2rem] text-[#0A2540] lg:text-[2.4rem]' : 'text-3xl text-white lg:text-[3.4rem]'}`}>
+          <h2 className={`mt-2 font-black tracking-tight sm:text-4xl ${compact ? 'text-[2rem] text-[#0A2540] lg:text-[2.4rem]' : 'text-[2rem] text-white lg:text-[2.9rem]'}`}>
             Free, Business, and Premium plans built for real trade execution.
           </h2>
-          <p className={`mt-3 max-w-3xl text-sm leading-7 sm:text-[15px] ${bodyTone}`}>
+          <p className={`mt-2 max-w-3xl text-sm leading-7 sm:text-[15px] ${bodyTone}`}>
             Clear pricing, clear limits, and real upgrade triggers. Users get value first, then move into Business or Premium when their deal activity grows.
           </p>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[0.98fr_1.02fr]">
-          <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-            {phases.map((phase, index) => {
-              const Icon = phase.icon;
-              return (
-                <div
-                  key={phase.title}
-                  className={cardShell}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${compact ? 'bg-[#f3f7fb] text-[#245c9d]' : 'bg-white/10 text-white'}`}>
-                      <Icon className={`h-5 w-5 ${compact ? 'text-[#245c9d]' : 'text-amber-300'}`} />
-                    </div>
-                    <div>
-                      <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>
-                        {phase.title}
+        <div className="grid gap-3 md:grid-cols-3">
+          {plans.map((plan) => {
+            const Icon = plan.icon;
+            return (
+              <article
+                key={plan.name}
+                className={`relative min-h-[500px] overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_60px_rgba(3,7,20,0.22)] ${
+                  plan.highlighted
+                    ? compact
+                      ? 'border-[#D8B35C]/40 bg-[linear-gradient(180deg,#0F2745_0%,#0B1E36_100%)] ring-1 ring-[#D8B35C]/25'
+                      : 'border-[#E5A93D]/50 bg-[linear-gradient(180deg,#1b4b82_0%,#0f2745_55%,#07101d_100%)] ring-1 ring-[#E5A93D]/40'
+                    : compact
+                      ? 'border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]'
+                      : 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))]'
+                }`}
+              >
+                {plan.highlighted ? (
+                  <>
+                    <div className="absolute -right-10 top-0 h-32 w-32 rounded-full bg-[#E5A93D]/20 blur-3xl" />
+                    <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-sky-400/15 blur-3xl" />
+                  </>
+                ) : null}
+
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${compact ? 'bg-slate-100 text-[#0A2540]' : 'bg-white/10'}`}>
+                        <Icon className={`h-5 w-5 ${plan.highlighted ? 'text-amber-300' : compact ? 'text-[#245c9d]' : 'text-sky-100'}`} />
                       </div>
-                      <h3 className={`mt-1 text-[1rem] font-semibold ${compact ? 'text-[#0A2540]' : 'text-white'}`}>{phase.label}</h3>
-                    </div>
-                  </div>
-                  <p className={`mt-2.5 text-sm leading-6 ${textMuted}`}>{phase.description}</p>
-                  <div className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ${compact ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-white/10 bg-white/5 text-slate-200'}`}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    {index === 0 ? 'Full access to one deal' : index === 1 ? 'Upgrade nudges appear' : 'Blocked at critical moments'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const Icon = plan.icon;
-              return (
-                <article
-                  key={plan.name}
-                  className={`relative h-full overflow-hidden ${planShell} ${
-                    plan.highlighted
-                      ? compact
-                        ? 'border-[#D8B35C]/40 bg-[linear-gradient(180deg,#0F2745_0%,#0B1E36_100%)] ring-1 ring-[#D8B35C]/25'
-                        : 'border-[#E5A93D]/50 bg-[linear-gradient(180deg,#1b4b82_0%,#0f2745_55%,#07101d_100%)] ring-1 ring-[#E5A93D]/40'
-                      : compact
-                        ? 'border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]'
-                        : 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))]'
-                  }`}
-                >
-                  {plan.highlighted ? (
-                    <>
-                      <div className="absolute -right-10 top-0 h-32 w-32 rounded-full bg-[#E5A93D]/20 blur-3xl" />
-                      <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-sky-400/15 blur-3xl" />
-                    </>
-                  ) : null}
-
-                  <div className="relative flex h-full flex-col">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${compact ? 'bg-slate-100 text-[#0A2540]' : 'bg-white/10'}`}>
-                          <Icon className={`h-5.5 w-5.5 ${plan.highlighted ? 'text-amber-300' : compact ? 'text-[#245c9d]' : 'text-sky-100'}`} />
-                        </div>
-                        <div>
-                          <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>{plan.badge}</div>
-                          <h3 className={`mt-1 font-black tracking-tight ${compact ? 'text-[1.5rem] text-[#0A2540]' : 'text-2xl text-white'}`}>{plan.name}</h3>
-                        </div>
-                      </div>
-                      {plan.highlighted ? (
-                        <div className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-amber-300/30 bg-amber-300/10 text-amber-200'}`}>
-                          Recommended
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className={`mt-4 rounded-[22px] border p-4 ${compact ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-white/5'}`}>
-                      <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${compact ? 'text-slate-400' : 'text-slate-300'}`}>Plan price</div>
-                      <div className={`mt-1 font-black ${compact ? 'text-lg text-[#0A2540]' : 'text-xl text-white'}`}>{plan.price}</div>
-                      <p className={`mt-2 text-sm leading-6 ${textMuted}`}>{plan.summary}</p>
-                    </div>
-
-                    <div className={`mt-4 rounded-[22px] border p-4 ${compact ? 'border-slate-200 bg-white' : 'border-white/10 bg-white/4'}`}>
-                      <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${compact ? 'text-slate-400' : 'text-slate-300'}`}>Plan details</div>
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {plan.metrics.map(([label, value]) => (
-                          <div key={label} className={`rounded-2xl px-3 py-2.5 ${compact ? 'bg-slate-50 text-slate-700' : 'bg-white/5 text-slate-100'}`}>
-                            <div className={`text-[9px] font-black uppercase tracking-[0.16em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>{label}</div>
-                            <div className={`mt-1 text-sm font-semibold leading-5 ${compact ? 'text-[#0A2540]' : 'text-white/95'}`}>{value}</div>
-                          </div>
-                        ))}
+                      <div>
+                        <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>{plan.badge}</div>
+                        <h3 className={`mt-1 font-black tracking-tight ${compact ? 'text-[1.4rem] text-[#0A2540]' : 'text-[1.72rem] text-white'}`}>{plan.name}</h3>
                       </div>
                     </div>
-
                     {plan.highlighted ? (
-                      <div className={`mt-4 rounded-[22px] p-4 ${compact ? 'border border-slate-200 bg-white' : 'border border-white/10 bg-white/6'}`}>
-                        <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-[#245c9d]' : 'text-amber-200/90'}`}>
-                          Premium includes
-                        </div>
-                        <div className="mt-3 grid gap-2">
-                          {premiumIncludes.map((item) => {
-                            const MiniIcon = item.icon;
-                            return (
-                              <div key={item.label} className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold ${compact ? 'bg-slate-50 text-slate-700' : 'bg-white/5 text-white/90'}`}>
-                                <MiniIcon className={`h-4 w-4 ${compact ? 'text-[#245c9d]' : 'text-amber-300'}`} />
-                                {item.label}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <div className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'border border-amber-300/30 bg-amber-300/10 text-amber-200'}`}>
+                        Recommended
                       </div>
                     ) : null}
-
-                    <div className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold ${compact ? 'border border-slate-200 bg-slate-50 text-slate-700' : 'border border-white/10 bg-white/5 text-slate-200'}`}>
-                      Best for: <span className={compact ? 'text-[#0A2540]' : 'text-white'}>{plan.bestFor}</span>
-                    </div>
-
-                    {/* ── Checkout CTA (full view) ── */}
-                    {plan.name !== 'Free' && (
-                      userPlan === plan.name.toLowerCase() ? (
-                        <div className="mt-4 flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 py-2.5 text-xs font-black text-emerald-300">
-                          ✓ Your Current Plan
-                        </div>
-                      ) : (
-                        <button
-                          id={`pricing-full-${plan.name.toLowerCase()}-btn`}
-                          onClick={() => handleUpgrade(plan.name.toLowerCase())}
-                          disabled={!!checkoutLoading}
-                          className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-black transition hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed ${
-                            plan.highlighted
-                              ? 'bg-[#E5A93D] text-[#0A2540] hover:bg-[#d49530] shadow-[0_8px_24px_rgba(229,169,61,0.35)]'
-                              : 'bg-white/10 text-white hover:bg-white/15 border border-white/10'
-                          }`}
-                        >
-                          {checkoutLoading === plan.name.toLowerCase() ? (
-                            <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting to Stripe…</>
-                          ) : (
-                            <>Upgrade to {plan.name} <ArrowRight className="h-4 w-4" /></>
-                          )}
-                        </button>
-                      )
-                    )}
                   </div>
-                </article>
-              );
-            })}
-          </div>
+
+                  <div className={`mt-3 rounded-[22px] border p-3.5 ${compact ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-white/5'}`}>
+                    <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${compact ? 'text-slate-400' : 'text-slate-300'}`}>Plan price</div>
+                    <div className={`mt-1 font-black ${compact ? 'text-lg text-[#0A2540]' : 'text-[1.2rem] text-white'}`}>{plan.price}</div>
+                    <p className={`mt-1.5 text-sm leading-6 ${textMuted}`}>{plan.summary}</p>
+                  </div>
+
+                  <div className={`mt-3 rounded-[22px] border p-3.5 ${compact ? 'border-slate-200 bg-white' : 'border-white/10 bg-white/4'}`}>
+                    <div className={`text-[10px] font-black uppercase tracking-[0.22em] ${compact ? 'text-slate-400' : 'text-slate-300'}`}>Plan details</div>
+                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                      {plan.metrics.map(([label, value]) => (
+                        <div key={label} className={`rounded-2xl px-3 py-2 ${compact ? 'bg-slate-50 text-slate-700' : 'bg-white/5 text-slate-100'}`}>
+                          <div className={`text-[9px] font-black uppercase tracking-[0.16em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>{label}</div>
+                          <div className={`mt-1 text-[12px] font-semibold leading-5 ${compact ? 'text-[#0A2540]' : 'text-white/95'}`}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {plan.highlighted ? (
+                    <div className={`mt-3 rounded-[22px] p-3.5 ${compact ? 'border border-slate-200 bg-white' : 'border border-white/10 bg-white/6'}`}>
+                      <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-[#245c9d]' : 'text-amber-200/90'}`}>
+                        Premium includes
+                      </div>
+                      <div className="mt-2.5 grid gap-2">
+                        {premiumIncludes.slice(0, 3).map((item) => {
+                          const MiniIcon = item.icon;
+                          return (
+                            <div key={item.label} className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold ${compact ? 'bg-slate-50 text-slate-700' : 'bg-white/5 text-white/90'}`}>
+                              <MiniIcon className={`h-4 w-4 ${compact ? 'text-[#245c9d]' : 'text-amber-300'}`} />
+                              {item.label}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold ${compact ? 'border border-slate-200 bg-slate-50 text-slate-700' : 'border border-white/10 bg-white/5 text-slate-200'}`}>
+                    Best for: <span className={compact ? 'text-[#0A2540]' : 'text-white'}>{plan.bestFor}</span>
+                  </div>
+
+                  {plan.name !== 'Free' && (
+                    userPlan === plan.name.toLowerCase() ? (
+                      <div className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 py-2.5 text-xs font-black text-emerald-300">
+                        ✓ Your Current Plan
+                      </div>
+                    ) : (
+                      <button
+                        id={`pricing-full-${plan.name.toLowerCase()}-btn`}
+                        onClick={() => handleUpgrade(plan.name.toLowerCase())}
+                        disabled={!!checkoutLoading}
+                        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-2.5 text-sm font-black transition hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed ${
+                          plan.highlighted
+                            ? 'bg-[#E5A93D] text-[#0A2540] hover:bg-[#d49530] shadow-[0_8px_24px_rgba(229,169,61,0.35)]'
+                            : 'bg-white/10 text-white hover:bg-white/15 border border-white/10'
+                        }`}
+                      >
+                        {checkoutLoading === plan.name.toLowerCase() ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting to Stripe…</>
+                        ) : (
+                          <>Upgrade to {plan.name} <ArrowRight className="h-4 w-4" /></>
+                        )}
+                      </button>
+                    )
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
 
-        {/* Full view checkout error */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {phases.map((phase, index) => {
+            const Icon = phase.icon;
+            return (
+              <div
+                key={phase.title}
+                className={`${cardShell} ${compact ? '' : 'min-h-[170px]'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${compact ? 'bg-[#f3f7fb] text-[#245c9d]' : 'bg-white/10 text-white'}`}>
+                    <Icon className={`h-5 w-5 ${compact ? 'text-[#245c9d]' : 'text-amber-300'}`} />
+                  </div>
+                  <div>
+                    <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${compact ? 'text-slate-400' : 'text-sky-100/70'}`}>
+                      {phase.title}
+                    </div>
+                    <h3 className={`mt-1 text-[1rem] font-semibold ${compact ? 'text-[#0A2540]' : 'text-white'}`}>{phase.label}</h3>
+                  </div>
+                </div>
+                <p className={`mt-2.5 text-sm leading-6 ${textMuted}`}>{phase.description}</p>
+                <div className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ${compact ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-white/10 bg-white/5 text-slate-200'}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  {index === 0 ? 'Full access to one deal' : index === 1 ? 'Upgrade nudges appear' : 'Blocked at critical moments'}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {checkoutError && (
           <p className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-3 text-center text-sm font-semibold text-rose-300">
             {checkoutError}

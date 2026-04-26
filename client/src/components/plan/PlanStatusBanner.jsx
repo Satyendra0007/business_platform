@@ -57,6 +57,7 @@ const PLAN_STYLES = {
 export default function PlanStatusBanner() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = user?.roles?.includes('admin');
 
   const [totalDeals,  setTotalDeals]  = useState(0);
   const [activeDeals, setActiveDeals] = useState(0);
@@ -67,9 +68,6 @@ export default function PlanStatusBanner() {
   const planConfig = getPlan(planKey);
   const phase      = getPhase(planKey, totalDeals);
   const phaseInfo  = PHASE_INFO[phase];
-
-  // Admins don't see this banner
-  if (user?.roles?.includes('admin')) return null;
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +96,9 @@ export default function PlanStatusBanner() {
     load();
     return () => { cancelled = true; };
   }, []);
+
+  // Admins don't see this banner
+  if (isAdmin) return null;
 
   const PlanIcon     = PLAN_ICON[planKey]   || Sparkles;
   const styles       = PLAN_STYLES[planKey] || PLAN_STYLES.free;
@@ -144,7 +145,7 @@ export default function PlanStatusBanner() {
 
           {showUpgradeCTA && (
             <button
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate('/premium-plans')}
               className={`inline-flex shrink-0 items-center gap-2 self-start rounded-2xl px-4 py-2.5 text-xs font-bold text-white transition hover:-translate-y-0.5 sm:self-center ${
                 isPhase3
                   ? 'bg-rose-600 hover:bg-rose-700'

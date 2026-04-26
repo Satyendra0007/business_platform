@@ -1,12 +1,13 @@
-import { LayoutDashboard, Package, ReceiptText, BriefcaseBusiness, ShieldCheck, ShipWheel } from 'lucide-react';
+import { LayoutDashboard, Package, ReceiptText, BriefcaseBusiness, ShieldCheck, ShipWheel, Sparkles } from 'lucide-react';
 
-export const privatePaths = ['/dashboard', '/deal-request', '/request-quote', '/my-rfqs', '/deals', '/deal', '/transport-bids', '/deal-support', '/admin', '/supplier/products'];
+export const privatePaths = ['/dashboard', '/deal-request', '/request-quote', '/my-rfqs', '/deals', '/deal', '/transport-bids', '/deal-support', '/premium-plans', '/admin', '/supplier/products'];
 
 export const navByRole = {
   buyer: [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Products', path: '/products' },
     { label: 'Deal Support', path: '/deal-support' },
+    { label: 'Premium Plans', path: '/premium-plans' },
     { label: 'Deals', path: '/deals' },
     { label: 'Transport Bids', path: '/transport-bids' },
   ],
@@ -16,6 +17,7 @@ export const navByRole = {
     { label: 'Deal Request',  path: '/deal-request' },
     { label: 'Transport Bids',path: '/transport-bids' },
     { label: 'Deal Support',  path: '/deal-support' },
+    { label: 'Premium Plans', path: '/premium-plans' },
   ],
   shipping_agent: [
     { label: 'Dashboard', path: '/dashboard' },
@@ -23,11 +25,13 @@ export const navByRole = {
     { label: 'Shipment Deals', path: '/deals' },
     { label: 'Products', path: '/products' },
     { label: 'Deal Support', path: '/deal-support' },
+    { label: 'Premium Plans', path: '/premium-plans' },
   ],
   admin: [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Admin Workspace', path: '/admin' },
     { label: 'Products', path: '/products' },
+    { label: 'Premium Plans', path: '/premium-plans' },
   ],
 };
 
@@ -52,6 +56,7 @@ export function getNavIcon(path) {
   if (path === '/transport-bids') return ShipWheel;
   if (path === '/deals' || path === '/deal') return BriefcaseBusiness;
   if (path === '/deal-support') return ShieldCheck;
+  if (path === '/premium-plans') return Sparkles;
   if (path === '/admin') return ShieldCheck;
   return LayoutDashboard;
 }
