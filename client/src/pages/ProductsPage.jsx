@@ -19,6 +19,8 @@ import { AppShell, PublicLayout } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getProducts, getCategories } from '../lib/productService';
+import { deleteProduct, getManagedProducts } from '../lib/productManagementService';
+import { hasRole } from '../lib/userRole';
 import ProductHero from '../components/products/ProductHero';
 import ProductGrid from '../components/products/ProductGrid';
 import Pagination from '../components/common/Pagination';
@@ -44,8 +46,10 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deletingProductId, setDeletingProductId] = useState(null);
 
   const timer = useRef(null);
+  const isSupplier = hasRole(user, 'supplier');
 
   // ── Load categories once on mount ──────────────────────────────────────────
   useEffect(() => {
@@ -70,7 +74,9 @@ export default function ProductsPage() {
       const params = { page, limit: LIMIT };
       if (debSearch) params.search = debSearch;
       if (category) params.category = category;
-      const result = await getProducts(params);
+      const result = isSupplier
+        ? await getManagedProducts(params)
+        : await getProducts(params);
       setProducts(result.products);
       setTotal(result.total);
       setTotalPages(result.totalPages);
@@ -79,13 +85,28 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debSearch, category]);
+  }, [page, debSearch, category, isSupplier]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleCategory = (cat) => { setCategory(cat); setPage(1); };
   const handleClear = () => { setSearch(''); setCategory(''); setPage(1); };
+  const handleEditProduct = (product) => {
+    navigate(`/supplier/products/edit/${product._id}`);
+  };
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Archive "${product.title}"? It will be hidden from buyers.`)) return;
+    setDeletingProductId(product._id);
+    try {
+      await deleteProduct(product._id);
+      await fetchProducts();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
 
   // ── Shared content (used by both public and auth layout) ───────────────────
   const content = (
@@ -107,6 +128,10 @@ export default function ProductsPage() {
         search={debSearch}
         category={category}
         onClear={handleClear}
+        management={isSupplier}
+        onEditProduct={isSupplier ? handleEditProduct : undefined}
+        onDeleteProduct={isSupplier ? handleDeleteProduct : undefined}
+        deletingProductId={deletingProductId}
       />
       <Pagination
         page={page}
@@ -145,7 +170,7 @@ export default function ProductsPage() {
       subtitle="Browse verified listings with search and filters, then start an RFQ directly from the product that fits."
     >
       <div className="space-y-5">
-        {user?.roles?.includes('supplier') && (
+        {isSupplier && (
           <div className="flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-[0_16px_44px_rgba(15,23,42,0.05)] sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Product tools</p>

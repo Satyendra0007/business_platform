@@ -10,8 +10,9 @@
  * All data from real API via adminService.js. Zero mock data.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Users, Building2, Briefcase, FileText,
+  Users, Building2, Briefcase, FileText, Package,
   Loader2, AlertCircle, CheckCircle2,
   XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw, ExternalLink, File
 } from 'lucide-react';
@@ -19,8 +20,12 @@ import { AppShell, MetricCard } from './ui';
 import {
   getUsers, toggleUserStatus,
   getCompanies, verifyCompany,
-  getAdminDeals, getAdminRFQs
+  getAdminDeals, getAdminRFQs,
+  getAdminProducts
 } from '../lib/adminService';
+import { deleteProduct } from '../lib/productManagementService';
+import ProductGrid from './products/ProductGrid';
+import Pagination from './common/Pagination';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +74,8 @@ function Panel({ title, children }) {
     </div>
   );
 }
+
+const PRODUCT_LIMIT = 12;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TABS
@@ -419,6 +426,84 @@ function RFQsTab() {
   );
 }
 
+// ─── Products monitor tab ────────────────────────────────────────────────────
+
+function ProductsTab() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const r = await getAdminProducts({ page, limit: PRODUCT_LIMIT });
+      setProducts(r.products);
+      setTotal(r.total);
+      setTotalPages(r.totalPages);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleEdit = (product) => {
+    navigate(`/products/edit/${product._id}`);
+  };
+
+  const handleDelete = async (product) => {
+    if (!window.confirm(`Delete "${product.title}" from the catalog?`)) return;
+    setDeleting(product._id);
+    try {
+      await deleteProduct(product._id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
+  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+
+  return (
+    <Panel title={`All Products — ${total} total`}>
+      <div className="space-y-4">
+        <ProductGrid
+          products={products}
+          loading={false}
+          error={''}
+          onRetry={load}
+          onClear={() => {}}
+          management
+          showOwner
+          onEditProduct={handleEdit}
+          onDeleteProduct={handleDelete}
+          deletingProductId={deleting}
+        />
+        {totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={PRODUCT_LIMIT}
+            onPage={setPage}
+          />
+        )}
+      </div>
+    </Panel>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ══════════════════════════════════════════════════════════════════════════════
@@ -426,6 +511,7 @@ function RFQsTab() {
 const TABS = [
   { key: 'users',     label: 'Users',     icon: Users     },
   { key: 'companies', label: 'Companies', icon: Building2 },
+  { key: 'products',  label: 'Products',  icon: Package   },
   { key: 'deals',     label: 'Deals',     icon: Briefcase },
   { key: 'rfqs',      label: 'RFQs',      icon: FileText  },
 ];
@@ -434,29 +520,31 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
 
   // Summary counts — load once on mount
-  const [counts, setCounts] = useState({ users: '—', companies: '—', deals: '—', rfqs: '—' });
+  const [counts, setCounts] = useState({ users: '—', companies: '—', products: '—', deals: '—', rfqs: '—' });
   useEffect(() => {
     Promise.all([
       getUsers({ limit: 1 }),
       getCompanies({ limit: 1 }),
+      getAdminProducts({ limit: 1 }),
       getAdminDeals({ limit: 1 }),
       getAdminRFQs({ limit: 1 }),
-    ]).then(([u, c, d, r]) => {
-      setCounts({ users: u.total, companies: c.total, deals: d.total, rfqs: r.total });
+    ]).then(([u, c, p, d, r]) => {
+      setCounts({ users: u.total, companies: c.total, products: p.total, deals: d.total, rfqs: r.total });
     }).catch(() => {}); // counts are decorative — fail silently
   }, []);
 
   return (
     <AppShell
       title="Admin Workspace"
-      subtitle="Manage users, verify companies, and monitor every RFQ and deal across the platform."
+      subtitle="Manage users, verify companies, oversee products, and monitor every RFQ and deal across the platform."
     >
       <div className="space-y-6">
 
         {/* ── Summary metrics ─────────────────────────────────────────────── */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard label="Total Users"     value={counts.users} />
           <MetricCard label="Companies"       value={counts.companies} />
+          <MetricCard label="Products"        value={counts.products} />
           <MetricCard label="Active Deals"    value={counts.deals} />
           <MetricCard label="Total RFQs"      value={counts.rfqs} />
         </div>
@@ -491,6 +579,7 @@ export default function AdminPage() {
           <div className="p-6">
             {activeTab === 'users'     && <UsersTab />}
             {activeTab === 'companies' && <CompaniesTab />}
+            {activeTab === 'products'  && <ProductsTab />}
             {activeTab === 'deals'     && <DealsTab />}
             {activeTab === 'rfqs'      && <RFQsTab />}
           </div>

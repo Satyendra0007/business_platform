@@ -11,6 +11,7 @@
  */
 
 import api, { saveToken, saveUser } from './api';
+import { getPrimaryRole } from './userRole';
 
 /**
  * Extracts the most useful error message from an Axios error.
@@ -52,7 +53,7 @@ export const login = async (email, password) => {
         email:           data.data.email,
         roles:           data.data.roles,
         // Derive a single primary role for UI convenience
-        role:            data.data.roles?.[0] || 'buyer',
+        role:            getPrimaryRole(data.data),
         companyId:       data.data.companyId     || null,
         profileImage:    data.data.profileImage  || null,
         phone:           data.data.phone         || null,

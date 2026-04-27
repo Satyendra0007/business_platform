@@ -8,6 +8,7 @@ import {
   Upload,
   Package,
 } from 'lucide-react';
+import { submitDealSupportRequest } from '../../../lib/dealSupportService';
 
 function Field({ label, icon: Icon, children, hint }) {
   return (
@@ -58,6 +59,7 @@ export default function GetVerifiedTradifyLabelCard({ compact = false, action, o
     complianceNotes: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const update = (key, value) => {
@@ -65,13 +67,25 @@ export default function GetVerifiedTradifyLabelCard({ compact = false, action, o
     setError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.companyName.trim() || !form.productLine.trim() || !form.annualVolume.trim() || !form.markets.trim()) {
       setError('Please complete the Tradify Label form.');
       return;
     }
-    setSubmitted(true);
+
+    try {
+      setLoading(true);
+      await submitDealSupportRequest({
+        sectionKey: 'tradify-label',
+        fields: form,
+      });
+      setSubmitted(true);
+    } catch (submitError) {
+      setError(submitError.message || 'Failed to send the label request.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (compact) {
@@ -201,9 +215,10 @@ export default function GetVerifiedTradifyLabelCard({ compact = false, action, o
           </p>
           <button
             type="submit"
-            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            disabled={loading}
+            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Apply for Label
+            {loading ? 'Sending...' : 'Apply for Label'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

@@ -14,6 +14,9 @@
  *
  * RFQs (read-only monitor):
  *  GET   /api/admin/rfq                        → getAdminRFQs(params)
+ *
+ * Products:
+ *  GET   /api/admin/products                   → getAdminProducts(params)
  */
 import api from './api';
 
@@ -80,4 +83,14 @@ export const getAdminRFQs = async (params = {}) => {
     if (res.success) return { rfqs: res.data, total: res.total, totalPages: res.totalPages };
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to load RFQs.'); }
+};
+
+// ─── Products (admin) ────────────────────────────────────────────────────────
+
+export const getAdminProducts = async (params = {}) => {
+  try {
+    const { data: res } = await api.get('/admin/products', { params });
+    if (res.success) return { products: res.data, total: res.total, totalPages: res.totalPages };
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load products.'); }
 };

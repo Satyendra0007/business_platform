@@ -5,6 +5,7 @@ import { navByRole, pageCopy, getNavIcon } from '../lib/navConstants';
 import { Ship } from 'lucide-react';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import { useAuth } from '../hooks/useAuth';
+import { getPrimaryRole } from '../lib/userRole';
 
 function isActive(pathname, path) {
   return pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
@@ -326,8 +327,7 @@ export function AppShell({ title, subtitle, children }) {
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Real auth object uses roles[] array, not a single role string
-  const userRole     = user?.roles?.[0] || 'buyer';
+  const userRole     = getPrimaryRole(user);
   const navigation   = navByRole[userRole] || navByRole.buyer;
   const fullName     = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : '';
   const userInitial  = fullName.charAt(0).toUpperCase() || '?';

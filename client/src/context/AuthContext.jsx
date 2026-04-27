@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { getUser, saveUser, clearSession } from '../lib/api';
+import { getPrimaryRole } from '../lib/userRole';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 export const AuthContext = createContext(null);
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
       if (freshUser) {
         // Map plan to subscriptionPlan for the frontend, but keep original plan
         freshUser.subscriptionPlan = freshUser.plan;
+        freshUser.role = getPrimaryRole(freshUser);
         
         // Preserve token if the server didn't return one
         if (user?.token && !freshUser.token) {

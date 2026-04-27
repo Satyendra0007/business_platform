@@ -7,6 +7,7 @@ import {
   Sparkles,
   Upload,
 } from 'lucide-react';
+import { submitDealSupportRequest } from '../../../lib/dealSupportService';
 
 function Field({ label, icon: Icon, children, hint }) {
   return (
@@ -57,6 +58,7 @@ export default function LegalDocumentReviewCard({ compact = false, action, onOpe
     notes: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const update = (key, value) => {
@@ -64,13 +66,25 @@ export default function LegalDocumentReviewCard({ compact = false, action, onOpe
     setError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.dealReference.trim() || !form.documentType || !form.jurisdiction.trim() || !form.notes.trim()) {
       setError('Please complete the review details before submitting.');
       return;
     }
-    setSubmitted(true);
+
+    try {
+      setLoading(true);
+      await submitDealSupportRequest({
+        sectionKey: 'legal-review',
+        fields: form,
+      });
+      setSubmitted(true);
+    } catch (submitError) {
+      setError(submitError.message || 'Failed to send the legal review request.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (compact) {
@@ -204,9 +218,10 @@ export default function LegalDocumentReviewCard({ compact = false, action, onOpe
           </p>
           <button
             type="submit"
-            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            disabled={loading}
+            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Request Review
+            {loading ? 'Sending...' : 'Request Review'}
           </button>
         </div>
       </form>

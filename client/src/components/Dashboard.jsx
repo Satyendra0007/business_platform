@@ -32,8 +32,11 @@ import { getDashboardStats } from '../lib/dashboardService';
 import { getPlan, isUnlimited, formatLimit } from '../lib/plans.config';
 import { getCompanyById } from '../lib/companyService';
 import { getProducts } from '../lib/productService';
+import { deleteProduct, getManagedProducts } from '../lib/productManagementService';
+import { getAdminProducts } from '../lib/adminService';
 import { formatDate, getDealsForUser, getRFQsForUser, getStatusSteps, getTransportBidOpportunities } from '../lib/tradafyData';
 import { getProductVisual } from '../lib/productVisuals';
+import { getPrimaryRole, hasRole } from '../lib/userRole';
 import { navByRole } from '../lib/navConstants';
 import CompanyBanner from './dashboard/CompanyBanner';
 import PremiumPlansBanner from './dashboard/PremiumPlansBanner';
@@ -217,10 +220,10 @@ function SidebarLink({ item, active, onNavigate, collapsed }) {
   );
 }
 
-function DashboardProductCard({ product, navigate }) {
+function DashboardProductCard({ product, navigate, management = false, onEdit, onDelete, deleting = false }) {
   const visual = product.images?.[0] || getProductVisual().image;
   return (
-    <article className="flex items-center gap-3 rounded-[20px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+    <article className="group relative flex items-center gap-3 rounded-[20px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[16px] bg-slate-100">
         <img src={visual} alt={product.title} className="h-full w-full object-cover" />
       </div>
@@ -244,13 +247,50 @@ function DashboardProductCard({ product, navigate }) {
         </p>
       </div>
 
-      <button
-        onClick={() => navigate(`/product/${product._id}`)}
-        className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
-      >
-        Start Deal
-        <ArrowRight className="h-3.5 w-3.5" />
-      </button>
+      <div className="flex shrink-0 flex-col gap-2">
+        {!management ? (
+          <button
+            onClick={() => navigate(`/product/${product._id}`)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
+          >
+            Start Deal
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => navigate(`/product/${product._id}`)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50"
+            >
+              Start Deal
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+            {(onEdit || onDelete) && (
+              <div className="flex flex-wrap gap-2">
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(product)}
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-[#d8e2ef] bg-white px-3 py-2 text-[11px] font-bold text-[#173b67] transition hover:bg-slate-50"
+                  >
+                    Edit
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(product)}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-600 px-3 py-2 text-[11px] font-bold text-white transition hover:bg-rose-500 disabled:opacity-50"
+                  >
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </article>
   );
 }
@@ -483,7 +523,7 @@ function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const role = user?.roles?.[0] || user?.role || 'buyer';
+  const role = getPrimaryRole(user);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.name || 'Buyer User';
 
   const [stats, setStats] = useState(null);
@@ -492,6 +532,7 @@ function DashboardPage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [featuredProductsLoading, setFeaturedProductsLoading] = useState(true);
   const [featuredProductsError, setFeaturedProductsError] = useState('');
+  const [featuredProductsDeleting, setFeaturedProductsDeleting] = useState(null);
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -528,21 +569,47 @@ function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    getProducts({ limit: 3 })
-      .then((res) => {
-        if (!cancelled) setFeaturedProducts((res.products || []).slice(0, 3));
-      })
-      .catch((error) => {
+    const loadProducts = async () => {
+      try {
+        let response;
+        if (hasRole(user, 'supplier')) {
+          response = await getManagedProducts({ limit: 3 });
+        } else if (hasRole(user, 'admin')) {
+          response = await getAdminProducts({ limit: 3 });
+        } else {
+          response = await getProducts({ limit: 3 });
+        }
+        if (!cancelled) setFeaturedProducts((response.products || []).slice(0, 3));
+      } catch (error) {
         if (!cancelled) setFeaturedProductsError(error.message || 'Failed to load featured products.');
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setFeaturedProductsLoading(false);
-      });
+      }
+    };
+
+    loadProducts();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [role]);
+
+  const handleEditProduct = (product) => {
+    navigate(`/products/edit/${product._id}`);
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Delete "${product.title}" from the product section?`)) return;
+    setFeaturedProductsDeleting(product._id);
+    try {
+      await deleteProduct(product._id);
+      setFeaturedProducts((prev) => prev.filter((item) => item._id !== product._id));
+    } catch (error) {
+      setFeaturedProductsError(error.message || 'Failed to delete product.');
+    } finally {
+      setFeaturedProductsDeleting(null);
+    }
+  };
 
   const rfqs = getRFQsForUser(user);
   const deals = getDealsForUser(user);
@@ -600,7 +667,7 @@ function DashboardPage() {
     { label: 'Invite a supplier', icon: Users, path: '/company/setup' },
   ];
 
-  if (role === 'supplier') {
+    if (hasRole(user, 'supplier')) {
     quickActions.unshift(
       { label: 'Add product', icon: Package, path: '/supplier/products/create' }
     );
@@ -983,8 +1050,20 @@ function DashboardPage() {
                 <div>
                   <div className="mb-3 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-[#143a6a] sm:text-xl">Featured Products</h2>
-                      <p className="mt-0.5 text-sm text-slate-500">Top listings ready to start a deal.</p>
+                      <h2 className="text-lg font-bold text-[#143a6a] sm:text-xl">
+                        {hasRole(user, 'admin')
+                          ? 'Managed Products'
+                          : hasRole(user, 'supplier')
+                            ? 'Your Products'
+                            : 'Featured Products'}
+                      </h2>
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        {hasRole(user, 'admin')
+                          ? 'Manage any product listed across the platform.'
+                          : hasRole(user, 'supplier')
+                            ? 'Edit or remove the listings you added.'
+                            : 'Top listings ready to start a deal.'}
+                      </p>
                     </div>
                     <button
                       onClick={() => navigate('/products')}
@@ -1004,7 +1083,15 @@ function DashboardPage() {
                       </div>
                     ) : featuredProducts.length > 0 ? (
                       featuredProducts.map((product) => (
-                        <DashboardProductCard key={product._id} product={product} navigate={navigate} />
+                        <DashboardProductCard
+                          key={product._id}
+                          product={product}
+                          navigate={navigate}
+                          management={hasRole(user, 'supplier') || hasRole(user, 'admin')}
+                          onEdit={hasRole(user, 'supplier') || hasRole(user, 'admin') ? handleEditProduct : undefined}
+                          onDelete={hasRole(user, 'supplier') || hasRole(user, 'admin') ? handleDeleteProduct : undefined}
+                          deleting={featuredProductsDeleting === product._id}
+                        />
                       ))
                     ) : (
                       <div className="rounded-[20px] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">

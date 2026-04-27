@@ -105,12 +105,12 @@ const premiumIncludes = [
 ];
 
 const addOns = [
-  'Legal Review: EUR 49',
-  'Legal Support (Lawyer): Custom',
-  'Credibility Report: EUR 49',
-  'Business Expansion Support: Custom',
-  'Private Labeling: Custom',
-  'Offline Verification / Trust Label: EUR 1,000',
+  'Legal Review',
+  'Legal Support (Lawyer)',
+  'Credibility Report',
+  'Business Expansion Support',
+  'Private Labeling',
+  'Offline Verification / Trust Label',
 ];
 
 export default function PremiumMembershipSection({ compact = false }) {

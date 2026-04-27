@@ -7,6 +7,7 @@ import { ArrowRight, BadgeDollarSign, BriefcaseBusiness, FileText, Package, Pack
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { getPrimaryRole, hasRole } from '../../lib/userRole';
 
 // ─── Milestone Tracker ────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ export function MilestoneTracker({ steps, activeStepIndex }) {
 export function QuickAccess() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const role = user?.roles?.[0] || user?.role;
+  const role = getPrimaryRole(user);
 
   const links = [
     // First link: Browse all products for everyone, BUT suppliers also get a 'My Products' management link
@@ -63,7 +64,7 @@ export function QuickAccess() {
       path: role === 'supplier' ? '/supplier/products' : '/products',
       style: { background: 'linear-gradient(135deg,#1d4d86,#2b66ad)' },
     },
-    ...(role === 'supplier'
+    ...(hasRole(user, 'supplier')
       ? [{
           label: 'Add Product',
           icon: Plus,
@@ -71,7 +72,7 @@ export function QuickAccess() {
           style: { background: 'linear-gradient(135deg,#0f2846,#173b67)' },
         }]
       : []),
-    ...(role === 'supplier'
+    ...(hasRole(user, 'supplier')
       ? []
       : [{
           label: 'Deals',
@@ -86,9 +87,9 @@ export function QuickAccess() {
       style: { background: 'linear-gradient(135deg,#295f99,#3f79b8)' },
     },
     {
-      label: role === 'admin' ? 'Control Center' : 'Deal Support',
+      label: hasRole(user, 'admin') ? 'Control Center' : 'Deal Support',
       icon: PackageCheck,
-      path: role === 'admin' ? '/admin' : '/deal-support',
+      path: hasRole(user, 'admin') ? '/admin' : '/deal-support',
       style: { background: 'linear-gradient(135deg,#346aa5,#4b84c2)' },
     },
   ];

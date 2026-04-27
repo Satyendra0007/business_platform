@@ -6,6 +6,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { getPrimaryRole } from '../../lib/userRole';
 
 function ActivityCard({ card, index }) {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ function EmptyActivity({ role }) {
 export default function OpenActivity({ requestCards }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const role = user?.roles?.[0] || user?.role;
+  const role = getPrimaryRole(user);
 
   const viewAllPath =
     role === 'shipping_agent' ? '/transport-bids' : role === 'supplier' ? '/deal-request' : '/deals';

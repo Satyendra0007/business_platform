@@ -125,6 +125,7 @@ export default function App() {
         <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
         <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
         <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
+        <Route path="/products/edit/:productId" element={<EditProductPage />} />
       </Route>
 
       {/* ── Admin only ── */}

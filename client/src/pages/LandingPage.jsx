@@ -93,7 +93,7 @@ const featuredProducts = [
     price: 'On request',
     origin: 'India / Vietnam / Middle East',
     moq: '10,000 MT',
-    badges: ['Top listing', 'Priorotise Supplier'],
+    badges: ['Top listing', 'Verified Supplier'],
     highlights: ['Bulk vessel supply', 'Suitable for OPC grinding']
   },
 ];
