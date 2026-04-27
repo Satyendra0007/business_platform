@@ -44,6 +44,7 @@ app.use('/api/rfq', require('./src/modules/rfq/rfq.routes'));
 app.use('/api/deals', require('./src/modules/deal/deal.routes'));
 app.use('/api/messages', require('./src/modules/chat/message.routes'));
 app.use('/api/shipping', require('./src/modules/shipping/shipping.routes'));
+app.use('/api/deal-support', require('./src/modules/deal-support/dealSupport.routes'));
 app.use('/api/admin', require('./src/modules/admin/admin.routes'));
 app.use('/api/dashboard', require('./src/modules/dashboard/dashboard.routes'));
 

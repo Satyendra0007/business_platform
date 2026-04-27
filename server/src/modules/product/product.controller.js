@@ -3,6 +3,14 @@ const Product = require('./product.model');
 const Company = require('../company/company.model');
 const { matchedData } = require('express-validator');
 
+const isAdminUser = (req) => req.user?.roles?.includes('admin');
+
+const canManageProduct = (req, product) => {
+  if (isAdminUser(req)) return true;
+  if (!req.user?.companyId || !product?.companyId) return false;
+  return req.user.companyId.toString() === product.companyId.toString();
+};
+
 // @desc    Create a new product listing
 // @route   POST /api/products
 // @access  Private (Verified Company Users only)
@@ -140,6 +148,75 @@ const getProductById = async (req, res) => {
   }
 };
 
+// @desc    Get managed products for the logged-in company or admin
+// @route   GET /api/products/manage
+// @access  Private
+const getManagedProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, category, companyId, status = 'all' } = req.query;
+
+    const query = { isDeleted: false };
+
+    if (isAdminUser(req)) {
+      if (companyId) {
+        if (!mongoose.Types.ObjectId.isValid(companyId)) {
+          return res.status(400).json({ success: false, message: 'Invalid company ID.' });
+        }
+        query.companyId = companyId;
+      }
+    } else {
+      if (!req.user?.companyId) {
+        return res.status(403).json({ success: false, message: 'You must be linked to a company to manage products.' });
+      }
+      query.companyId = req.user.companyId;
+    }
+
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { countryOfOrigin: regex },
+      ];
+    }
+
+    if (category && category.trim()) {
+      query.category = new RegExp(`^${category.trim()}$`, 'i');
+    }
+
+    if (status === 'active') query.isActive = true;
+    if (status === 'inactive') query.isActive = false;
+
+    const limitValue = Math.min(parseInt(limit, 10) || 20, 50);
+    const pageValue = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (pageValue - 1) * limitValue;
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .select('title price unit MOQ images category countryOfOrigin companyId leadTime isActive createdAt updatedAt')
+        .populate('companyId', 'name')
+        .skip(skip)
+        .limit(limitValue)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      count: products.length,
+      total,
+      totalPages: Math.ceil(total / limitValue) || 1,
+      page: pageValue,
+      data: products
+    });
+  } catch (error) {
+    console.error('[getManagedProducts]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private (Owner Company Only)
@@ -163,10 +240,7 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found.' });
     }
 
-    const isCompanyUser = req.user.companyId && req.user.companyId.toString() === product.companyId.toString();
-    const isAdmin = req.user.roles.includes('admin');
-
-    if (!isCompanyUser && !isAdmin) {
+    if (!canManageProduct(req, product)) {
       return res.status(403).json({ success: false, message: 'Unauthorized to modify this product.' });
     }
 
@@ -199,10 +273,7 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found or already archived.' });
     }
 
-    const isCompanyUser = req.user.companyId && req.user.companyId.toString() === product.companyId.toString();
-    const isAdmin = req.user.roles.includes('admin');
-
-    if (!isCompanyUser && !isAdmin) {
+    if (!canManageProduct(req, product)) {
       return res.status(403).json({ success: false, message: 'Unauthorized to delete this product.' });
     }
 
@@ -217,5 +288,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getCategories };
-
+module.exports = { createProduct, getProducts, getManagedProducts, getProductById, updateProduct, deleteProduct, getCategories };

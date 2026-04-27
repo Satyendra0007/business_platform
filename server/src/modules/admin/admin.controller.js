@@ -3,6 +3,7 @@ const User    = require('../user/user.model');
 const Company = require('../company/company.model');
 const Deal    = require('../deal/deal.model');
 const RFQ     = require('../rfq/rfq.model');
+const Product = require('../product/product.model');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -246,4 +247,64 @@ const getRFQById = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, toggleUserStatus, getCompanies, verifyCompany, getDeals, getDealById, getRFQs, getRFQById };
+// ─── PRODUCT MANAGEMENT ─────────────────────────────────────────────────────
+
+// @route   GET /api/admin/products
+// @desc    List all products for admin control
+const getProducts = async (req, res) => {
+  try {
+    const { page, limitValue, skip } = getPagination(req.query);
+    const { search, category, companyId, status = 'all' } = req.query;
+
+    const query = { isDeleted: false };
+
+    if (search) {
+      const regex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: regex },
+        { description: regex },
+        { category: regex },
+        { countryOfOrigin: regex },
+      ];
+    }
+
+    if (category) {
+      query.category = new RegExp(`^${category.trim()}$`, 'i');
+    }
+
+    if (companyId) {
+      if (!isValidId(companyId)) {
+        return res.status(400).json({ success: false, message: 'Invalid company ID.' });
+      }
+      query.companyId = companyId;
+    }
+
+    if (status === 'active') query.isActive = true;
+    if (status === 'inactive') query.isActive = false;
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .select('title price unit MOQ images category countryOfOrigin companyId leadTime isActive createdAt updatedAt')
+        .populate('companyId', 'name')
+        .skip(skip)
+        .limit(limitValue)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      count: products.length,
+      total,
+      totalPages: Math.ceil(total / limitValue) || 1,
+      page,
+      data: products
+    });
+  } catch (error) {
+    console.error('[admin.getProducts]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+module.exports = { getUsers, toggleUserStatus, getCompanies, verifyCompany, getDeals, getDealById, getRFQs, getRFQById, getProducts };

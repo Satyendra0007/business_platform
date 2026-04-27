@@ -6,7 +6,8 @@ const {
   getUsers, toggleUserStatus,
   getCompanies, verifyCompany,
   getDeals, getDealById,
-  getRFQs, getRFQById
+  getRFQs, getRFQById,
+  getProducts
 } = require('./admin.controller');
 
 // All admin routes: must be authenticated AND have admin role
@@ -19,6 +20,9 @@ router.patch('/users/:id/toggle-status', toggleUserStatus);
 // Company Management
 router.get('/companies',              getCompanies);
 router.patch('/companies/:id/verify', verifyCompany);
+
+// Product Management
+router.get('/products', getProducts);
 
 // Deal Monitoring
 router.get('/deals',      getDeals);
