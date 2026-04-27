@@ -196,10 +196,10 @@ export default function RequestQuotePage() {
               Open Deal Support
             </button>
             <button
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/my-rfqs')}
               className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Browse More
+              View My Requests
             </button>
           </div>
         </div>

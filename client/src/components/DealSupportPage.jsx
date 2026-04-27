@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { Clock3, FileText, ShieldCheck, X } from 'lucide-react';
 import { AppShell } from './ui';
 import DealSupportIllustration from './deal-support/DealSupportIllustration';
 import DealSupportFooter from './deal-support/DealSupportFooter';
 import { dealSupportSections, proofPills } from './deal-support/dealSupportData';
 import DealSupportSection from './deal-support/DealSupportSection';
-import { ShieldCheck, FileText, Clock3 } from 'lucide-react';
 import LegalDocumentReviewCard from './deal-support/cards/LegalDocumentReviewCard';
 import GetLegalSupportCard from './deal-support/cards/GetLegalSupportCard';
 import GetVerifiedCard from './deal-support/cards/GetVerifiedCard';

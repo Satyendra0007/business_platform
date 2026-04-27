@@ -22,6 +22,8 @@ const isDealParticipant = (deal, user) => {
 const isShippingAgentUser = (user) =>
   user.roles?.includes('shipping_agent') && !user.roles?.includes('admin');
 
+const senderSelect = 'firstName lastName email companyId';
+
 // ─── SEND MESSAGE ────────────────────────────────────────────────────────────
 // @route   POST /api/messages
 // @access  Private (Deal participants only)
@@ -86,6 +88,8 @@ const sendMessage = async (req, res) => {
       readBy: [req.user._id]
     });
 
+    await message.populate('senderId', senderSelect);
+
     res.status(201).json({ success: true, data: message });
   } catch (error) {
     console.error('[sendMessage]', error);
@@ -126,6 +130,7 @@ const getMessages = async (req, res) => {
     const [messages, total] = await Promise.all([
       Message.find({ dealId, isDeleted: false })
         .select('-__v -isDeleted')
+        .populate('senderId', senderSelect)
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: -1 })

@@ -108,7 +108,7 @@ export default function App() {
         <Route path="/company/:id"             element={<CompanyDetailPage />} />
         <Route path="/company/:id/edit"        element={<EditCompanyPage />} />
         <Route path="/my-rfqs"                 element={<RFQListPage incoming={false} />} />
-        <Route path="/incoming-rfqs"           element={<Navigate to="/deal-request" replace />} />
+        <Route path="/incoming-rfqs"           element={<RFQListPage incoming={true} />} />
         <Route path="/rfq/:rfqId/edit"         element={<EditRFQPage />} />
         <Route path="/deals"                   element={<DealsPage />} />
         <Route path="/deal/:dealId"            element={<DealPage />} />

@@ -19,6 +19,7 @@ import {
 import { AppShell } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { createRFQ, getIncomingRFQs } from '../lib/rfqService';
+import { getMyRFQs } from '../lib/rfqService';
 
 const CATEGORY_OPTIONS = [
   'Food & Agriculture',
@@ -86,12 +87,20 @@ function Select(props) {
   );
 }
 
-function SupplierRequestCard({ rfq, navigate }) {
+function DealRequestCard({ rfq, navigate, onOpenRequest, view = 'supplier' }) {
   const createdDate = rfq.createdAt
     ? new Date(rfq.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : '—';
 
   const canOpenDeal = Boolean(rfq.dealId);
+  const buyerName = rfq.buyerUserName || 'Buyer';
+  const buyerCompany = rfq.buyerCompanyName || 'Company pending';
+  const supplierName = rfq.supplierCompanyName || 'Supplier pending';
+  const supplierCompany = rfq.supplierCompanyName || 'Company pending';
+  const partyLabel = view === 'supplier' ? 'Buyer' : 'Supplier';
+  const partyName = view === 'supplier' ? buyerName : supplierName;
+  const partyCompany = view === 'supplier' ? buyerCompany : supplierCompany;
+  const partyEmail = view === 'supplier' ? rfq.buyerUserEmail : rfq.supplierUserEmail;
 
   return (
     <article className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
@@ -109,14 +118,143 @@ function SupplierRequestCard({ rfq, navigate }) {
         </div>
         <button
           type="button"
-          onClick={() => (canOpenDeal ? navigate(`/deal/${rfq.dealId}`) : navigate('/deal-support'))}
+          onClick={() => (canOpenDeal ? navigate(`/deal/${rfq.dealId}`) : onOpenRequest?.(rfq))}
           className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] px-3.5 py-2 text-[11px] font-bold text-white transition hover:-translate-y-0.5"
         >
-          {canOpenDeal ? 'Open Deal' : 'Review'}
+          {canOpenDeal ? 'Open Deal' : 'View Request'}
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>
+      <div className="mt-3 rounded-[18px] bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{partyLabel}</p>
+        <p className="font-semibold text-slate-700">{partyName}</p>
+        <p>{partyCompany}</p>
+        {partyEmail ? <p className="text-slate-400">{partyEmail}</p> : null}
+      </div>
     </article>
+  );
+}
+
+function DealRequestDetailPanel({ request, isSupplier, onClose, navigate }) {
+  if (!request) return null;
+
+  const partyLabel = isSupplier ? 'Buyer' : 'Supplier';
+  const partyName = isSupplier
+    ? (request.buyerUserName || 'Buyer')
+    : (request.supplierCompanyName || 'Supplier');
+  const partyCompany = isSupplier
+    ? (request.buyerCompanyName || 'Company pending')
+    : (request.supplierCompanyName || 'Company pending');
+  const partyEmail = isSupplier ? request.buyerUserEmail : request.supplierUserEmail;
+
+  return (
+    <section className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">Request detail</p>
+          <h2 className="mt-1 text-[1.35rem] font-black tracking-tight text-[#143a6a]">
+            {request.productName || 'Deal request'}
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-[22px] bg-slate-50 px-4 py-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{partyLabel}</p>
+          <p className="mt-1 text-base font-bold text-slate-800">{partyName}</p>
+          <p className="mt-1 text-sm text-slate-600">{partyCompany}</p>
+          {partyEmail ? <p className="mt-1 text-xs text-slate-400">{partyEmail}</p> : null}
+        </div>
+        <div className="rounded-[22px] bg-slate-50 px-4 py-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</p>
+          <p className="mt-1 text-base font-bold text-slate-800 capitalize">
+            {request.status?.replace('_', ' ') || 'open'}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {request.dealId
+              ? 'Deal chat is available now.'
+              : isSupplier
+                ? 'This request is waiting for the buyer to convert it into a live deal.'
+                : 'This request is waiting for the supplier to open a live deal workspace.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        {request.dealId ? (
+          <button
+            type="button"
+            onClick={() => navigate(`/deal/${request.dealId}`)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-3 text-sm font-bold text-white"
+          >
+            Open Chat
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
+        >
+          Dismiss
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function BuyerRequestWorkspace({ buyerRequests, buyerLoading, buyerError, navigate, onOpenRequest, emptyMessage }) {
+  return (
+    <section className="mt-6 rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">Buyer workspace</p>
+          <h2 className="mt-1 text-[1.35rem] font-black tracking-tight text-[#143a6a]">My deal requests</h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/my-rfqs')}
+          className="text-sm font-medium text-[#245c9d]"
+        >
+          Open full list
+        </button>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {buyerLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
+            ))}
+          </div>
+        ) : buyerError ? (
+          <div className="rounded-[22px] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {buyerError}
+          </div>
+        ) : buyerRequests.length > 0 ? (
+          buyerRequests.slice(0, 3).map((request) => (
+            <DealRequestCard
+              key={request._id}
+              rfq={request}
+              navigate={navigate}
+              onOpenRequest={onOpenRequest}
+              view="buyer"
+            />
+          ))
+        ) : (
+          <div className="rounded-[22px] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+            {emptyMessage || 'No requests are showing yet. Your next request will appear here once submitted.'}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -131,6 +269,10 @@ export default function DealRequestPage() {
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [incomingLoading, setIncomingLoading] = useState(true);
   const [incomingError, setIncomingError] = useState('');
+  const [buyerRequests, setBuyerRequests] = useState([]);
+  const [buyerLoading, setBuyerLoading] = useState(true);
+  const [buyerError, setBuyerError] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
   const canCreate = user?.roles?.includes('buyer');
   const isSupplier = user?.roles?.includes('supplier');
@@ -165,10 +307,31 @@ export default function DealRequestPage() {
     };
   }, [isSupplier]);
 
+  const loadBuyerRequests = useCallback(() => {
+    if (isSupplier) return;
+    let cancelled = false;
+    setBuyerLoading(true);
+    setBuyerError('');
+    getMyRFQs({ page: 1, limit: 10 })
+      .then((result) => {
+        if (!cancelled) setBuyerRequests(result.rfqs || []);
+      })
+      .catch((err) => {
+        if (!cancelled) setBuyerError(err.response?.data?.message || err.message || 'Failed to load deal requests.');
+      })
+      .finally(() => {
+        if (!cancelled) setBuyerLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSupplier]);
+
   useEffect(() => {
-    if (!isSupplier) return undefined;
-    return loadIncomingRequests();
-  }, [isSupplier, loadIncomingRequests]);
+    if (isSupplier) return loadIncomingRequests();
+    return loadBuyerRequests();
+  }, [isSupplier, loadIncomingRequests, loadBuyerRequests]);
 
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -217,7 +380,13 @@ export default function DealRequestPage() {
           ) : incomingRequests.length > 0 ? (
             <div className="space-y-3">
               {incomingRequests.map((request) => (
-                <SupplierRequestCard key={request._id} rfq={request} navigate={navigate} />
+                <DealRequestCard
+                  key={request._id}
+                  rfq={request}
+                  navigate={navigate}
+                  onOpenRequest={setSelectedRequest}
+                  view="supplier"
+                />
               ))}
             </div>
           ) : (
@@ -231,6 +400,13 @@ export default function DealRequestPage() {
               </div>
             </div>
           )}
+
+          <DealRequestDetailPanel
+            request={selectedRequest}
+            isSupplier
+            onClose={() => setSelectedRequest(null)}
+            navigate={navigate}
+          />
         </div>
       </AppShell>
     );
@@ -268,6 +444,9 @@ export default function DealRequestPage() {
         ...(form.specifications && { specifications: form.specifications.trim() }),
         ...(form.remarks && { remarks: form.remarks.trim() }),
       });
+      if (!isSupplier) {
+        await loadBuyerRequests();
+      }
       setSubmitted(true);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to create deal request.');
@@ -279,29 +458,50 @@ export default function DealRequestPage() {
   if (submitted) {
     return (
       <AppShell title="Deal Request Submitted" subtitle="">
-        <div className="mx-auto max-w-3xl rounded-[32px] border border-emerald-100 bg-[linear-gradient(135deg,#f0fdf8,#ecfdf5)] p-8 text-center shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 className="h-8 w-8" />
+        <div className="space-y-6">
+          <div className="mx-auto max-w-3xl rounded-[32px] border border-emerald-100 bg-[linear-gradient(135deg,#f0fdf8,#ecfdf5)] p-8 text-center shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950">Your deal request is ready</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              The request has been created and is now available for follow-up in the workspace.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => navigate('/my-rfqs')}
+                className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-3 text-sm font-bold text-white"
+              >
+                View My Requests
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => navigate('/deals')}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
+              >
+                Open Deals
+              </button>
+            </div>
           </div>
-          <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950">Your deal request is ready</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            The request has been created and is now available for follow-up in the workspace.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => navigate('/deal-support')}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-3 text-sm font-bold text-white"
-            >
-              Open Deal Support
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => navigate('/deals')}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
-            >
-              View Deal Request
-            </button>
-          </div>
+
+          {!isSupplier && (
+            <BuyerRequestWorkspace
+              buyerRequests={buyerRequests}
+              buyerLoading={buyerLoading}
+              buyerError={buyerError}
+              navigate={navigate}
+              onOpenRequest={setSelectedRequest}
+              emptyMessage="No requests are showing yet. Your next request will appear here once submitted."
+            />
+          )}
+          {!isSupplier && (
+            <DealRequestDetailPanel
+              request={selectedRequest}
+              isSupplier={false}
+              onClose={() => setSelectedRequest(null)}
+              navigate={navigate}
+            />
+          )}
         </div>
       </AppShell>
     );
@@ -312,7 +512,18 @@ export default function DealRequestPage() {
       title="Deal Request"
       subtitle="Create a structured trade request with the same clarity you would expect from a company verification form."
     >
-      <div className="grid gap-6 xl:grid-cols-[0.86fr_1.14fr]">
+      {!isSupplier && (
+        <BuyerRequestWorkspace
+          buyerRequests={buyerRequests}
+          buyerLoading={buyerLoading}
+          buyerError={buyerError}
+          navigate={navigate}
+          onOpenRequest={setSelectedRequest}
+          emptyMessage="No deal requests are showing yet. Your submitted requests will appear here."
+        />
+      )}
+
+      <div className={`${!isSupplier ? 'mt-6' : ''} grid gap-6 xl:grid-cols-[0.86fr_1.14fr]`}>
         <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#0c1f38_0%,#143a6a_100%)] p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-sky-100">
             <Sparkles className="h-3.5 w-3.5 text-amber-300" />
@@ -329,7 +540,7 @@ export default function DealRequestPage() {
             {[
               { icon: FileText, label: 'Commercial scope', copy: 'Add product name, category, and quantity.' },
               { icon: Globe, label: 'Logistics context', copy: 'Set destination, incoterm, and timing.' },
-              { icon: ShieldCheck, label: 'Professional routing', copy: 'The request can be reviewed in Deal Support.' },
+              { icon: ShieldCheck, label: 'Professional routing', copy: 'The request can be reviewed in your Deal Requests workspace.' },
             ].map(({ icon, label, copy }) => (
               <div key={label} className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10">
@@ -499,6 +710,17 @@ export default function DealRequestPage() {
           </form>
         </section>
       </div>
+
+      {!isSupplier && (
+        <div className="mt-6">
+          <DealRequestDetailPanel
+            request={selectedRequest}
+            isSupplier={false}
+            onClose={() => setSelectedRequest(null)}
+            navigate={navigate}
+          />
+        </div>
+      )}
     </AppShell>
   );
 }

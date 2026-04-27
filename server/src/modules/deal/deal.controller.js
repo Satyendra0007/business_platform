@@ -1,8 +1,73 @@
 const mongoose = require('mongoose');
 const Deal    = require('./deal.model');
+const Company = require('../company/company.model');
+const User    = require('../user/user.model');
 const { matchedData } = require('express-validator');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+const displayUserName = (user) => {
+  if (!user) return null;
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  return fullName || user.name || user.email || null;
+};
+
+const enrichDeals = async (deals) => {
+  const list = Array.isArray(deals) ? deals : [deals];
+  const buyerCompanyIds = [...new Set(list.map((deal) => deal?.buyerCompanyId?.toString()).filter(Boolean))];
+  const supplierCompanyIds = [...new Set(list.map((deal) => deal?.supplierCompanyId?.toString()).filter(Boolean))];
+  const buyerUserIds = [...new Set(list.map((deal) => deal?.buyerUserId?.toString()).filter(Boolean))];
+  const supplierUserIds = [...new Set(list.map((deal) => deal?.supplierUserId?.toString()).filter(Boolean))];
+
+  const [buyerCompanies, supplierCompanies, buyerUsers, supplierUsers] = await Promise.all([
+    buyerCompanyIds.length ? Company.find({ _id: { $in: buyerCompanyIds } }).select('name country city description industry companyType yearEstablished numberOfEmployees website mainProducts exportMarkets').lean() : Promise.resolve([]),
+    supplierCompanyIds.length ? Company.find({ _id: { $in: supplierCompanyIds } }).select('name country city description industry companyType yearEstablished numberOfEmployees website mainProducts exportMarkets').lean() : Promise.resolve([]),
+    buyerUserIds.length ? User.find({ _id: { $in: buyerUserIds } }).select('firstName lastName email').lean() : Promise.resolve([]),
+    supplierUserIds.length ? User.find({ _id: { $in: supplierUserIds } }).select('firstName lastName email').lean() : Promise.resolve([]),
+  ]);
+
+  const buyerCompanyMap = new Map(buyerCompanies.map((company) => [company._id.toString(), company]));
+  const supplierCompanyMap = new Map(supplierCompanies.map((company) => [company._id.toString(), company]));
+  const buyerUserMap = new Map(buyerUsers.map((user) => [user._id.toString(), user]));
+  const supplierUserMap = new Map(supplierUsers.map((user) => [user._id.toString(), user]));
+
+  return list.map((deal) => {
+    const buyerCompany = buyerCompanyMap.get(deal.buyerCompanyId?.toString()) || null;
+    const supplierCompany = supplierCompanyMap.get(deal.supplierCompanyId?.toString()) || null;
+    const buyerUser = buyerUserMap.get(deal.buyerUserId?.toString()) || null;
+    const supplierUser = supplierUserMap.get(deal.supplierUserId?.toString()) || null;
+
+    return {
+      ...deal,
+      buyerCompany,
+      buyerCompanyName: buyerCompany?.name || null,
+      buyerCompanyCountry: buyerCompany?.country || null,
+      buyerCompanyCity: buyerCompany?.city || null,
+      buyerCompanyOrigin: [buyerCompany?.city, buyerCompany?.country].filter(Boolean).join(', ') || buyerCompany?.country || null,
+      buyerCompanyDescription: buyerCompany?.description || null,
+      buyerCompanyIndustry: buyerCompany?.industry || null,
+      buyerCompanyWebsite: buyerCompany?.website || null,
+      buyerCompanyMainProducts: buyerCompany?.mainProducts || [],
+      buyerCompanyExportMarkets: buyerCompany?.exportMarkets || [],
+      buyerUser,
+      buyerUserName: displayUserName(buyerUser),
+      buyerUserEmail: buyerUser?.email || null,
+      supplierCompany,
+      supplierCompanyName: supplierCompany?.name || null,
+      supplierCompanyCountry: supplierCompany?.country || null,
+      supplierCompanyCity: supplierCompany?.city || null,
+      supplierCompanyOrigin: [supplierCompany?.city, supplierCompany?.country].filter(Boolean).join(', ') || supplierCompany?.country || null,
+      supplierCompanyDescription: supplierCompany?.description || null,
+      supplierCompanyIndustry: supplierCompany?.industry || null,
+      supplierCompanyWebsite: supplierCompany?.website || null,
+      supplierCompanyMainProducts: supplierCompany?.mainProducts || [],
+      supplierCompanyExportMarkets: supplierCompany?.exportMarkets || [],
+      supplierUser,
+      supplierUserName: displayUserName(supplierUser),
+      supplierUserEmail: supplierUser?.email || null,
+    };
+  });
+};
 
 // Sequential lifecycle map — each stage only moves forward to the next allowed stage(s)
 // Prevents a deal from jumping from 'inquiry' straight to 'closed' etc.
@@ -132,7 +197,7 @@ const getDeals = async (req, res) => {
         .select(
           shippingAgentView
             ? 'productName quantity incoterm status shipment selectedBidId shippingAgentId shippingRequestId'
-            : 'buyerCompanyId supplierCompanyId shippingAgentId selectedBidId productName status quantity price shipment createdAt'
+            : 'buyerCompanyId supplierCompanyId buyerUserId supplierUserId shippingAgentId selectedBidId productName status quantity price shipment createdAt'
         )
         .populate('shippingRequestId', 'origin destination incoterm quantity')
         .skip(skip)
@@ -142,13 +207,15 @@ const getDeals = async (req, res) => {
       Deal.countDocuments(query)
     ]);
 
+    const enrichedDeals = shippingAgentView ? deals.map(sanitizeForShippingAgent) : await enrichDeals(deals);
+
     res.json({
       success: true,
-      count: deals.length,
+      count: enrichedDeals.length,
       total,
       totalPages: Math.ceil(total / limitValue),
       page: pageValue,
-      data: shippingAgentView ? deals.map(sanitizeForShippingAgent) : deals
+      data: enrichedDeals
     });
   } catch (error) {
     console.error('[getDeals]', error);
@@ -183,7 +250,7 @@ const getDealById = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to view this Deal.' });
     }
 
-    res.json({ success: true, data: shippingAgentView ? sanitizeForShippingAgent(deal) : deal });
+    res.json({ success: true, data: shippingAgentView ? sanitizeForShippingAgent(deal) : (await enrichDeals(deal))[0] });
   } catch (error) {
     console.error('[getDealById]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
@@ -264,10 +331,14 @@ const updateDealStatus = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to update this Deal.' });
     }
 
-    // Role Control Guard: ONLY the Buyer company can progress the core deal lifecycle stages.
-    // The logical flow dictates that buyers approve progression. Suppliers do not dictate stage increments.
-    if (deal.buyerCompanyId.toString() !== req.user.companyId?.toString()) {
-      return res.status(403).json({ success: false, message: 'Only the Buyer can trigger deal progression.' });
+    const userCompanyId = req.user.companyId?.toString();
+    const canProgress =
+      deal.buyerCompanyId?.toString() === userCompanyId ||
+      deal.supplierCompanyId?.toString() === userCompanyId ||
+      req.user.roles.includes('admin');
+
+    if (!canProgress) {
+      return res.status(403).json({ success: false, message: 'Only the buyer, supplier, or an admin can trigger deal progression.' });
     }
 
     if (deal.status === 'closed') {

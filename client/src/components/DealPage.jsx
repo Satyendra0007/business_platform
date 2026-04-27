@@ -65,6 +65,23 @@ const fmtPrice = (p) => p != null
   ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(p)
   : '—';
 
+const fmtCompanyOrigin = (company) => {
+  const city = company?.city;
+  const country = company?.country;
+  return [city, country].filter(Boolean).join(', ') || country || '—';
+};
+
+const fmtList = (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) return '—';
+  return items.slice(0, 4).join(', ');
+};
+
+const getPersonName = (person) => {
+  if (!person) return 'Participant';
+  const fullName = `${person.firstName || ''} ${person.lastName || ''}`.trim();
+  return fullName || person.name || person.email || 'Participant';
+};
+
 // ─── Chat tab ─────────────────────────────────────────────────────────────────
 
 const sameId = (a, b) => String(a || '') === String(b || '');
@@ -76,6 +93,7 @@ function ChatTab({ dealId, user }) {
   const [sending,  setSending]    = useState(false);
   const [error,    setError]      = useState('');
   const bottomRef = useRef(null);
+  const currentUserName = getPersonName(user);
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
@@ -135,6 +153,7 @@ function ChatTab({ dealId, user }) {
         ) : (
           messages.map((msg) => {
             const isMine = msg.senderId === user._id || msg.senderId?._id === user._id;
+            const senderName = isMine ? currentUserName : getPersonName(msg.senderId);
             return (
               <div
                 key={msg._id}
@@ -143,11 +162,9 @@ function ChatTab({ dealId, user }) {
                 }`}
               >
                 <div className={`mb-1 flex items-center gap-3 ${isMine ? 'justify-end' : 'justify-between'}`}>
-                  {!isMine && (
-                    <span className="text-[11px] font-bold text-[#173b67]/60">
-                      {msg.senderId?.firstName ? msg.senderId.firstName : 'Participant'}
-                    </span>
-                  )}
+                  <span className="text-[11px] font-bold text-[#173b67]/60">
+                    {senderName}
+                  </span>
                   <span className="text-[10px] text-slate-400/80">{fmtDate(msg.createdAt)}</span>
                 </div>
                 <p className="text-[13px] leading-snug text-slate-700">{msg.text}</p>
@@ -323,6 +340,83 @@ function ShipmentTab({ deal, canUpdateShipment, onShipmentUpdate, updatingShipme
   );
 }
 
+function BuyerProfileCard({ deal }) {
+  const company = deal?.buyerCompany || null;
+  const buyerName = deal?.buyerUserName || 'Buyer';
+  const companyName = deal?.buyerCompanyName || 'Buyer company';
+  const origin = deal?.buyerCompanyOrigin || fmtCompanyOrigin(company);
+  const website = deal?.buyerCompanyWebsite || company?.website || '';
+  const description = deal?.buyerCompanyDescription || company?.description || '';
+  const industry = deal?.buyerCompanyIndustry || company?.industry || '—';
+  const mainProducts = deal?.buyerCompanyMainProducts || company?.mainProducts || [];
+  const exportMarkets = deal?.buyerCompanyExportMarkets || company?.exportMarkets || [];
+
+  const initials = (buyerName || 'B')
+    .split(' ')
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'B';
+
+  return (
+    <div className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
+      <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Buyer profile</p>
+      <div className="flex items-start gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#173b67,#245c9d)] text-lg font-black text-white">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <h3 className="truncate text-lg font-bold text-[#143a6a]">{buyerName}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-700">{companyName}</p>
+          <p className="mt-1 text-xs text-slate-500">{origin}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-[20px] bg-[#f5f9fd] px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Industry</p>
+          <p className="mt-1 text-sm font-semibold text-slate-700">{industry}</p>
+        </div>
+        <div className="rounded-[20px] bg-[#f5f9fd] px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Company origin</p>
+          <p className="mt-1 text-sm font-semibold text-slate-700">{origin}</p>
+        </div>
+      </div>
+
+      {description ? (
+        <div className="mt-4 rounded-[20px] bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
+          {description}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-[20px] border border-slate-100 bg-white px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Main products</p>
+          <p className="mt-1 text-sm text-slate-700">{fmtList(mainProducts)}</p>
+        </div>
+        <div className="rounded-[20px] border border-slate-100 bg-white px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Export markets</p>
+          <p className="mt-1 text-sm text-slate-700">{fmtList(exportMarkets)}</p>
+        </div>
+      </div>
+
+      {website ? (
+        <div className="mt-4">
+          <a
+            href={website.startsWith('http') ? website : `https://${website}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#245c9d] hover:underline"
+          >
+            Visit company website
+          </a>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DealPage() {
@@ -422,7 +516,7 @@ export default function DealPage() {
   const isShippingAgent = isShippingAgentRole;
   const isCompanyUser = Boolean(isBuyer || isSupplier || isAdmin);
   const canEditDeal = isCompanyUser && ['inquiry', 'negotiation'].includes(deal.status);
-  const canAdvanceStatus = Boolean(isBuyer && nextStage);
+  const canAdvanceStatus = Boolean((isBuyer || isSupplier || isAdmin) && nextStage);
   const canUpdateShipment = Boolean((isShippingAgent || isAssignedAgent || isAdmin) && ['shipping', 'delivery'].includes(deal.status));
   const visibleTabs = isShippingAgent ? TABS.filter((tab) => tab.key === 'shipment') : TABS;
 
@@ -564,6 +658,10 @@ export default function DealPage() {
                 <MetricCard label={isShippingAgent ? 'Shipment Status' : 'Opened'} value={isShippingAgent ? (deal.shipment?.status?.replace(/_/g, ' ') || 'not started') : fmtDate(deal.createdAt)} />
               </div>
             </div>
+
+            {!isShippingAgent && (
+              <BuyerProfileCard deal={deal} />
+            )}
 
             {/* Workspace rules */}
             <div className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">

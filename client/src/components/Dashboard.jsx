@@ -34,6 +34,7 @@ import { getCompanyById } from '../lib/companyService';
 import { getProducts } from '../lib/productService';
 import { deleteProduct, getManagedProducts } from '../lib/productManagementService';
 import { getAdminProducts } from '../lib/adminService';
+import { getMyRFQs, getIncomingRFQs } from '../lib/rfqService';
 import { formatDate, getDealsForUser, getRFQsForUser, getStatusSteps, getTransportBidOpportunities } from '../lib/tradafyData';
 import { getProductVisual } from '../lib/productVisuals';
 import { getPrimaryRole, hasRole } from '../lib/userRole';
@@ -529,6 +530,7 @@ function DashboardPage() {
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState('');
   const [company, setCompany] = useState(null);
+  const [liveRfqs, setLiveRfqs] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [featuredProductsLoading, setFeaturedProductsLoading] = useState(true);
   const [featuredProductsError, setFeaturedProductsError] = useState('');
@@ -566,6 +568,36 @@ function DashboardPage() {
       cancelled = true;
     };
   }, [user?.companyId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRfqs = async () => {
+      try {
+        if (hasRole(user, 'buyer')) {
+          const result = await getMyRFQs({ page: 1, limit: 50 });
+          if (!cancelled) setLiveRfqs(result.rfqs || []);
+          return;
+        }
+
+        if (hasRole(user, 'supplier')) {
+          const result = await getIncomingRFQs({ page: 1, limit: 50 });
+          if (!cancelled) setLiveRfqs(result.rfqs || []);
+          return;
+        }
+
+        if (!cancelled) setLiveRfqs(null);
+      } catch (error) {
+        if (!cancelled) setLiveRfqs(null);
+      }
+    };
+
+    loadRfqs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -611,7 +643,7 @@ function DashboardPage() {
     }
   };
 
-  const rfqs = getRFQsForUser(user);
+  const rfqs = liveRfqs ?? getRFQsForUser(user);
   const deals = getDealsForUser(user);
   const bidOpportunities = getTransportBidOpportunities(user);
   const steps = getStatusSteps();
@@ -1128,7 +1160,12 @@ function DashboardPage() {
                 <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_16px_44px_rgba(15,23,42,0.06)]">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 className="text-[1.1rem] font-bold text-[#143a6a]">Deal Request Overview</h3>
-                    <button className="text-sm font-medium text-[#245c9d]">View all Deal Requests</button>
+                    <button
+                      onClick={() => navigate(hasRole(user, 'supplier') ? '/deal-request' : '/my-rfqs')}
+                      className="text-sm font-medium text-[#245c9d]"
+                    >
+                      View all Deal Requests
+                    </button>
                   </div>
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     {overviewCards.map((card) => {
