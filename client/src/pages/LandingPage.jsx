@@ -27,6 +27,7 @@ import productFreshEggs from '../assets/product-fresh-eggs.jpg';
 import productHalalLambCarcass from '../assets/product-halal-lamb-carcass.jpg';
 import productClinker from '../assets/product-clinker.jpg';
 import { PublicLayout, Reveal, Marquee } from '../components/ui';
+import EarlyAccessPromo from '../components/landing/EarlyAccessPromo';
 import { useNavigate } from 'react-router-dom';
 
 const featuredProducts = [
@@ -349,67 +350,75 @@ function LandingPage() {
   ];
 
   return (
-    <PublicLayout>
-      <div className="space-y-10 pb-20 sm:space-y-14 sm:pb-24 lg:space-y-16 lg:pb-32">
+    <PublicLayout topSlot={<EarlyAccessPromo variant="banner" />}>
+      <div className="space-y-5 pb-12 sm:space-y-6 sm:pb-14 lg:space-y-8 lg:pb-16">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
-        <section className="relative flex min-h-[55vh] flex-col justify-start overflow-hidden rounded-[28px] px-4 pt-7 pb-10 text-white shadow-2xl sm:px-6 sm:pt-10 sm:pb-12 lg:min-h-[60vh] lg:rounded-[40px] lg:px-20 lg:pt-10 lg:pb-28"
+        <section className="relative overflow-hidden rounded-[28px] px-4 pt-3 pb-6 text-white shadow-2xl sm:px-6 sm:pt-4 sm:pb-8 lg:min-h-[38vh] lg:rounded-[40px] lg:px-16 lg:pt-5 lg:pb-14"
           style={{
             background: `linear-gradient(rgba(10, 31, 56, 0.9), rgba(10, 31, 56, 0.4)), url(${heroShip})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.22),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.2),transparent_26%)] pointer-events-none" />
-          <Reveal effect="up">
-            <div className="relative max-w-4xl space-y-4 sm:space-y-6 lg:pr-6">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
-                <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
-                <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
-              </div>
-              <h1 className="max-w-3xl text-[2.35rem] font-black leading-[0.98] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[4.5rem]">
-                Stop losing deals to <br className="hidden sm:block" />
-                <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
-              </h1>
-              <p className="max-w-2xl text-base font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-2xl">
-                Trade smarter. Close faster.
-              </p>
-              <div className="flex flex-col gap-2.5 text-sm font-bold sm:gap-4 sm:text-base lg:text-lg">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Centralized communication</span>
+          <div className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <Reveal effect="up">
+              <div className="relative max-w-4xl space-y-2.5 sm:space-y-4 lg:pr-6">
+                <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.24em] text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur transition-all hover:bg-white/20 sm:px-5 sm:text-[10px] sm:tracking-[0.3em]">
+                  <Ship className="h-4 w-4 text-[#E5A93D] drop-shadow-[0_0_10px_rgba(229,169,61,0.8)] animate-pulse" />
+                  <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent drop-shadow-sm">Global Trade OS</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Full deal visibility</span>
+                <h1 className="max-w-3xl text-[1.95rem] font-black leading-[0.95] tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-[3.35rem]">
+                  Stop losing deals to <br className="hidden sm:block" />
+                  <span className="bg-gradient-to-r from-[#E5A93D] via-[#fcd34d] to-[#E5A93D] bg-[length:200%_auto] bg-clip-text text-transparent inline-block animate-float-slow transition-transform duration-700 hover:scale-[1.03] hover:drop-shadow-[0_0_35px_rgba(229,169,61,0.5)]">miscommunication.</span>
+                </h1>
+                <p className="max-w-2xl text-[14px] font-medium leading-relaxed text-slate-100 sm:text-xl lg:text-[1.1rem]">
+                  Trade smarter. Close faster.
+                </p>
+                <div className="flex flex-col gap-1.5 text-sm font-bold sm:gap-2.5 sm:text-base lg:text-[14px]">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Centralized communication</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Full deal visibility</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
+                    <span>Integrated shipping & documents</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-[#E5A93D]" />
-                  <span>Integrated shipping & documents</span>
+                <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-3">
+                  <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:w-auto sm:px-8 sm:py-4">
+                    <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
+                    <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
+                  </button>
+                  <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:w-auto sm:px-10 sm:py-4">
+                    <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
+                    <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2 border-t border-white/10 pt-2 text-[11px] font-bold text-slate-200/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:pt-3">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 fill-[#E5A93D] text-[#E5A93D]" />
+                    4.9/5 team satisfaction
+                  </div>
+                  <div>92% faster document alignment</div>
+                  <div>Used across 30+ trade corridors</div>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4 sm:pt-5">
-                <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white backdrop-blur transition-all hover:-translate-y-1 hover:bg-white/20 hover:shadow-[0_15px_30px_rgba(255,255,255,0.1)] sm:w-auto sm:px-8 sm:py-4">
-                  <div className="absolute inset-0 translate-y-full bg-white/10 transition-transform duration-300 group-hover:translate-y-0" />
-                  <span className="relative z-10 flex items-center justify-center gap-2">Log In</span>
-                </button>
-                <button onClick={() => navigate('/login')} className="group relative w-full overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-6 py-3 font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.4)] transition-all hover:-translate-y-1 sm:w-auto sm:px-10 sm:py-4">
-                  <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
-                  <span className="relative z-10 flex items-center justify-center gap-2">Start Trading <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></span>
-                </button>
+            </Reveal>
+
+            <Reveal delay={220} effect="up">
+              <div className="relative w-full max-w-[520px] justify-self-start lg:justify-self-end">
+                <EarlyAccessPromo variant="card" />
               </div>
-              <div className="flex flex-col gap-2 border-t border-white/10 pt-4 text-[13px] font-bold text-slate-200/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 sm:pt-5">
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 fill-[#E5A93D] text-[#E5A93D]" />
-                  4.9/5 team satisfaction
-                </div>
-                <div>92% faster document alignment</div>
-                <div>Used across 30+ trade corridors</div>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
 
           {/* Stats Bar */}
-          <div className="relative mt-8 left-0 right-0 sm:mt-10 lg:absolute lg:bottom-5 lg:left-16 lg:right-16 lg:mt-0">
+          <div className="relative mt-4 left-0 right-0 sm:mt-5 lg:absolute lg:bottom-0 lg:left-16 lg:right-16 lg:mt-0">
             <Reveal delay={400} effect="zoom">
               <div className="relative mx-auto grid max-w-4xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
                 <div className="absolute left-1/4 top-0 h-px w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-blue-400 to-transparent" />

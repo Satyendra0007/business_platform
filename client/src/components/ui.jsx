@@ -307,9 +307,10 @@ export function Marquee({ items, direction = 'left', speed = 'normal', className
   );
 }
 
-export function PublicLayout({ children }) {
+export function PublicLayout({ children, topSlot = null }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
+      {topSlot ? <div className="w-full">{topSlot}</div> : null}
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-4 pt-1 sm:px-5 sm:pb-6 sm:pt-2 lg:px-6 lg:pb-8 lg:pt-3">
         <PublicHeader />
         <main className="flex-1">

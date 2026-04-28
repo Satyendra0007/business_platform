@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-import AnalyticsTracker from './components/AnalyticsTracker';
+import MarketingTracker from './components/MarketingTracker';
 
 // ─── Page imports ─────────────────────────────────────────────────────────────
 import LandingPage from './pages/LandingPage';
@@ -85,7 +85,7 @@ function RedirectIfAuth() {
 export default function App() {
   return (
     <>
-      <AnalyticsTracker />
+      <MarketingTracker />
       <Routes>
         {/* ── Public ── */}
         <Route path="/" element={<LandingPage />} />

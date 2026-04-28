@@ -61,7 +61,7 @@ const INITIAL_FORM = {
   attachments:       [],
 };
 
-const INCOTERMS = ['EXW', 'FOB', 'CIF', 'CFR', 'DAP', 'DDP', 'FCA', 'CPT', 'CIP'];
+const INCOTERMS = ['EXW', 'FOB'];
 
 export default function RequestQuotePage() {
   const { user }      = useAuth();

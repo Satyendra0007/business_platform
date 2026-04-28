@@ -37,6 +37,8 @@ const fmtPrice = (p) => p != null
   ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p)
   : '—';
 
+const getUserMobile = (user) => user?.phone ?? user?.Phone ?? user?.mobile ?? user?.mobileNumber ?? '—';
+
 // ─── Verification badge ───────────────────────────────────────────────────────
 
 function VerifBadge({ status }) {
@@ -126,6 +128,9 @@ function UsersTab() {
                 <ActiveBadge active={u.isActive} />
               </div>
               <p className="mt-1 text-sm text-slate-500">{u.email}</p>
+              <p className="mt-0.5 text-sm text-slate-500">
+                Mobile: <span className="font-medium text-slate-700">{getUserMobile(u)}</span>
+              </p>
               <p className="mt-0.5 text-xs text-slate-400">
                 Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
                 {' · '} Joined: {fmtDate(u.createdAt)}
