@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 // ─── Page imports ─────────────────────────────────────────────────────────────
 import LandingPage from './pages/LandingPage';
@@ -83,64 +84,67 @@ function RedirectIfAuth() {
 
 export default function App() {
   return (
-    <Routes>
-      {/* ── Public ── */}
-      <Route path="/" element={<LandingPage />} />
-      {/* ── Public (unauthenticated only) ── */}
-      <Route element={<RedirectIfAuth />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
+    <>
+      <AnalyticsTracker />
+      <Routes>
+        {/* ── Public ── */}
+        <Route path="/" element={<LandingPage />} />
+        {/* ── Public (unauthenticated only) ── */}
+        <Route element={<RedirectIfAuth />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-      {/* OTP verification — public, accessible right after registration */}
-      <Route path="/verify-phone" element={<VerifyPhonePage />} />
+        {/* OTP verification — public, accessible right after registration */}
+        <Route path="/verify-phone" element={<VerifyPhonePage />} />
 
-      <Route path="/products" element={<ProductsPage />} />
-      <Route path="/product/:productId" element={<ProductDetailPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/premium-plans" element={<PremiumPlansPage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/product/:productId" element={<ProductDetailPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/premium-plans" element={<PremiumPlansPage />} />
 
-      {/* ── Authenticated ── */}
-      <Route element={<RequireAuth />}>
-        <Route path="/deal-request" element={<DealRequestPage />} />
-        <Route path="/dashboard"              element={<DashboardPage />} />
-        <Route path="/company/setup"           element={<CompanySetupPage />} />
-        <Route path="/company/:id"             element={<CompanyDetailPage />} />
-        <Route path="/company/:id/edit"        element={<EditCompanyPage />} />
-        <Route path="/my-rfqs"                 element={<RFQListPage incoming={false} />} />
-        <Route path="/incoming-rfqs"           element={<RFQListPage incoming={true} />} />
-        <Route path="/rfq/:rfqId/edit"         element={<EditRFQPage />} />
-        <Route path="/deals"                   element={<DealsPage />} />
-        <Route path="/deal/:dealId"            element={<DealPage />} />
-        <Route path="/deal/:dealId/edit"       element={<EditDealPage />} />
-        <Route path="/transport-bids"          element={<TransportBidsPage />} />
-        <Route path="/deal-support"            element={<DealSupportPage />} />
-        <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
-        <Route path="/phone/verify"             element={<PhoneVerifyPage />} />
-        <Route path="/billing/success"          element={<BillingSuccessPage />} />
-        <Route path="/deal-support/verification" element={<DealVerificationPage />} />
-        <Route path="/deal-support/legal-review" element={<DealSupportLegalReviewPage />} />
-        <Route path="/deal-support/legal-support" element={<DealSupportLegalSupportPage />} />
-        <Route path="/deal-support/tradify-label" element={<DealSupportTradifyLabelPage />} />
-        <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
-        <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
-        <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
-        <Route path="/products/edit/:productId" element={<EditProductPage />} />
-      </Route>
+        {/* ── Authenticated ── */}
+        <Route element={<RequireAuth />}>
+          <Route path="/deal-request" element={<DealRequestPage />} />
+          <Route path="/dashboard"              element={<DashboardPage />} />
+          <Route path="/company/setup"           element={<CompanySetupPage />} />
+          <Route path="/company/:id"             element={<CompanyDetailPage />} />
+          <Route path="/company/:id/edit"        element={<EditCompanyPage />} />
+          <Route path="/my-rfqs"                 element={<RFQListPage incoming={false} />} />
+          <Route path="/incoming-rfqs"           element={<RFQListPage incoming={true} />} />
+          <Route path="/rfq/:rfqId/edit"         element={<EditRFQPage />} />
+          <Route path="/deals"                   element={<DealsPage />} />
+          <Route path="/deal/:dealId"            element={<DealPage />} />
+          <Route path="/deal/:dealId/edit"       element={<EditDealPage />} />
+          <Route path="/transport-bids"          element={<TransportBidsPage />} />
+          <Route path="/deal-support"            element={<DealSupportPage />} />
+          <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
+          <Route path="/phone/verify"             element={<PhoneVerifyPage />} />
+          <Route path="/billing/success"          element={<BillingSuccessPage />} />
+          <Route path="/deal-support/verification" element={<DealVerificationPage />} />
+          <Route path="/deal-support/legal-review" element={<DealSupportLegalReviewPage />} />
+          <Route path="/deal-support/legal-support" element={<DealSupportLegalSupportPage />} />
+          <Route path="/deal-support/tradify-label" element={<DealSupportTradifyLabelPage />} />
+          <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
+          <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
+          <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
+          <Route path="/products/edit/:productId" element={<EditProductPage />} />
+        </Route>
 
-      {/* ── Admin only ── */}
-      <Route element={<RequireAdmin />}>
-        <Route path="/admin" element={<AdminPage />} />
-      </Route>
+        {/* ── Admin only ── */}
+        <Route element={<RequireAdmin />}>
+          <Route path="/admin" element={<AdminPage />} />
+        </Route>
 
-      {/* ── Supplier only ── */}
-      <Route element={<RequireSupplier />}>
-        <Route path="/supplier/products" element={<MyProductsPage />} />
-        <Route path="/supplier/products/create" element={<CreateProductPage />} />
-        <Route path="/supplier/products/edit/:productId" element={<EditProductPage />} />
-      </Route>
+        {/* ── Supplier only ── */}
+        <Route element={<RequireSupplier />}>
+          <Route path="/supplier/products" element={<MyProductsPage />} />
+          <Route path="/supplier/products/create" element={<CreateProductPage />} />
+          <Route path="/supplier/products/edit/:productId" element={<EditProductPage />} />
+        </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
