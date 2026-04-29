@@ -1,49 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ArrowRight, BriefcaseBusiness, Eye, EyeOff, Lock, Mail,
-  Package, ShipWheel, Globe, Zap, Shield, AlertCircle, Loader2
+  ArrowRight, Eye, EyeOff, Lock, Mail,
+  Globe, Zap, Shield, AlertCircle, Loader2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Reveal } from '../components/ui';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import { login } from '../lib/authService';
 import { useAuth } from '../hooks/useAuth';
 
-const roles = [
-  {
-    key: 'buyer',
-    label: 'Buyer',
-    tag: 'Procurement',
-    note: 'Browse listings, create RFQs, and convert strong opportunities into deals.',
-    accent: 'Source fast',
-    icon: BriefcaseBusiness,
-  },
-  {
-    key: 'supplier',
-    label: 'Supplier',
-    tag: 'Sales',
-    note: 'Manage your catalog, respond to incoming RFQs, and deliver with confidence.',
-    accent: 'Sell smarter',
-    icon: Package,
-  },
-  {
-    key: 'shipping_agent',
-    label: 'Shipping Agent',
-    tag: 'Logistics',
-    note: 'Bid on approved deal lanes, win freight awards, and manage shipment execution visibility.',
-    accent: 'Move freight',
-    icon: ShipWheel,
-  },
-];
-
 function LoginPage() {
   const { login: contextLogin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!location.state?.justLoggedOut) return;
+
+    setEmail('');
+    setPassword('');
+    setShowPassword(false);
+    setError('');
+  }, [location.state?.justLoggedOut]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -65,7 +48,8 @@ function LoginPage() {
       // contextLogin() sets React state and navigates to /dashboard
       contextLogin(userData);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Invalid email or password. Please try again.');
+      const message = err.response?.data?.message || err.message || 'Invalid email or password. Please try again.';
+      setError(message === 'Invalid credentials' ? 'Email or password is incorrect. Please try again.' : message);
     } finally {
       setIsLoading(false);
     }

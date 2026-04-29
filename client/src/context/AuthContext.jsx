@@ -4,6 +4,7 @@ import api, { getUser, saveUser, clearSession } from '../lib/api';
 import { getPrimaryRole } from '../lib/userRole';
 
 // ─── Context ──────────────────────────────────────────────────────────────────
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     clearSession();
     setUser(null);
-    navigate('/');
+    navigate('/login', { replace: true, state: { justLoggedOut: true } });
   }, [navigate]);
 
   /**

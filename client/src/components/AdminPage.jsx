@@ -77,6 +77,16 @@ function Panel({ title, children }) {
   );
 }
 
+function InfoRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="min-w-0 pr-2">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}: </span>
+      <span className="text-[11px] text-slate-700 truncate">{value}</span>
+    </div>
+  );
+}
+
 const PRODUCT_LIMIT = 12;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -207,14 +217,7 @@ function CompaniesTab() {
 
 function CompanyCard({ company: c, updating, actionErr, onVerify }) {
   const [open, setOpen] = useState(false);
-
-  const InfoRow = ({ label, value }) =>
-    value ? (
-      <div className="min-w-0 pr-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}: </span>
-        <span className="text-[11px] text-slate-700 truncate">{value}</span>
-      </div>
-    ) : null;
+  const registeredByName = c.registeredBy?.name || [c.registeredBy?.firstName, c.registeredBy?.lastName].filter(Boolean).join(' ') || '—';
 
   return (
     <div className={`overflow-hidden rounded-[20px] border transition-all ${open ? 'border-[#245c9d]/30 bg-white shadow-md' : 'border-slate-200 bg-[#f5f9fd]'}`}>
@@ -230,6 +233,9 @@ function CompanyCard({ company: c, updating, actionErr, onVerify }) {
         <div className="flex-1 min-w-0">
           <p className="truncate font-semibold text-slate-900">{c.name}</p>
           <p className="text-xs text-slate-400">{c.country || '—'}{c.city ? `, ${c.city}` : ''}</p>
+          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+            Registered by <span className="font-semibold text-slate-700">{registeredByName}</span>
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <VerifBadge status={c.verificationStatus} />
@@ -265,7 +271,41 @@ function CompanyCard({ company: c, updating, actionErr, onVerify }) {
                 <InfoRow label="Est."       value={c.yearEstablished} />
                 <InfoRow label="Registered" value={fmtDate(c.createdAt)} />
                 <InfoRow label="Plan"       value={c.subscriptionPlan} />
+                <InfoRow label="Owner"      value={registeredByName} />
+                <InfoRow label="Products"   value={c.productCount ? `${c.productCount} item${c.productCount === 1 ? '' : 's'}` : '0'} />
                 {c.website && <InfoRow label="Web" value={<a href={c.website} target="_blank" rel="noreferrer" className="text-[#245c9d] hover:underline decoration-1">{c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>} />}
+              </div>
+
+              {/* Products added by the registered user */}
+              <div className="rounded-[18px] border border-slate-200 bg-white p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Products added by this user ({c.productCount || 0})
+                </p>
+                {c.products?.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {c.products.slice(0, 5).map((product) => (
+                      <div
+                        key={product._id}
+                        className="min-w-0 rounded-2xl border border-[#d8e2ef] bg-[#f4f8fc] px-3 py-2"
+                      >
+                        <p className="max-w-[220px] truncate text-[11px] font-semibold text-slate-800">
+                          {product.title}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          {product.category || 'Uncategorized'}
+                          {product.price != null ? ` · ${fmtPrice(product.price)}` : ''}
+                        </p>
+                      </div>
+                    ))}
+                    {c.products.length > 5 && (
+                      <div className="flex items-center rounded-2xl border border-dashed border-slate-300 px-3 py-2 text-[10px] font-semibold text-slate-500">
+                        +{c.products.length - 5} more
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-400">No products added yet.</p>
+                )}
               </div>
 
               {/* compact Tags */}
@@ -339,7 +379,6 @@ function DealsTab() {
   const [error,   setError]   = useState('');
 
   useEffect(() => {
-    setLoading(true);
     getAdminDeals({ limit: 50 })
       .then((r) => { setDeals(r.deals); setTotal(r.total); })
       .catch((err) => setError(err.response?.data?.message || err.message))
@@ -386,7 +425,6 @@ function RFQsTab() {
   const [error,   setError]   = useState('');
 
   useEffect(() => {
-    setLoading(true);
     getAdminRFQs({ limit: 50 })
       .then((r) => { setRFQs(r.rfqs); setTotal(r.total); })
       .catch((err) => setError(err.response?.data?.message || err.message))

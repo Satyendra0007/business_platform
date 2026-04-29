@@ -105,7 +105,57 @@ const getCompanies = async (req, res) => {
       Company.countDocuments(query)
     ]);
 
-    res.json({ success: true, count: companies.length, total, totalPages: Math.ceil(total / limitValue), page, data: companies });
+    const companyIds = companies.map((company) => company._id);
+    const [linkedUsers, linkedProducts] = companyIds.length > 0
+      ? await Promise.all([
+          User.find({ companyId: { $in: companyIds } })
+            .select('firstName lastName email phone roles companyId createdAt')
+            .sort({ createdAt: 1 })
+            .lean(),
+          Product.find({ companyId: { $in: companyIds }, isDeleted: false })
+            .select('title category price unit MOQ companyId createdAt isActive')
+            .sort({ createdAt: -1 })
+            .lean(),
+        ])
+      : [[], []];
+
+    const ownerByCompanyId = new Map();
+    linkedUsers.forEach((user) => {
+      const key = user.companyId?.toString();
+      if (!key || ownerByCompanyId.has(key)) return;
+
+      ownerByCompanyId.set(key, {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        phone: user.phone || null,
+        roles: user.roles || [],
+        createdAt: user.createdAt,
+      });
+    });
+
+    const productsByCompanyId = new Map();
+    linkedProducts.forEach((product) => {
+      const key = product.companyId?.toString();
+      if (!key) return;
+      if (!productsByCompanyId.has(key)) productsByCompanyId.set(key, []);
+      productsByCompanyId.get(key).push(product);
+    });
+
+    const enrichedCompanies = companies.map((company) => {
+      const key = company._id.toString();
+      const products = productsByCompanyId.get(key) || [];
+      return {
+        ...company,
+        registeredBy: ownerByCompanyId.get(key) || null,
+        products,
+        productCount: products.length,
+      };
+    });
+
+    res.json({ success: true, count: enrichedCompanies.length, total, totalPages: Math.ceil(total / limitValue), page, data: enrichedCompanies });
   } catch (error) {
     console.error('[admin.getCompanies]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });

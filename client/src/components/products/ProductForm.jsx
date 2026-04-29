@@ -27,7 +27,7 @@ const CATEGORIES = [
   'Chemicals', 'Shipping & Logistics',
 ];
 
-const INCOTERMS = ['EXW','FOB'];
+const INCOTERMS = ['EXW'];
 const UNIT_OPTIONS = ['MT', 'KG', 'pcs', 'L'];
 
 // ─── Field config — maps directly to schema fields ────────────────────────
@@ -234,7 +234,7 @@ export default function ProductForm({ initial = {}, onSubmit, isLoading, submitL
     price:             initial.price              != null ? String(initial.price) : '',
     MOQ:               initial.MOQ               != null ? String(initial.MOQ)   : '',
     availableQuantity: initial.availableQuantity  != null ? String(initial.availableQuantity) : '',
-    incoterm:          initial.incoterm           || '',
+    incoterm:          'EXW',
     countryOfOrigin:   initial.countryOfOrigin    || '',
     leadTime:          initial.leadTime           || '',
     packagingDetails:  initial.packagingDetails   || '',
@@ -350,7 +350,6 @@ export default function ProductForm({ initial = {}, onSubmit, isLoading, submitL
           </Field>
           <Field label="Incoterm">
             <select value={fields.incoterm} onChange={(e) => set('incoterm', e.target.value)} className={INPUT_CLS}>
-              <option value="">Select…</option>
               {INCOTERMS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </Field>

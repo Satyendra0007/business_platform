@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -24,7 +25,7 @@ body {
 }
 
 .font-display {
-  font-family: "Aptos Display", "Avenir Next Condensed", "Helvetica Neue", Georgia, serif;
+  font-family: "Manrope", "Aptos Display", "Avenir Next Condensed", "Helvetica Neue", Georgia, serif;
 }
 
 @keyframes inUp {
