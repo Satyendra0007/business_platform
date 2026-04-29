@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Phone, Loader2, AlertCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
+import { useAuth } from '../hooks/useAuth';
+import { saveToken, saveUser } from '../lib/api';
 import { sendOtp, resendOtp, verifyOtp } from '../lib/authService';
 
 const RESEND_COOLDOWN = 60; // seconds
 const CODE_LENGTH = 6;
 
 export default function VerifyPhonePage() {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phone = decodeURIComponent(searchParams.get('phone') || '');
@@ -109,6 +112,7 @@ export default function VerifyPhonePage() {
     try {
       await verifyOtp(phone, code);
       setSuccess(true);
+      sessionStorage.removeItem('tradafy-pending-auth');
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Invalid OTP. Please try again.');
@@ -117,6 +121,28 @@ export default function VerifyPhonePage() {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const handleSkip = () => {
+    const pendingAuthRaw = sessionStorage.getItem('tradafy-pending-auth');
+    if (pendingAuthRaw) {
+      try {
+        const pendingAuth = JSON.parse(pendingAuthRaw);
+        if (pendingAuth?.token && pendingAuth?.user) {
+          const userToSave = { ...pendingAuth.user, token: pendingAuth.token };
+          saveToken(pendingAuth.token);
+          saveUser(userToSave);
+          sessionStorage.removeItem('tradafy-pending-auth');
+          login(userToSave);
+          return;
+        }
+      } catch {
+        sessionStorage.removeItem('tradafy-pending-auth');
+      }
+    }
+
+    // Fallback: send them to login if no pending session is available.
+    navigate('/login', { replace: true });
   };
 
   // Mask phone: show first 3 and last 2 digits
@@ -233,6 +259,15 @@ export default function VerifyPhonePage() {
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
+            </button>
+
+            <button
+              id="otp-skip-btn"
+              type="button"
+              onClick={handleSkip}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:w-auto sm:px-6"
+            >
+              Skip for now
             </button>
           </form>
 

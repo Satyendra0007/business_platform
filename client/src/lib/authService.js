@@ -80,7 +80,26 @@ export const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
     if (data.success) {
       // Both new users (201) and existing-unverified (200) return needsVerification: true
-      return { phone: data.data?.phone || formData.phone, needsVerification: data.needsVerification };
+      return {
+        phone: data.data?.phone || formData.phone,
+        needsVerification: data.needsVerification,
+        token: data.data?.token || null,
+        user: data.data
+          ? {
+              _id: data.data._id,
+              firstName: data.data.firstName,
+              lastName: data.data.lastName,
+              name: `${data.data.firstName} ${data.data.lastName}`,
+              email: data.data.email,
+              roles: data.data.roles,
+              companyId: data.data.companyId || null,
+              profileImage: data.data.profileImage || null,
+              phone: data.data.phone || null,
+              isPhoneVerified: data.data.isPhoneVerified ?? false,
+              plan: data.data.plan || 'free',
+            }
+          : null,
+      };
     }
     const err = new Error(data.message || 'Registration failed');
     err.code = data.code;

@@ -410,17 +410,20 @@ function LandingPage() {
               </div>
             </Reveal>
 
+          </div>
+
+          <div className="relative mt-5 sm:mt-6 lg:mt-7">
             <Reveal delay={220} effect="up">
-              <div className="relative w-full max-w-[520px] justify-self-start lg:justify-self-end">
+              <div className="mx-auto w-full max-w-6xl">
                 <EarlyAccessPromo variant="card" />
               </div>
             </Reveal>
           </div>
 
           {/* Stats Bar */}
-          <div className="relative mt-4 left-0 right-0 sm:mt-5 lg:absolute lg:bottom-0 lg:left-16 lg:right-16 lg:mt-0">
+          <div className="relative mt-5 left-0 right-0 sm:mt-6 lg:mt-8">
             <Reveal delay={400} effect="zoom">
-              <div className="relative mx-auto grid max-w-4xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
+              <div className="relative mx-auto grid max-w-6xl grid-cols-1 overflow-hidden rounded-[24px] border border-white/40 bg-white/80 p-1.5 shadow-[0_30px_70px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-colors duration-500 hover:border-white/60 md:grid-cols-3">
                 <div className="absolute left-1/4 top-0 h-px w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
                 {[
                   { label: 'Active Deals', value: '24' },
