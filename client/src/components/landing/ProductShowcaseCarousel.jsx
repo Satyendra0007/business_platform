@@ -196,7 +196,7 @@ export default function ProductShowcaseCarousel() {
   const categoryCount = new Set(products.map((product) => product.category).filter(Boolean)).size;
   const newestListing = products[0];
   const repeatedProducts = [...products, ...products];
-  const marqueeDuration = Math.max(24, products.length * 2.5);
+  const marqueeDuration = 60;
   const featuredProduct = products.find((product) => product._id === hoveredProductId) || newestListing;
 
   const handleSelect = (productId) => {
