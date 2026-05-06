@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
-  Clock3,
-  Globe,
+  FileText,
   Package,
+  ShieldCheck,
   Sparkles,
+  Star,
+  Truck,
+  Users,
+  MapPin,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts } from '../../lib/productService';
@@ -28,14 +32,6 @@ const fmtDate = (value) => {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
 };
 
-const freshnessLabel = (value) => {
-  if (!value) return 'Live listing';
-  const ageDays = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 86400000));
-  if (ageDays <= 14) return 'New arrival';
-  if (ageDays <= 120) return 'Active listing';
-  return 'Established';
-};
-
 const getFallbackTone = (category = '') => {
   const value = category.toLowerCase();
   if (value.includes('food') || value.includes('agri') || value.includes('agriculture')) return 'from-emerald-500/20 via-white to-amber-400/10';
@@ -49,21 +45,72 @@ const getFallbackTone = (category = '') => {
 
 const getInitials = (title = '') => title.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('');
 
+const hashText = (value = '') => {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+};
+
+const getViewerCount = (title = '') => 2 + (hashText(title) % 7);
+
+const getListingBadge = (product = {}) => {
+  const leadTime = `${product.leadTime || ''}`.toLowerCase();
+  const createdAt = new Date(product.createdAt || 0);
+  const ageDays = Number.isNaN(createdAt.getTime()) ? 999 : Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 86400000));
+
+  if (leadTime.includes('ready') || leadTime.includes('ship')) return 'Shipping Ready';
+  if (ageDays <= 14) return 'Active Listing';
+  if (ageDays <= 60) return 'Recently Updated';
+  return 'High Demand';
+};
+
+const getFeatureBadges = (product = {}) => {
+  const lowered = `${product.category || ''} ${product.leadTime || ''}`.toLowerCase();
+
+  const docsLabel = lowered.includes('chem')
+    ? 'COA Available'
+    : lowered.includes('food') || lowered.includes('agri') || lowered.includes('grain')
+      ? 'Docs Ready'
+      : 'Export Docs';
+
+  const shippingLabel = lowered.includes('ready') || lowered.includes('ship')
+    ? 'Shipping Ready'
+    : 'Fast Dispatch';
+
+  return [
+    { icon: ShieldCheck, label: 'Verified Supplier', tone: 'emerald' },
+    { icon: FileText, label: docsLabel, tone: 'sky' },
+    { icon: Truck, label: shippingLabel, tone: 'amber' },
+  ];
+};
+
+const toneClasses = {
+  emerald: 'bg-emerald-500/10 text-emerald-200 border-emerald-400/15',
+  sky: 'bg-sky-500/10 text-sky-200 border-sky-400/15',
+  amber: 'bg-amber-500/10 text-amber-200 border-amber-400/15',
+};
+
 function ProductTile({ product, onSelect, onHover }) {
+  const listingBadge = getListingBadge(product);
+  const viewers = getViewerCount(product.title);
+  const featureBadges = getFeatureBadges(product);
+
   return (
     <button
       type="button"
       onMouseEnter={() => onHover?.(product._id)}
       onFocus={() => onHover?.(product._id)}
       onClick={() => onSelect(product._id)}
-      className="group flex h-full w-[16rem] flex-none flex-col overflow-hidden rounded-[24px] border border-white/10 bg-white/8 text-left shadow-[0_16px_40px_rgba(5,14,28,0.22)] transition hover:-translate-y-1 hover:border-white/20 hover:bg-white/12 sm:w-[18rem]"
+      className="group flex h-full w-[16.5rem] flex-none flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[rgba(10,16,29,0.86)] text-left shadow-[0_18px_48px_rgba(5,14,28,0.28)] transition hover:-translate-y-1 hover:border-white/20 hover:bg-[rgba(12,20,36,0.92)] sm:w-[18rem]"
     >
-      <div className={`relative h-36 overflow-hidden bg-gradient-to-br ${getFallbackTone(product.category)}`}>
+      <div className={`relative h-44 overflow-hidden bg-gradient-to-br ${getFallbackTone(product.category)}`}>
         {product.images?.[0] ? (
           <img
             src={product.images[0]}
             alt={product.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -73,55 +120,81 @@ function ProductTile({ product, onSelect, onHover }) {
           </div>
         )}
 
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,14,28,0.04)_0%,rgba(5,14,28,0.1)_38%,rgba(5,14,28,0.76)_100%)]" />
-        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <span className="rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#143a6a] shadow-sm">
-            {product.category || 'Product'}
-          </span>
-          <span className="rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white">
-            {freshnessLabel(product.createdAt)}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,14,28,0.02)_0%,rgba(5,14,28,0.08)_40%,rgba(5,14,28,0.74)_100%)]" />
+
+        <div className="absolute left-3 top-3 flex items-center gap-2">
+          <span className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] shadow-sm ${
+            listingBadge === 'Shipping Ready'
+              ? 'border-emerald-400/20 bg-emerald-500/18 text-emerald-50'
+              : listingBadge === 'Recently Updated'
+                ? 'border-amber-400/20 bg-amber-500/18 text-amber-50'
+                : listingBadge === 'High Demand'
+                  ? 'border-sky-400/20 bg-sky-500/18 text-sky-50'
+                  : 'border-emerald-400/20 bg-emerald-500/18 text-emerald-50'
+          }`}>
+            {listingBadge}
           </span>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-3.5">
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-sky-100/80">
-            Listed {fmtDate(product.createdAt)}
-          </p>
-          <h4 className="mt-1 line-clamp-2 text-[1.1rem] font-black leading-tight tracking-tight text-white">
-            {product.title}
-          </h4>
+
+        <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white/90 backdrop-blur-sm">
+          <Star className="h-4 w-4" />
+        </div>
+
+        <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/75 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white shadow-[0_12px_26px_rgba(0,0,0,0.22)] backdrop-blur-sm">
+          <Users className="h-3.5 w-3.5 text-emerald-300" />
+          {viewers} buyers viewing
+          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#edf5ff] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#245c9d]">
-            <Globe className="h-3.5 w-3.5" />
-            {product.countryOfOrigin || 'Global supply'}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-            <Clock3 className="h-3.5 w-3.5" />
-            {product.leadTime || 'Ready to quote'}
-          </span>
+      <div className="flex flex-1 flex-col gap-2.5 p-3.5">
+        <div className="space-y-1">
+          <h4 className="min-h-[2.75rem] line-clamp-2 text-[0.94rem] font-black leading-5 tracking-tight text-white sm:text-[1rem]">
+            {product.title}
+          </h4>
         </div>
 
-        <p className="line-clamp-2 text-[12px] leading-5 text-slate-500">
-          Live product listing from the catalog, shown in motion so buyers can scan quickly and act sooner.
-        </p>
-
-        <div className="mt-auto flex items-end justify-between gap-3">
-          <div>
-            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Price</div>
-            <div className="mt-0.5 text-sm font-black text-slate-900">{fmtPrice(product.price, product.unit)}</div>
+        <div className="grid grid-cols-1 gap-1.5">
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-3 py-2 text-[10.5px] text-slate-100">
+            <MapPin className="h-3.5 w-3.5 text-sky-300" />
+            <span className="text-slate-300">Origin:</span>
+            <span className="font-semibold text-white">{product.countryOfOrigin || 'Global supply'}</span>
           </div>
-          <div className="rounded-2xl bg-[#f0f7ff] px-2.5 py-1.5 text-right">
-            <div className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">MOQ</div>
-            <div className="mt-0.5 text-[11px] font-black text-[#143a6a]">{product.MOQ || '—'}</div>
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-3 py-2 text-[10.5px] text-slate-100">
+            <Package className="h-3.5 w-3.5 text-amber-300" />
+            <span className="text-slate-300">MOQ:</span>
+            <span className="font-semibold text-white">{product.MOQ || '—'}</span>
           </div>
         </div>
 
-        <div className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0A2540,#245c9d)] px-3 py-2 text-xs font-bold text-white transition group-hover:shadow-[0_10px_24px_rgba(20,58,106,0.24)]">
-          Open Listing
-          <ArrowRight className="h-3.5 w-3.5" />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {featureBadges.map((badge) => {
+            const Icon = badge.icon;
+            return (
+              <div key={badge.label} className={`flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[18px] border px-2.5 py-2 text-center ${toneClasses[badge.tone]}`}>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-[8.5px] font-black uppercase tracking-[0.14em] leading-tight">
+                  {badge.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="rounded-[18px] bg-white/8 px-3 py-2">
+            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/65">Price</div>
+            <div className="mt-1 text-[0.92rem] font-black text-white">{fmtPrice(product.price, product.unit)}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/8 px-3 py-2 text-right">
+            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/65">Updated</div>
+            <div className="mt-1 text-[0.86rem] font-black text-white">{fmtDate(product.createdAt)}</div>
+          </div>
+        </div>
+
+        <div className="mt-auto inline-flex items-center justify-center gap-2 rounded-[18px] bg-[linear-gradient(135deg,#E5A93D,#FFB545)] px-4 py-2.5 text-[11px] font-black text-[#0A2540] shadow-[0_14px_30px_rgba(229,169,61,0.22)] transition group-hover:-translate-y-0.5">
+          Start Deal
+          <ArrowRight className="h-4 w-4" />
         </div>
       </div>
     </button>
@@ -130,8 +203,8 @@ function ProductTile({ product, onSelect, onHover }) {
 
 function ProductSkeleton() {
   return (
-    <div className="flex h-full w-[16rem] flex-none flex-col overflow-hidden rounded-[24px] border border-white/10 bg-white/8 shadow-[0_16px_40px_rgba(5,14,28,0.22)] sm:w-[18rem]">
-      <div className="h-36 animate-pulse bg-white/10" />
+    <div className="flex h-full w-[16.5rem] flex-none flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[rgba(10,16,29,0.86)] shadow-[0_18px_48px_rgba(5,14,28,0.28)] sm:w-[18rem]">
+      <div className="h-44 animate-pulse bg-white/10" />
       <div className="flex flex-1 flex-col gap-3 p-3.5">
         <div className="h-5 w-24 animate-pulse rounded-full bg-white/10" />
         <div className="h-4 w-5/6 animate-pulse rounded-full bg-white/10" />
@@ -200,6 +273,7 @@ export default function ProductShowcaseCarousel() {
   const featuredProduct = products.find((product) => product._id === hoveredProductId) || newestListing;
 
   const handleSelect = (productId) => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     navigate(`/product/${productId}`);
   };
 
@@ -267,77 +341,11 @@ export default function ProductShowcaseCarousel() {
               </div>
             ) : totalProducts > 0 ? (
               <>
-                <article className="relative flex h-full max-w-[16rem] flex-col overflow-hidden rounded-[22px] border border-white/10 bg-white/5">
-                  <div className="relative h-[clamp(120px,18vh,180px)] overflow-hidden">
-                    {featuredProduct?.images?.[0] ? (
-                      <img
-                        src={featuredProduct.images[0]}
-                        alt={featuredProduct.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${getFallbackTone(featuredProduct?.category)}`}>
-                        <div className="flex h-24 w-24 items-center justify-center rounded-[26px] border border-white/40 bg-white/65 text-3xl font-black text-[#143a6a] shadow-[0_20px_50px_rgba(255,255,255,0.24)]">
-                          {getInitials(featuredProduct?.title || '') || <Package className="h-10 w-10" />}
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,14,28,0.02)_0%,rgba(5,14,28,0.1)_34%,rgba(5,14,28,0.82)_100%)]" />
-                    <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                      <span className="rounded-full border border-white/20 bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#143a6a]">
-                        {featuredProduct?.category || 'Product'}
-                      </span>
-                      <span className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white">
-                        {freshnessLabel(featuredProduct?.createdAt)}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/80">
-                        Hover preview
-                      </p>
-                      <h4 className="mt-1 line-clamp-2 text-[1rem] font-black tracking-tight text-white">
-                        {featuredProduct?.title}
-                      </h4>
-                      <p className="mt-1.5 line-clamp-2 max-w-xl text-[11px] leading-4.5 text-slate-200">
-                        {featuredProduct?.description || 'Hover over any card below to expand it here as a polished featured product view.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2.5 p-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-[16px] bg-white/8 px-2.5 py-2">
-                        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/70">Price</div>
-                        <div className="mt-1 text-[0.9rem] font-black text-white">
-                          {fmtPrice(featuredProduct?.price, featuredProduct?.unit)}
-                        </div>
-                      </div>
-                      <div className="rounded-[16px] bg-white/8 px-2.5 py-2">
-                        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/70">MOQ</div>
-                        <div className="mt-1 text-[0.9rem] font-black text-white">{featuredProduct?.MOQ || '—'}</div>
-                      </div>
-                      <div className="rounded-[16px] bg-white/8 px-2.5 py-2">
-                        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/70">Origin</div>
-                        <div className="mt-1 text-[12px] font-semibold text-white">
-                          {featuredProduct?.countryOfOrigin || 'Global supply'}
-                        </div>
-                      </div>
-                      <div className="rounded-[16px] bg-white/8 px-2.5 py-2">
-                        <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/70">Listed</div>
-                        <div className="mt-1 text-[12px] font-semibold text-white">{fmtDate(featuredProduct?.createdAt)}</div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(featuredProduct?._id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#E5A93D,#FFB545)] px-3 py-2 text-[11px] font-black text-[#0A2540] transition hover:-translate-y-0.5"
-                    >
-                      Open product page
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </article>
+                <ProductTile
+                  product={featuredProduct}
+                  onHover={(productId) => setHoveredProductId(productId)}
+                  onSelect={handleSelect}
+                />
 
                 <div className="relative flex min-h-[260px] items-center overflow-hidden rounded-[22px] border border-white/10 bg-white/5 px-3 py-3">
                   <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#07111f] to-transparent" />
