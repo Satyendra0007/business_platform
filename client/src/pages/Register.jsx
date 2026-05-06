@@ -119,7 +119,12 @@ function RegisterPage() {
         );
       }
       const phoneForOtp = result.phone || phone.trim();
-      navigate(`/verify-phone?phone=${encodeURIComponent(phoneForOtp)}`);
+      navigate(`/verify-phone?phone=${encodeURIComponent(phoneForOtp)}`, {
+        state: {
+          onboardingRole: selectedRole,
+          showCompanyVerificationPrompt: selectedRole === 'supplier',
+        },
+      });
 
     } catch (err) {
       // EMAIL_ALREADY_VERIFIED — account exists and is fully active, stay on page

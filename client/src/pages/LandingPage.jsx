@@ -4,11 +4,9 @@ import {
   CheckCircle2,
   XCircle,
   Ship,
-  MapPin,
   Bell,
   Settings,
   MessageSquare,
-  FileCheck,
   Star
 } from 'lucide-react';
 import heroShip from '../assets/hero-ship.png';
@@ -20,101 +18,10 @@ import productHealthBeautyA from '../assets/product-health-beauty-a.png';
 import productHealthBeautyB from '../assets/product-health-beauty-b.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
-import productBelgianJonagoldApples from '../assets/product-belgian-jonagold-apples.jpg';
-import productBelgianPears from '../assets/product-belgian-pears.jpg';
-import productIR64ParboiledRice from '../assets/product-ir64-parboiled-rice.jpg';
-import productFreshEggs from '../assets/product-fresh-eggs.jpg';
-import productHalalLambCarcass from '../assets/product-halal-lamb-carcass.jpg';
-import productClinker from '../assets/product-clinker.jpg';
 import { PublicLayout, Reveal, Marquee } from '../components/ui';
 import EarlyAccessPromo from '../components/landing/EarlyAccessPromo';
+import ProductShowcaseCarousel from '../components/landing/ProductShowcaseCarousel';
 import { useNavigate } from 'react-router-dom';
-
-const featuredProducts = [
-  {
-    id: 'belgian-jonagold-apples',
-    name: 'Belgian Jonagold Apples',
-    category: 'Food & Agriculture',
-    img: productBelgianJonagoldApples,
-    price: 'On request',
-    origin: 'Belgium',
-    moq: '1 container',
-    badges: ['Urgent deal'],
-    highlights: ['70-85 mm caliber', '18 kg cartons or bulk bins']
-  },
-  {
-    id: 'belgian-conference-pears',
-    name: 'Belgian Pears',
-    category: 'Food & Agriculture',
-    img: productBelgianPears,
-    price: 'On request',
-    origin: 'Belgium',
-    moq: '1 container',
-    badges: ['Active deal'],
-    highlights: ['55-75 mm caliber', '12.5 kg export cartons']
-  },
-  {
-    id: 'ir64-parboiled-rice',
-    name: 'IR64 Parboiled Rice',
-    category: 'Food & Agriculture',
-    img: productIR64ParboiledRice,
-    price: 'On request',
-    origin: 'India',
-    moq: '500 MT',
-    badges: ['High demand'],
-    highlights: ['5% max broken', '50 kg PP bags or bulk']
-  },
-  {
-    id: 'fresh-eggs',
-    name: 'Fresh Eggs',
-    category: 'Food & Agriculture',
-    img: productFreshEggs,
-    price: 'On request',
-    origin: 'Belgium / Netherlands',
-    moq: '1 pallet',
-    badges: ['Life Opportunities'],
-    highlights: ['Grade A export quality', '30 egg trays or 360/carton']
-  },
-  {
-    id: 'halal-lamb-carcass',
-    name: 'Halal Lamb Carcass',
-    category: 'Food & Agriculture',
-    img: productHalalLambCarcass,
-    price: 'On request',
-    origin: 'Kenya / India',
-    moq: '500 KG',
-    badges: ['Three Recent requests'],
-    highlights: ['9-12 kg carcasses', 'Halal certified and chilled']
-  },
-  {
-    id: 'clinker',
-    name: 'Clinker',
-    category: 'Chemicals',
-    img: productClinker,
-    price: 'On request',
-    origin: 'India / Vietnam / Middle East',
-    moq: '10,000 MT',
-    badges: ['Top listing', 'Verified Supplier'],
-    highlights: ['Bulk vessel supply', 'Suitable for OPC grinding']
-  },
-];
-
-const productBadgeStyles = {
-  'Urgent deal':
-    'border border-rose-200 bg-gradient-to-r from-rose-500 to-orange-400 text-white shadow-[0_10px_24px_rgba(244,63,94,0.22)]',
-  'Active deal':
-    'border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_10px_24px_rgba(16,185,129,0.12)]',
-  'High demand':
-    'border border-amber-200 bg-amber-50 text-amber-800 shadow-[0_10px_24px_rgba(245,158,11,0.14)]',
-  'Life Opportunities':
-    'border border-sky-200 bg-sky-50 text-sky-700 shadow-[0_10px_24px_rgba(14,165,233,0.12)]',
-  'Three Recent requests':
-    'border border-cyan-200 bg-cyan-50 text-cyan-700 shadow-[0_10px_24px_rgba(6,182,212,0.12)]',
-  'Top listing':
-    'border border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]',
-  'Priorotise Supplier':
-    'border border-violet-200 bg-violet-50 text-violet-700 shadow-[0_10px_24px_rgba(139,92,246,0.12)]'
-};
 
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
 
@@ -514,101 +421,10 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 3: FEATURED PRODUCTS --- */}
-        <section className="px-0 pt-0 pb-8 sm:px-1 lg:px-16">
+        {/* --- SECTION 3: LIVE PRODUCT SHOWCASE --- */}
+        <section className="px-0 pt-0 pb-5 sm:px-1 lg:px-0 xl:px-0">
           <Reveal effect="up">
-            <div className="relative overflow-hidden rounded-[36px] border border-blue-100 bg-[linear-gradient(135deg,#f0f7ff,#e8f2ff)] px-5 py-6 shadow-[0_24px_60px_rgba(20,58,106,0.10)] sm:px-6 lg:px-8 lg:py-7">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#245c9d]/10 blur-[80px]" />
-              <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-[#E5A93D]/10 blur-[60px]" />
-
-              <div className="relative mx-auto max-w-6xl text-left">
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#143A6A] shadow-sm">
-                  <FileCheck className="h-3.5 w-3.5" /> Featured Export Products
-                </div>
-                <h2 className="mt-4 text-2xl font-black tracking-tight text-[#0A2540] md:text-[2.5rem]">
-                  Export-ready products for immediate shipment
-                </h2>
-                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-                  Fresh produce, rice, eggs, lamb, and clinker from trusted origins, ready to be presented on the landing page without changing anything else in the app.
-                </p>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {featuredProducts.map((product, index) => (
-                    <Reveal key={product.id} delay={120 + index * 60} effect="up">
-                      <article className="group flex h-full min-h-[300px] flex-col overflow-hidden rounded-[24px] border border-blue-100 bg-white shadow-[0_16px_36px_rgba(20,58,106,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_48px_rgba(20,58,106,0.14)] sm:min-h-[320px]">
-                        <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-36">
-                          <img
-                            src={product.img}
-                            alt={product.name}
-                            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-col gap-1.5 sm:left-4 sm:top-4 sm:max-w-[calc(100%-2rem)] sm:flex-row sm:flex-wrap sm:items-start">
-                            <div className="w-fit rounded-full bg-white/92 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.14em] text-[#143A6A] shadow-sm backdrop-blur sm:px-3 sm:text-[10px]">
-                              {product.category}
-                            </div>
-                            <div className="w-fit rounded-full bg-[#0A2540]/85 px-2.5 py-1 text-[8.5px] font-black uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur sm:px-3 sm:text-[10px]">
-                              Export ready
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <h3 className="line-clamp-2 text-[15px] font-black leading-5 tracking-tight text-[#0A2540] sm:text-[15px]">{product.name}</h3>
-                              <div className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-                                <MapPin className="h-3.5 w-3.5 text-[#245c9d]" />
-                                <span>{product.origin}</span>
-                              </div>
-                            </div>
-                            <div className="w-fit rounded-2xl bg-[#edf5ff] px-2 py-1.5 text-right">
-                              <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Availability</div>
-                              <div className="mt-0.5 text-[11px] font-black text-[#143A6A]">On request</div>
-                            </div>
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {product.badges.map((badge) => (
-                              <span
-                                key={badge}
-                                className={`inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[8.25px] font-black uppercase tracking-[0.12em] sm:text-[8.5px] ${productBadgeStyles[badge]}`}
-                              >
-                                {badge}
-                              </span>
-                            ))}
-                          </div>
-
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            {product.highlights.map((highlight) => (
-                              <div key={highlight} className="flex items-center gap-2 rounded-2xl bg-slate-50 px-2.5 py-1.5 text-[10px] font-semibold leading-4 text-slate-700">
-                                <FileCheck className="h-3.5 w-3.5 flex-none text-[#E5A93D]" />
-                                <span>{highlight}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <p className="mt-3 line-clamp-2 text-[11px] font-medium leading-5 text-slate-500">
-                            {product.name} is presented here with the supplied export details and product imagery for the landing page showcase.
-                          </p>
-
-                          <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row sm:items-center sm:gap-3">
-                            <button
-                              onClick={() => navigate('/login')}
-                              className="w-full rounded-2xl bg-[linear-gradient(135deg,#0A2540,#143A6A)] px-4 py-2 text-[11px] font-black text-white shadow-[0_10px_24px_rgba(20,58,106,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(20,58,106,0.3)] sm:w-auto"
-                            >
-                              Start Deal
-                            </button>
-                            <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 sm:whitespace-nowrap">
-                              Min order: {product.moq}
-                            </div>
-                          </div>
-                        </div>
-                      </article>
-                    </Reveal>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <ProductShowcaseCarousel />
           </Reveal>
         </section>
 

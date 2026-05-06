@@ -1,19 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Phone, Loader2, AlertCircle, ArrowRight, RefreshCw } from 'lucide-react';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import { useAuth } from '../hooks/useAuth';
 import { saveToken, saveUser } from '../lib/api';
 import { sendOtp, resendOtp, verifyOtp } from '../lib/authService';
+import CompanyVerificationPrompt from '../components/onboarding/CompanyVerificationPrompt';
 
 const RESEND_COOLDOWN = 60; // seconds
 const CODE_LENGTH = 6;
 
+function readPendingAuth() {
+  try {
+    const raw = sessionStorage.getItem('tradafy-pending-auth');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function VerifyPhonePage() {
-  const { login } = useAuth();
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const phone = decodeURIComponent(searchParams.get('phone') || '');
+  const pendingAuth = readPendingAuth();
+  const onboardingRole = location.state?.onboardingRole || pendingAuth?.user?.role || (pendingAuth?.user?.roles?.includes('supplier') ? 'supplier' : '');
+  const [showCompanyPrompt, setShowCompanyPrompt] = useState(Boolean(
+    location.state?.showCompanyVerificationPrompt || onboardingRole === 'supplier'
+  ));
 
   const [digits, setDigits] = useState(Array(CODE_LENGTH).fill(''));
   const [isVerifying, setIsVerifying] = useState(false);
@@ -112,8 +128,23 @@ export default function VerifyPhonePage() {
     try {
       await verifyOtp(phone, code);
       setSuccess(true);
-      sessionStorage.removeItem('tradafy-pending-auth');
-      setTimeout(() => navigate('/login'), 3000);
+
+      const currentPendingAuth = readPendingAuth();
+      const isSupplierUser = currentPendingAuth?.user?.roles?.includes('supplier') || currentPendingAuth?.user?.role === 'supplier';
+      if (currentPendingAuth?.token && currentPendingAuth?.user) {
+        const userToSave = { ...currentPendingAuth.user, token: currentPendingAuth.token };
+        saveToken(currentPendingAuth.token);
+        saveUser(userToSave);
+        updateUser(userToSave);
+        sessionStorage.removeItem('tradafy-pending-auth');
+
+        if (isSupplierUser) {
+          setTimeout(() => navigate('/company/setup?onboarding=1&next=/supplier/products/create', { replace: true }), 300);
+          return;
+        }
+      }
+
+      setTimeout(() => navigate('/dashboard', { replace: true }), 300);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Invalid OTP. Please try again.');
       setDigits(Array(CODE_LENGTH).fill(''));
@@ -124,21 +155,22 @@ export default function VerifyPhonePage() {
   };
 
   const handleSkip = () => {
-    const pendingAuthRaw = sessionStorage.getItem('tradafy-pending-auth');
-    if (pendingAuthRaw) {
-      try {
-        const pendingAuth = JSON.parse(pendingAuthRaw);
-        if (pendingAuth?.token && pendingAuth?.user) {
-          const userToSave = { ...pendingAuth.user, token: pendingAuth.token };
-          saveToken(pendingAuth.token);
-          saveUser(userToSave);
-          sessionStorage.removeItem('tradafy-pending-auth');
-          login(userToSave);
-          return;
-        }
-      } catch {
-        sessionStorage.removeItem('tradafy-pending-auth');
+    const currentPendingAuth = readPendingAuth();
+    if (currentPendingAuth?.token && currentPendingAuth?.user) {
+      const isSupplierUser = currentPendingAuth?.user?.roles?.includes('supplier') || currentPendingAuth?.user?.role === 'supplier';
+      const userToSave = { ...currentPendingAuth.user, token: currentPendingAuth.token };
+      saveToken(currentPendingAuth.token);
+      saveUser(userToSave);
+      updateUser(userToSave);
+      sessionStorage.removeItem('tradafy-pending-auth');
+
+      if (isSupplierUser) {
+        navigate('/company/setup?onboarding=1&next=/supplier/products/create', { replace: true });
+        return;
       }
+
+      navigate('/dashboard', { replace: true });
+      return;
     }
 
     // Fallback: send them to login if no pending session is available.
@@ -160,7 +192,7 @@ export default function VerifyPhonePage() {
           </div>
           <h2 className="text-3xl font-bold text-slate-900">Phone Verified!</h2>
           <p className="mt-4 text-slate-600">
-            Your phone number has been verified. Redirecting to login…
+            Your phone number has been verified. Redirecting to your workspace…
           </p>
           <div className="mt-8 flex justify-center">
             <div className="h-1.5 w-32 overflow-hidden rounded-full bg-slate-100">
@@ -181,6 +213,12 @@ export default function VerifyPhonePage() {
   // ─── OTP Screen ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(236,181,58,0.18),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.16),transparent_22%),linear-gradient(180deg,#eff4fb_0%,#f8fafc_42%,#edf3fb_100%)] flex items-center justify-center px-4 py-8">
+      <CompanyVerificationPrompt
+        open={showCompanyPrompt}
+        role={onboardingRole}
+        onClose={() => setShowCompanyPrompt(false)}
+        onPrimary={() => navigate('/company/setup?onboarding=1&next=/supplier/products/create', { replace: true })}
+      />
       <div className="w-full max-w-md">
 
         {/* Card */}
