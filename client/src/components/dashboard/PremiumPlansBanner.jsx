@@ -12,7 +12,7 @@ const premiumSlides = [
     eyebrow: 'Premium Plans',
     title: 'Priority execution for serious trade teams',
     copy: 'Unlock boosted visibility, stronger support, and a cleaner path to closing more deals.',
-    metric: '€99 / month',
+    metric: '$99 / month',
     chips: ['Priority support', 'Boosted ranking'],
     icon: Sparkles,
     image: dashboardBanner1,

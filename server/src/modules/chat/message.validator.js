@@ -18,8 +18,15 @@ const sendMessageValidation = [
 
   check('attachments.*')
     .optional()
-    .isURL()
-    .withMessage('Each attachment must be a valid URL')
+    .custom((value) => {
+      if (typeof value === 'string') {
+        return /^https?:\/\//i.test(value);
+      }
+      if (value && typeof value === 'object' && typeof value.url === 'string') {
+        return /^https?:\/\//i.test(value.url);
+      }
+      throw new Error('Each attachment must be a valid URL');
+    })
 ];
 
 module.exports = { sendMessageValidation };

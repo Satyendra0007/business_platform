@@ -17,7 +17,7 @@ const PLANS = {
   free: {
     name: 'Free',
     badge: 'Starter',
-    price: '€0',
+    price: '$0',
     maxActiveDeals:   1,          // max deals not in 'closed' state
     maxTotalDeals:    3,          // max deals ever created (including closed)
     maxChats:         Infinity,   // chat gated by phase, not a simple count
@@ -27,7 +27,7 @@ const PLANS = {
   business: {
     name: 'Business',
     badge: 'Scale',
-    price: '€49 / month',
+    price: '$49 / month',
     maxActiveDeals:   5,
     maxTotalDeals:    Infinity,
     maxChats:         5,          // max active chat threads
@@ -37,7 +37,7 @@ const PLANS = {
   premium: {
     name: 'Premium',
     badge: 'Pro',
-    price: '€99 / month',
+    price: '$99 / month',
     maxActiveDeals:   Infinity,
     maxTotalDeals:    Infinity,
     maxChats:         Infinity,

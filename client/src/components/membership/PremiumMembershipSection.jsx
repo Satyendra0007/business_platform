@@ -21,7 +21,7 @@ const plans = [
   {
     name: 'Free',
     badge: 'Starter',
-    price: '€0',
+    price: '$0',
     icon: Sparkles,
     summary: 'Get started with one real deal before the workspace soft-limits.',
     metrics: [
@@ -39,7 +39,7 @@ const plans = [
   {
     name: 'Business',
     badge: 'Scale',
-    price: '€49 / month',
+    price: '$49 / month',
     icon: Building2,
     summary: 'Built for active traders who manage several deals at once.',
     metrics: [
@@ -57,7 +57,7 @@ const plans = [
   {
     name: 'Premium',
     badge: 'Pro',
-    price: '€99 / month',
+    price: '$99 / month',
     icon: Star,
     highlighted: true,
     summary: 'The premium plan for serious traders who want faster and safer closes.',

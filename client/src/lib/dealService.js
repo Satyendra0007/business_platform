@@ -8,7 +8,8 @@
  *
  * Messages (per-deal chat):
  * GET    /api/messages?dealId=   → getMessages(dealId, params)
- * POST   /api/messages           → sendMessage(dealId, text)
+ * POST   /api/messages           → sendMessage(dealId, { text, attachments, type })
+ * GET    /api/messages/:id/attachments/:index/download → downloadMessageAttachment(messageId, index)
  */
 import api from './api';
 
@@ -105,14 +106,31 @@ export const getMessages = async (dealId, params = {}) => {
 };
 
 /**
- * Send a text message to a deal thread.
+ * Send a message to a deal thread.
  * @param {string} dealId
- * @param {string} text
+ * @param {string|object} payload
  */
-export const sendMessage = async (dealId, text) => {
+export const sendMessage = async (dealId, payload) => {
   try {
-    const { data: res } = await api.post('/messages', { dealId, text });
+    const body = typeof payload === 'string'
+      ? { dealId, text: payload }
+      : { dealId, ...payload };
+    const { data: res } = await api.post('/messages', body);
     if (res.success) return res.data;
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to send message.'); }
+};
+
+/**
+ * Download an attachment for a specific message.
+ * @param {string} messageId
+ * @param {number} index
+ */
+export const downloadMessageAttachment = async (messageId, index) => {
+  try {
+    const res = await api.get(`/messages/${messageId}/attachments/${index}/download`, {
+      responseType: 'blob',
+    });
+    return res.data;
+  } catch (error) { handleError(error, 'Failed to download attachment.'); }
 };
