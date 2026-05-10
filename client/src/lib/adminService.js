@@ -26,10 +26,16 @@
  *
  * RFQs:
  *  GET   /api/admin/rfq                        → getAdminRFQs(params)
+<<<<<<< HEAD
  *  GET   /api/admin/rfq/:id                    → getAdminRFQById(id)
  *  PUT   /api/admin/rfq/:id                    → updateRFQ(id, data)
  *  PATCH /api/admin/rfq/:id/close              → closeRFQ(id)
  *  PATCH /api/admin/rfq/:id/remove             → removeRFQ(id)
+=======
+ *
+ * Products:
+ *  GET   /api/admin/products                   → getAdminProducts(params)
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
  */
 import api from './api';
 
@@ -194,6 +200,7 @@ export const getAdminRFQs = async (params = {}) => {
   } catch (error) { handleError(error, 'Failed to load RFQs.'); }
 };
 
+<<<<<<< HEAD
 export const getAdminRFQById = async (id) => {
   try {
     const { data: res } = await api.get(`/admin/rfq/${id}`);
@@ -224,4 +231,14 @@ export const removeRFQ = async (id) => {
     if (res.success) return true;
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to remove RFQ.'); }
+=======
+// ─── Products (admin) ────────────────────────────────────────────────────────
+
+export const getAdminProducts = async (params = {}) => {
+  try {
+    const { data: res } = await api.get('/admin/products', { params });
+    if (res.success) return { products: res.data, total: res.total, totalPages: res.totalPages };
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load products.'); }
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
 };

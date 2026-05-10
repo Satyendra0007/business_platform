@@ -9,7 +9,7 @@
  *  - stripeCustomerId is retrieved or created on demand.
  */
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+let stripeClient = null;
 const User = require('../user/user.model');
 
 // ─── Plan → Stripe Price ID map ───────────────────────────────────────────────
@@ -25,6 +25,61 @@ const priceIdToPlan = () => ({
   [process.env.STRIPE_PREMIUM_PRICE_ID]: 'premium',
 });
 
+const getStripeClient = () => {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  if (!stripeClient) {
+    stripeClient = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripeClient;
+};
+
+const getFrontendUrl = () => (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
+const isStaleStripeCustomerError = (err) => {
+  const message = String(err?.message || '');
+  const rawCode = err?.raw?.code || err?.code;
+  return (
+    rawCode === 'resource_missing' ||
+    /No such customer/i.test(message) ||
+    (/customer/i.test(message) && err?.statusCode === 404)
+  );
+};
+
+const createOrRefreshStripeCustomer = async (user) => {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    throw new Error('Stripe is not configured on the server.');
+  }
+
+  const customer = await stripe.customers.create({
+    email: user.email,
+    name: [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email,
+    metadata: { userId: user._id.toString() },
+  });
+
+  await User.findByIdAndUpdate(user._id, { stripeCustomerId: customer.id });
+  return customer.id;
+};
+
+const createStripeCheckoutSession = async ({ customerId, priceId, user, plan }) => {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    throw new Error('Stripe is not configured on the server.');
+  }
+
+  const frontendUrl = getFrontendUrl();
+
+  return stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    metadata: { userId: user._id.toString(), plan },
+    allow_promotion_codes: true,
+    success_url: `${frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${frontendUrl}/pricing?canceled=1`,
+  });
+};
+
 // ───────────────────────────────────────────────────────────────────────────────
 // @desc    Create a Stripe Checkout session for a subscription upgrade
 // @route   POST /api/billing/create-checkout-session
@@ -33,9 +88,24 @@ const priceIdToPlan = () => ({
 const createCheckoutSession = async (req, res) => {
   try {
     const { plan } = req.body;
+    const normalizedPlan = plan?.toLowerCase();
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: 'Stripe is not configured on the server.',
+      });
+    }
+
+    if (!PLAN_PRICE_IDS.business || !PLAN_PRICE_IDS.premium) {
+      return res.status(500).json({
+        success: false,
+        message: 'Stripe plan prices are missing on the server.',
+      });
+    }
 
     // Validate plan
-    const priceId = PLAN_PRICE_IDS[plan?.toLowerCase()];
+    const priceId = PLAN_PRICE_IDS[normalizedPlan];
     if (!priceId) {
       return res.status(400).json({
         success: false,
@@ -46,7 +116,7 @@ const createCheckoutSession = async (req, res) => {
     const user = req.user;
 
     // Prevent downgrade via checkout
-    if (user.plan === plan?.toLowerCase()) {
+    if (user.plan === normalizedPlan) {
       return res.status(400).json({
         success: false,
         message: `You are already on the ${plan} plan.`,
@@ -57,34 +127,46 @@ const createCheckoutSession = async (req, res) => {
     let stripeCustomerId = user.stripeCustomerId;
 
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        metadata: { userId: user._id.toString() },
-      });
-      stripeCustomerId = customer.id;
-      // Persist immediately so we don't create duplicates on retry
-      await User.findByIdAndUpdate(user._id, { stripeCustomerId });
+      stripeCustomerId = await createOrRefreshStripeCustomer(user);
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-
     // ── Create Checkout session (subscription mode) ────────────────────────────
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: 'subscription',
-      line_items: [{ price: priceId, quantity: 1 }],
-      metadata: { userId: user._id.toString(), plan: plan.toLowerCase() },
-      // Allow customers to change quantity or switch plans during checkout
-      allow_promotion_codes: true,
-      success_url: `${frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${frontendUrl}/pricing?canceled=1`,
-    });
+    let session;
+    try {
+      session = await createStripeCheckoutSession({
+        customerId: stripeCustomerId,
+        priceId,
+        user,
+        plan: normalizedPlan,
+      });
+    } catch (err) {
+      if (stripeCustomerId && isStaleStripeCustomerError(err)) {
+        console.warn('[createCheckoutSession] Recreating stale Stripe customer:', user._id.toString());
+        await User.findByIdAndUpdate(user._id, { stripeCustomerId: null });
+        stripeCustomerId = await createOrRefreshStripeCustomer(user);
+        session = await createStripeCheckoutSession({
+          customerId: stripeCustomerId,
+          priceId,
+          user,
+          plan: normalizedPlan,
+        });
+      } else {
+        throw err;
+      }
+    }
 
     res.json({ success: true, url: session.url });
   } catch (err) {
-    console.error('[createCheckoutSession]', err.message);
-    res.status(500).json({ success: false, message: 'Failed to create checkout session.' });
+    console.error('[createCheckoutSession]', {
+      message: err.message,
+      code: err.code,
+      rawCode: err.raw?.code,
+      type: err.type,
+    });
+    res.status(500).json({
+      success: false,
+      message: err?.message || 'Failed to create checkout session.',
+    });
   }
 };
 
@@ -97,6 +179,14 @@ const createCheckoutSession = async (req, res) => {
 //            It must be registered BEFORE express.json() in index.js.
 // ───────────────────────────────────────────────────────────────────────────────
 const handleWebhook = async (req, res) => {
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return res.status(500).json({
+      success: false,
+      message: 'Stripe is not configured on the server.',
+    });
+  }
+
   const sig = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 

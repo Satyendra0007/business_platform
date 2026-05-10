@@ -10,18 +10,29 @@
  * All data from real API via adminService.js. Zero mock data.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Users, Building2, Briefcase, FileText,
+  Users, Building2, Briefcase, FileText, Package,
   Loader2, AlertCircle, CheckCircle2,
   XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw, ExternalLink, File
 } from 'lucide-react';
 import { AppShell, MetricCard } from './ui';
 import {
+<<<<<<< HEAD
   getUsers, toggleUserStatus, updateUserRole, updateUserPlan, verifyUser,
   getCompanies, verifyCompany, toggleCompanyStatus, updateCompanyAdmin,
   getAdminDeals, updateDealStatus, updateDealShipment, resolveDeal,
   getAdminRFQs, updateRFQ, closeRFQ, removeRFQ
+=======
+  getUsers, toggleUserStatus,
+  getCompanies, verifyCompany,
+  getAdminDeals, getAdminRFQs,
+  getAdminProducts
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
 } from '../lib/adminService';
+import { deleteProduct } from '../lib/productManagementService';
+import ProductGrid from './products/ProductGrid';
+import Pagination from './common/Pagination';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,6 +43,8 @@ const fmtDate = (d) => d
 const fmtPrice = (p) => p != null
   ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p)
   : '—';
+
+const getUserMobile = (user) => user?.phone ?? user?.Phone ?? user?.mobile ?? user?.mobileNumber ?? '—';
 
 // ─── Verification badge ───────────────────────────────────────────────────────
 
@@ -70,6 +83,18 @@ function Panel({ title, children }) {
     </div>
   );
 }
+
+function InfoRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="min-w-0 pr-2">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}: </span>
+      <span className="text-[11px] text-slate-700 truncate">{value}</span>
+    </div>
+  );
+}
+
+const PRODUCT_LIMIT = 12;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TABS
@@ -161,6 +186,7 @@ function UsersTab() {
                 </p>
                 {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
               </div>
+<<<<<<< HEAD
               <button
                 onClick={() => handleToggle(u._id)}
                 disabled={toggling === u._id}
@@ -191,6 +217,17 @@ function UsersTab() {
                 {u.isEmailVerified ? '☑ Email' : '☐ Email'}
               </button>
               {busy === u._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+=======
+              <p className="mt-1 text-sm text-slate-500">{u.email}</p>
+              <p className="mt-0.5 text-sm text-slate-500">
+                Mobile: <span className="font-medium text-slate-700">{getUserMobile(u)}</span>
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
+                {' · '} Joined: {fmtDate(u.createdAt)}
+              </p>
+              {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
             </div>
           </div>
         ))}
@@ -265,14 +302,7 @@ function CompaniesTab() {
 
 function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus }) {
   const [open, setOpen] = useState(false);
-
-  const InfoRow = ({ label, value }) =>
-    value ? (
-      <div className="min-w-0 pr-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}: </span>
-        <span className="text-[11px] text-slate-700 truncate">{value}</span>
-      </div>
-    ) : null;
+  const registeredByName = c.registeredBy?.name || [c.registeredBy?.firstName, c.registeredBy?.lastName].filter(Boolean).join(' ') || '—';
 
   return (
     <div className={`overflow-hidden rounded-[20px] border transition-all ${open ? 'border-[#245c9d]/30 bg-white shadow-md' : 'border-slate-200 bg-[#f5f9fd]'}`}>
@@ -288,6 +318,9 @@ function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus
         <div className="flex-1 min-w-0">
           <p className="truncate font-semibold text-slate-900">{c.name}</p>
           <p className="text-xs text-slate-400">{c.country || '—'}{c.city ? `, ${c.city}` : ''}</p>
+          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+            Registered by <span className="font-semibold text-slate-700">{registeredByName}</span>
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ActiveBadge active={c.isActive} />
@@ -324,7 +357,41 @@ function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus
                 <InfoRow label="Est."       value={c.yearEstablished} />
                 <InfoRow label="Registered" value={fmtDate(c.createdAt)} />
                 <InfoRow label="Plan"       value={c.subscriptionPlan} />
+                <InfoRow label="Owner"      value={registeredByName} />
+                <InfoRow label="Products"   value={c.productCount ? `${c.productCount} item${c.productCount === 1 ? '' : 's'}` : '0'} />
                 {c.website && <InfoRow label="Web" value={<a href={c.website} target="_blank" rel="noreferrer" className="text-[#245c9d] hover:underline decoration-1">{c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>} />}
+              </div>
+
+              {/* Products added by the registered user */}
+              <div className="rounded-[18px] border border-slate-200 bg-white p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Products added by this user ({c.productCount || 0})
+                </p>
+                {c.products?.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {c.products.slice(0, 5).map((product) => (
+                      <div
+                        key={product._id}
+                        className="min-w-0 rounded-2xl border border-[#d8e2ef] bg-[#f4f8fc] px-3 py-2"
+                      >
+                        <p className="max-w-[220px] truncate text-[11px] font-semibold text-slate-800">
+                          {product.title}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          {product.category || 'Uncategorized'}
+                          {product.price != null ? ` · ${fmtPrice(product.price)}` : ''}
+                        </p>
+                      </div>
+                    ))}
+                    {c.products.length > 5 && (
+                      <div className="flex items-center rounded-2xl border border-dashed border-slate-300 px-3 py-2 text-[10px] font-semibold text-slate-500">
+                        +{c.products.length - 5} more
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-400">No products added yet.</p>
+                )}
               </div>
 
               {/* compact Tags */}
@@ -412,6 +479,7 @@ function DealsTab() {
   const [busy,    setBusy]    = useState(null);
   const [actionErr, setActionErr] = useState({});
 
+<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -419,6 +487,13 @@ function DealsTab() {
       setDeals(r.deals); setTotal(r.total);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
+=======
+  useEffect(() => {
+    getAdminDeals({ limit: 50 })
+      .then((r) => { setDeals(r.deals); setTotal(r.total); })
+      .catch((err) => setError(err.response?.data?.message || err.message))
+      .finally(() => setLoading(false));
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -526,6 +601,7 @@ function RFQsTab() {
   const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({});
 
+<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -533,6 +609,13 @@ function RFQsTab() {
       setRFQs(r.rfqs); setTotal(r.total);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
+=======
+  useEffect(() => {
+    getAdminRFQs({ limit: 50 })
+      .then((r) => { setRFQs(r.rfqs); setTotal(r.total); })
+      .catch((err) => setError(err.response?.data?.message || err.message))
+      .finally(() => setLoading(false));
+>>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -657,6 +740,84 @@ function RFQsTab() {
   );
 }
 
+// ─── Products monitor tab ────────────────────────────────────────────────────
+
+function ProductsTab() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const r = await getAdminProducts({ page, limit: PRODUCT_LIMIT });
+      setProducts(r.products);
+      setTotal(r.total);
+      setTotalPages(r.totalPages);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleEdit = (product) => {
+    navigate(`/products/edit/${product._id}`);
+  };
+
+  const handleDelete = async (product) => {
+    if (!window.confirm(`Delete "${product.title}" from the catalog?`)) return;
+    setDeleting(product._id);
+    try {
+      await deleteProduct(product._id);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
+  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+
+  return (
+    <Panel title={`All Products — ${total} total`}>
+      <div className="space-y-4">
+        <ProductGrid
+          products={products}
+          loading={false}
+          error={''}
+          onRetry={load}
+          onClear={() => {}}
+          management
+          showOwner
+          onEditProduct={handleEdit}
+          onDeleteProduct={handleDelete}
+          deletingProductId={deleting}
+        />
+        {totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={PRODUCT_LIMIT}
+            onPage={setPage}
+          />
+        )}
+      </div>
+    </Panel>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ══════════════════════════════════════════════════════════════════════════════
@@ -664,6 +825,7 @@ function RFQsTab() {
 const TABS = [
   { key: 'users',     label: 'Users',     icon: Users     },
   { key: 'companies', label: 'Companies', icon: Building2 },
+  { key: 'products',  label: 'Products',  icon: Package   },
   { key: 'deals',     label: 'Deals',     icon: Briefcase },
   { key: 'rfqs',      label: 'RFQs',      icon: FileText  },
 ];
@@ -672,29 +834,31 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
 
   // Summary counts — load once on mount
-  const [counts, setCounts] = useState({ users: '—', companies: '—', deals: '—', rfqs: '—' });
+  const [counts, setCounts] = useState({ users: '—', companies: '—', products: '—', deals: '—', rfqs: '—' });
   useEffect(() => {
     Promise.all([
       getUsers({ limit: 1 }),
       getCompanies({ limit: 1 }),
+      getAdminProducts({ limit: 1 }),
       getAdminDeals({ limit: 1 }),
       getAdminRFQs({ limit: 1 }),
-    ]).then(([u, c, d, r]) => {
-      setCounts({ users: u.total, companies: c.total, deals: d.total, rfqs: r.total });
+    ]).then(([u, c, p, d, r]) => {
+      setCounts({ users: u.total, companies: c.total, products: p.total, deals: d.total, rfqs: r.total });
     }).catch(() => {}); // counts are decorative — fail silently
   }, []);
 
   return (
     <AppShell
       title="Admin Workspace"
-      subtitle="Manage users, verify companies, and monitor every RFQ and deal across the platform."
+      subtitle="Manage users, verify companies, oversee products, and monitor every RFQ and deal across the platform."
     >
       <div className="space-y-6">
 
         {/* ── Summary metrics ─────────────────────────────────────────────── */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard label="Total Users"     value={counts.users} />
           <MetricCard label="Companies"       value={counts.companies} />
+          <MetricCard label="Products"        value={counts.products} />
           <MetricCard label="Active Deals"    value={counts.deals} />
           <MetricCard label="Total RFQs"      value={counts.rfqs} />
         </div>
@@ -729,6 +893,7 @@ export default function AdminPage() {
           <div className="p-6">
             {activeTab === 'users'     && <UsersTab />}
             {activeTab === 'companies' && <CompaniesTab />}
+            {activeTab === 'products'  && <ProductsTab />}
             {activeTab === 'deals'     && <DealsTab />}
             {activeTab === 'rfqs'      && <RFQsTab />}
           </div>

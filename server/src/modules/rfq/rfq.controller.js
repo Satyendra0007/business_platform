@@ -2,11 +2,53 @@ const mongoose = require('mongoose');
 const RFQ = require('./rfq.model');
 const Deal = require('../deal/deal.model');
 const Product = require('../product/product.model');
+const Company = require('../company/company.model');
+const User = require('../user/user.model');
 const { matchedData } = require('express-validator');
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+const displayUserName = (user) => {
+  if (!user) return null;
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  return fullName || user.name || user.email || null;
+};
+
+const enrichRFQs = async (rfqs) => {
+  const list = Array.isArray(rfqs) ? rfqs : [rfqs];
+  const buyerCompanyIds = [...new Set(list.map((rfq) => rfq?.buyerCompanyId?.toString()).filter(Boolean))];
+  const supplierCompanyIds = [...new Set(list.map((rfq) => rfq?.supplierCompanyId?.toString()).filter(Boolean))];
+  const buyerUserIds = [...new Set(list.map((rfq) => rfq?.buyerUserId?.toString()).filter(Boolean))];
+
+  const [buyerCompanies, supplierCompanies, buyerUsers] = await Promise.all([
+    buyerCompanyIds.length ? Company.find({ _id: { $in: buyerCompanyIds } }).select('name country city').lean() : Promise.resolve([]),
+    supplierCompanyIds.length ? Company.find({ _id: { $in: supplierCompanyIds } }).select('name country city').lean() : Promise.resolve([]),
+    buyerUserIds.length ? User.find({ _id: { $in: buyerUserIds } }).select('firstName lastName email').lean() : Promise.resolve([]),
+  ]);
+
+  const buyerCompanyMap = new Map(buyerCompanies.map((company) => [company._id.toString(), company]));
+  const supplierCompanyMap = new Map(supplierCompanies.map((company) => [company._id.toString(), company]));
+  const buyerUserMap = new Map(buyerUsers.map((user) => [user._id.toString(), user]));
+
+  return list.map((rfq) => {
+    const buyerCompany = buyerCompanyMap.get(rfq.buyerCompanyId?.toString()) || null;
+    const supplierCompany = supplierCompanyMap.get(rfq.supplierCompanyId?.toString()) || null;
+    const buyerUser = buyerUserMap.get(rfq.buyerUserId?.toString()) || null;
+
+    return {
+      ...rfq,
+      buyerCompanyName: buyerCompany?.name || null,
+      buyerCompany,
+      supplierCompanyName: supplierCompany?.name || null,
+      supplierCompany,
+      buyerUserName: displayUserName(buyerUser),
+      buyerUserEmail: buyerUser?.email || null,
+      buyerUser,
+    };
+  });
+};
 
 // ─── CREATE RFQ ─────────────────────────────────────────────────────────────
 // @route   POST /api/rfq
@@ -100,7 +142,7 @@ const getRFQs = async (req, res) => {
 
     const [rfqs, total] = await Promise.all([
       RFQ.find(query)
-        .select('productName category quantity status createdAt supplierCompanyId dealId')
+        .select('productName category quantity status createdAt buyerCompanyId buyerUserId supplierCompanyId dealId')
         .skip(skip)
         .limit(limitValue)
         .sort({ createdAt: -1 })
@@ -108,13 +150,15 @@ const getRFQs = async (req, res) => {
       RFQ.countDocuments(query)
     ]);
 
+    const enrichedRfqs = await enrichRFQs(rfqs);
+
     res.json({
       success: true,
-      count: rfqs.length,
+      count: enrichedRfqs.length,
       total,
       totalPages: Math.ceil(total / limitValue) || 1,
       page: pageValue,
-      data: rfqs
+      data: enrichedRfqs
     });
   } catch (error) {
     console.error('[getRFQs]', error);
@@ -148,7 +192,8 @@ const getRFQById = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to view this RFQ.' });
     }
 
-    res.json({ success: true, data: rfq });
+    const [enriched] = await enrichRFQs(rfq);
+    res.json({ success: true, data: enriched });
   } catch (error) {
     console.error('[getRFQById]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });

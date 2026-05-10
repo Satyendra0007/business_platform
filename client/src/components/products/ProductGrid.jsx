@@ -8,7 +8,14 @@ import ProductCard, { ProductCardSkeleton } from './ProductCard';
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ search, category, onClear }) {
+function EmptyState({
+  search,
+  category,
+  onClear,
+  title,
+  description,
+  actionLabel = 'Clear filters',
+}) {
   const hasFilter = Boolean(search || category);
   return (
     <div className="col-span-full flex flex-col items-center gap-5 rounded-[28px] border border-dashed border-slate-200 py-20 text-center">
@@ -17,12 +24,12 @@ function EmptyState({ search, category, onClear }) {
       </div>
       <div>
         <p className="text-lg font-bold text-slate-700">
-          {hasFilter ? 'No matching products' : 'No products listed yet'}
+          {hasFilter ? title || 'No matching products' : title || 'No products listed yet'}
         </p>
         <p className="mt-1 text-sm text-slate-500">
           {hasFilter
-            ? 'Try adjusting or removing your search filters.'
-            : 'Verified suppliers will appear here once they list products.'}
+            ? description || 'Try adjusting or removing your search filters.'
+            : description || 'Verified suppliers will appear here once they list products.'}
         </p>
       </div>
       {hasFilter && (
@@ -30,7 +37,7 @@ function EmptyState({ search, category, onClear }) {
           onClick={onClear}
           className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
         >
-          Clear filters
+          {actionLabel}
         </button>
       )}
     </div>
@@ -53,7 +60,20 @@ function ErrorBanner({ message, onRetry }) {
 
 // ─── Grid ─────────────────────────────────────────────────────────────────────
 
-export default function ProductGrid({ products, loading, error, onRetry, search, category, onClear }) {
+export default function ProductGrid({
+  products,
+  loading,
+  error,
+  onRetry,
+  search,
+  category,
+  onClear,
+  management = false,
+  onEditProduct,
+  onDeleteProduct,
+  deletingProductId,
+  showOwner = false,
+}) {
   return (
     <div className="space-y-4">
       {error && <ErrorBanner message={error} onRetry={onRetry} />}
@@ -62,10 +82,26 @@ export default function ProductGrid({ products, loading, error, onRetry, search,
         {loading ? (
           Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
         ) : products.length > 0 ? (
-          products.map((product) => <ProductCard key={product._id} product={product} />)
+          products.map((product) => (
+            <ProductCard
+              key={product._id}
+              product={product}
+              management={management}
+              onEdit={onEditProduct}
+              onDelete={onDeleteProduct}
+              deleting={deletingProductId === product._id}
+              showOwner={showOwner}
+            />
+          ))
         ) : (
           !error && (
-            <EmptyState search={search} category={category} onClear={onClear} />
+            <EmptyState
+              search={search}
+              category={category}
+              onClear={onClear}
+              title={undefined}
+              description={undefined}
+            />
           )
         )}
       </div>

@@ -27,7 +27,8 @@ const CATEGORIES = [
   'Chemicals', 'Shipping & Logistics',
 ];
 
-const INCOTERMS = ['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'];
+const INCOTERMS = ['EXW'];
+const UNIT_OPTIONS = ['MT', 'KG', 'pcs', 'L'];
 
 // ─── Field config — maps directly to schema fields ────────────────────────
 // type: 'text' | 'number' | 'textarea' | 'select'
@@ -37,7 +38,7 @@ const TEXT_FIELDS = [
   { key: 'title',          label: 'Product Title',        type: 'text',     required: true,  placeholder: 'e.g. Premium Basmati Rice 25 kg Bags' },
   { key: 'subcategory',    label: 'Subcategory',           type: 'text',     required: false, placeholder: 'e.g. Long-grain Rice' },
   { key: 'description',    label: 'Description',           type: 'textarea', required: false, placeholder: 'Describe quality, specs, certifications…' },
-  { key: 'unit',           label: 'Unit of Measure',       type: 'text',     required: false, placeholder: 'e.g. MT, kg, pcs, L' },
+  { key: 'unit',           label: 'Unit of Measure',       type: 'select',   required: false, placeholder: 'Select unit of measure' },
   { key: 'countryOfOrigin',label: 'Country of Origin',     type: 'text',     required: false, placeholder: 'e.g. India' },
   { key: 'leadTime',       label: 'Lead Time',             type: 'text',     required: false, placeholder: 'e.g. 14-21 days' },
   { key: 'packagingDetails',label:'Packaging Details',     type: 'textarea', required: false, placeholder: 'Packing type, box size, pallet info…' },
@@ -233,7 +234,7 @@ export default function ProductForm({ initial = {}, onSubmit, isLoading, submitL
     price:             initial.price              != null ? String(initial.price) : '',
     MOQ:               initial.MOQ               != null ? String(initial.MOQ)   : '',
     availableQuantity: initial.availableQuantity  != null ? String(initial.availableQuantity) : '',
-    incoterm:          initial.incoterm           || '',
+    incoterm:          'EXW',
     countryOfOrigin:   initial.countryOfOrigin    || '',
     leadTime:          initial.leadTime           || '',
     packagingDetails:  initial.packagingDetails   || '',
@@ -334,11 +335,21 @@ export default function ProductForm({ initial = {}, onSubmit, isLoading, submitL
             </Field>
           ))}
           <Field label="Unit of Measure">
-            <input value={fields.unit} onChange={(e) => set('unit', e.target.value)} placeholder="MT, kg, pcs, L" className={INPUT_CLS} />
+            <select
+              value={fields.unit}
+              onChange={(e) => set('unit', e.target.value)}
+              className={INPUT_CLS}
+            >
+              <option value="">Select unit of measure…</option>
+              {UNIT_OPTIONS.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Incoterm">
             <select value={fields.incoterm} onChange={(e) => set('incoterm', e.target.value)} className={INPUT_CLS}>
-              <option value="">Select…</option>
               {INCOTERMS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </Field>

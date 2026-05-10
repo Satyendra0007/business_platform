@@ -120,7 +120,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'generic', mess
       setLoading(planKey);
       const url = await createCheckoutSession(planKey);
       // Redirect browser to Stripe Checkout — plan update happens via webhook only
-      window.location.href = url;
+      window.location.assign(url);
     } catch (err) {
       console.error('[UpgradeModal] checkout error:', err);
       setError(err?.response?.data?.message || 'Could not start checkout. Please try again.');
@@ -245,10 +245,10 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'generic', mess
             </p>
           )}
 
-          {/* Primary CTA — view all plans on /pricing */}
+          {/* Primary CTA — view all plans on /premium-plans */}
           <button
             id="upgrade-modal-view-plans-btn"
-            onClick={() => { onClose(); navigate('/pricing'); }}
+            onClick={() => { onClose(); navigate('/premium-plans'); }}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E5A93D] py-3.5 text-sm font-black text-[#0A2540] transition hover:bg-[#d49530] hover:-translate-y-0.5 active:translate-y-0"
           >
             <Star className="h-4 w-4" /> View Full Plans <ArrowRight className="h-4 w-4" />

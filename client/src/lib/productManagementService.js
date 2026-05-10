@@ -3,6 +3,7 @@
  * Supplier CRUD for own products. Uses the same axios instance as
  * everything else — no new config needed.
  *
+ * manage  GET  /api/products/manage
  * create  POST /api/products
  * update  PUT  /api/products/:id
  * delete  DELETE /api/products/:id
@@ -24,6 +25,28 @@ export const createProduct = async (data) => {
     if (res.success) return res.data;
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to create product.'); }
+};
+
+/**
+ * Fetch products that the current user is allowed to manage.
+ * Suppliers see their own company listings; admins see all products.
+ * @param {Object} params
+ */
+export const getManagedProducts = async (params = {}) => {
+  try {
+    const { data: res } = await api.get('/products/manage', { params });
+    if (res.success) {
+      return {
+        products: res.data,
+        total: res.total,
+        totalPages: res.totalPages,
+        page: res.page,
+      };
+    }
+    throw new Error(res.message || 'Failed to load products');
+  } catch (error) {
+    handleError(error, 'Failed to load products.');
+  }
 };
 
 /**

@@ -44,7 +44,8 @@ export default function EditProductPage() {
     try {
       await updateProduct(productId, data);
       setDone(true);
-      setTimeout(() => navigate('/supplier/products'), 2200);
+      const backPath = user?.roles?.includes('admin') ? '/admin' : '/supplier/products';
+      setTimeout(() => navigate(backPath), 2200);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {

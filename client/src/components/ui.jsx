@@ -5,6 +5,7 @@ import { navByRole, pageCopy, getNavIcon } from '../lib/navConstants';
 import { Ship } from 'lucide-react';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import { useAuth } from '../hooks/useAuth';
+import { getPrimaryRole } from '../lib/userRole';
 
 function isActive(pathname, path) {
   return pathname === path || (path !== '/dashboard' && pathname.startsWith(path));
@@ -60,8 +61,8 @@ export function PublicHeader() {
   const navigate = useNavigate();
   const { user } = useAuth();
   return (
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/50 bg-transparent px-0 pb-3 pt-1">
-      <button onClick={() => navigate('/')} className="text-left transition-transform hover:-translate-y-0.5">
+    <header className="flex flex-col items-stretch gap-4 border-b border-slate-200/50 bg-transparent px-0 pb-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+      <button onClick={() => navigate('/')} className="text-left transition-transform hover:-translate-y-0.5 sm:w-auto">
         <BrandMark size="md" tone="light" showSubtext subtext="Global Trade Workspace" />
       </button>
 
@@ -70,18 +71,18 @@ export function PublicHeader() {
         <button onClick={() => navigate('/products')} className="hover:text-[#0A2540] transition-colors">View Products</button>
       </div>
 
-      <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
         {!user && (
           <button
             onClick={() => navigate('/login')}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-[#0A2540] transition hover:border-slate-300 hover:bg-slate-50"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-[#0A2540] transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
           >
             Log In
           </button>
         )}
         <button
           onClick={() => navigate(user ? '/dashboard' : '/login')}
-          className="rounded-xl bg-[#E5A93D] px-5 py-2.5 text-sm font-black text-[#0A2540] transition hover:bg-[#FF8A00] shadow-[0_10px_20px_rgba(229,169,61,0.2)]"
+          className="w-full rounded-xl bg-[#E5A93D] px-5 py-2.5 text-sm font-black text-[#0A2540] transition hover:bg-[#FF8A00] shadow-[0_10px_20px_rgba(229,169,61,0.2)] sm:w-auto"
         >
           {user ? 'Open Workspace' : 'Start Trading'}
         </button>
@@ -155,7 +156,7 @@ export function Footer() {
             <h4 className="text-white font-bold text-sm uppercase tracking-widest">Solutions</h4>
             <ul className="space-y-4 text-sm">
               <li><button onClick={() => navigate('/products')} className="hover:text-white transition-colors">Bulk Marketplace</button></li>
-              <li><button className="hover:text-white transition-colors cursor-not-allowed">Logistics Hub</button></li>
+              <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Users</button></li>
               <li><button className="hover:text-white transition-colors cursor-not-allowed">Deal Management</button></li>
               <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Suppliers</button></li>
             </ul>
@@ -183,7 +184,7 @@ export function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold">Email</p>
-                  <p className="text-sm text-white font-semibold">global@tradafy.app</p>
+                  <p className="text-sm text-white font-semibold">Start@tradafy.eu</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 group">
@@ -192,7 +193,7 @@ export function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-500 font-bold">Headquarters</p>
-                  <p className="text-sm text-white font-semibold">Dubai International Financial Centre</p>
+                  <p className="text-sm text-white font-semibold">Belgium - Brussels</p>
                 </div>
               </div>
             </div>
@@ -233,7 +234,7 @@ export function Reveal({ children, delay = 0, effect = 'up', className = '' }) {
 
 export function ReviewCard({ name, role, company, content, rating = 5, avatar, product, productImage, country, flag }) {
   return (
-    <div className="w-[280px] shrink-0 rounded-[28px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] p-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-2 hover:border-white/20 hover:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] group md:w-[320px]">
+    <div className="w-[240px] shrink-0 rounded-[28px] border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] p-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all hover:-translate-y-2 hover:border-white/20 hover:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] group sm:w-[280px] md:w-[320px]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <img
@@ -306,9 +307,10 @@ export function Marquee({ items, direction = 'left', speed = 'normal', className
   );
 }
 
-export function PublicLayout({ children }) {
+export function PublicLayout({ children, topSlot = null }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
+      {topSlot ? <div className="w-full">{topSlot}</div> : null}
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-4 pt-1 sm:px-5 sm:pb-6 sm:pt-2 lg:px-6 lg:pb-8 lg:pt-3">
         <PublicHeader />
         <main className="flex-1">
@@ -326,15 +328,18 @@ export function AppShell({ title, subtitle, children }) {
   const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Real auth object uses roles[] array, not a single role string
-  const userRole     = user?.roles?.[0] || 'buyer';
+  const userRole     = getPrimaryRole(user);
   const navigation   = navByRole[userRole] || navByRole.buyer;
   const fullName     = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : '';
   const userInitial  = fullName.charAt(0).toUpperCase() || '?';
   const roleLabel    = pageCopy[userRole] || 'Workspace';
 
   useEffect(() => {
-    setSidebarOpen(false);
+    const timer = window.setTimeout(() => {
+      setSidebarOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   const sidebar = () => (

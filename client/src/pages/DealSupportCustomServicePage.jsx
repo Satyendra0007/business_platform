@@ -1,0 +1,20 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { AppShell } from '../components/ui';
+import CustomServiceContactCard from '../components/deal-support/cards/CustomServiceContactCard';
+
+export default function DealSupportCustomServicePage() {
+  const navigate = useNavigate();
+  return (
+    <AppShell title="Deal Support" subtitle="Assign a dedicated support manager on a dedicated page.">
+      <div className="space-y-5">
+        <button type="button" onClick={() => navigate('/deal-support')} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Deal Support
+        </button>
+        <CustomServiceContactCard />
+      </div>
+    </AppShell>
+  );
+}

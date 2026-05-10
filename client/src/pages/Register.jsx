@@ -29,7 +29,7 @@ function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted] = useState(false);
 
   // ── Profile image (optional Cloudinary upload) ──────────────────────────────
   const [profileImage, setProfileImage]       = useState('');   // final HTTPS URL
@@ -112,8 +112,19 @@ function RegisterPage() {
 
       // Both new users and existing-unverified users land here.
       // result.phone is the canonical phone saved in the DB.
+      if (result.token && result.user) {
+        sessionStorage.setItem(
+          'tradafy-pending-auth',
+          JSON.stringify({ token: result.token, user: result.user })
+        );
+      }
       const phoneForOtp = result.phone || phone.trim();
-      navigate(`/verify-phone?phone=${encodeURIComponent(phoneForOtp)}`);
+      navigate(`/verify-phone?phone=${encodeURIComponent(phoneForOtp)}`, {
+        state: {
+          onboardingRole: selectedRole,
+          showCompanyVerificationPrompt: selectedRole === 'supplier',
+        },
+      });
 
     } catch (err) {
       // EMAIL_ALREADY_VERIFIED — account exists and is fully active, stay on page

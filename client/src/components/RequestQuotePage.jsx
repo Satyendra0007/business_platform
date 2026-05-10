@@ -61,7 +61,7 @@ const INITIAL_FORM = {
   attachments:       [],
 };
 
-const INCOTERMS = ['EXW', 'FOB', 'CIF', 'CFR', 'DAP', 'DDP', 'FCA', 'CPT', 'CIP'];
+const INCOTERMS = ['EXW', 'FOB'];
 
 export default function RequestQuotePage() {
   const { user }      = useAuth();
@@ -190,16 +190,16 @@ export default function RequestQuotePage() {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => navigate('/my-rfqs')}
+              onClick={() => navigate('/deal-support')}
               className="rounded-2xl bg-[#0A2540] px-6 py-3 text-sm font-bold text-white hover:bg-[#143a6a]"
             >
-              View My RFQs
+              Open Deal Support
             </button>
             <button
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/my-rfqs')}
               className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Browse More
+              View My Requests
             </button>
           </div>
         </div>

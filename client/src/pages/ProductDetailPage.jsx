@@ -99,6 +99,10 @@ function ProductDetailPage() {
   const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [productId]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError('');

@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2, Globe, MapPin, Briefcase, Users, FileText,
   Link, ArrowRight, CheckCircle2, Loader2, X, Upload,
@@ -94,6 +94,9 @@ function StepDot({ label, index, active, done }) {
 export default function CompanySetupPage() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = searchParams.get('next');
+  const onboardingMode = searchParams.get('onboarding') === '1';
 
   const [step, setStep] = useState(0); // 0=basics 1=details 2=documents 3=done
   const [loading, setLoading] = useState(false);
@@ -106,6 +109,14 @@ export default function CompanySetupPage() {
   const [logo, setLogo] = useState('');
   const [documents, setDocuments] = useState([]);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (step !== 3 || !nextPath) return undefined;
+    const timer = window.setTimeout(() => {
+      navigate(nextPath, { replace: true });
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [step, nextPath, navigate]);
 
 
   const set = (field, value) => {
@@ -168,6 +179,15 @@ export default function CompanySetupPage() {
           <p className="mt-4 text-sm leading-6 text-sky-100/70">
             Your company profile is the foundation of everything on Tradafy — products, RFQs, deals, and shipping all require a verified business identity.
           </p>
+
+          {onboardingMode && (
+            <div className="mt-8 rounded-[24px] border border-white/10 bg-white/6 p-4 text-sm text-sky-100/80">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#E5A93D]">Onboarding flow</p>
+              <p className="mt-2 leading-6">
+                Finish this verification step and we will move you straight into the product creation page.
+              </p>
+            </div>
+          )}
 
           {/* Step progress */}
           <div className="mt-14 flex items-start gap-3">
@@ -362,13 +382,13 @@ export default function CompanySetupPage() {
               </div>
               <div className={`rounded-2xl border px-5 py-4 text-sm ${documents.length > 0 ? 'border-sky-100 bg-sky-50 text-sky-800' : 'border-amber-100 bg-amber-50 text-amber-800'}`}>
                 <strong>Status: {documents.length > 0 ? 'Submitted for Review' : 'Draft — Pending Documents'}</strong>
-                {' '}— You'll be able to list products once your company is verified.
+                {' '}— {nextPath ? 'You will land on your product creation page after this step.' : "You'll be able to list products once your company is verified."}
               </div>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(nextPath || '/dashboard')}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0A2540] py-4 text-sm font-bold text-white transition hover:bg-[#143a6a]"
               >
-                Go to Dashboard <ArrowRight className="h-4 w-4" />
+                {nextPath ? 'Continue to Product Creation' : 'Go to Dashboard'} <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           )}
