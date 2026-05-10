@@ -18,17 +18,11 @@ import {
 } from 'lucide-react';
 import { AppShell, MetricCard } from './ui';
 import {
-<<<<<<< HEAD
   getUsers, toggleUserStatus, updateUserRole, updateUserPlan, verifyUser,
   getCompanies, verifyCompany, toggleCompanyStatus, updateCompanyAdmin,
   getAdminDeals, updateDealStatus, updateDealShipment, resolveDeal,
-  getAdminRFQs, updateRFQ, closeRFQ, removeRFQ
-=======
-  getUsers, toggleUserStatus,
-  getCompanies, verifyCompany,
-  getAdminDeals, getAdminRFQs,
+  getAdminRFQs, updateRFQ, closeRFQ, removeRFQ,
   getAdminProducts
->>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
 } from '../lib/adminService';
 import { deleteProduct } from '../lib/productManagementService';
 import ProductGrid from './products/ProductGrid';
@@ -178,6 +172,9 @@ function UsersTab() {
                   <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${u.plan === 'premium' ? 'border-violet-200 bg-violet-50 text-violet-700' : u.plan === 'business' ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>{u.plan || 'free'}</span>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">{u.email}</p>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Mobile: <span className="font-medium text-slate-700">{getUserMobile(u)}</span>
+                </p>
                 <p className="mt-0.5 text-xs text-slate-400">
                   Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
                   {' · '} Joined: {fmtDate(u.createdAt)}
@@ -186,7 +183,6 @@ function UsersTab() {
                 </p>
                 {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
               </div>
-<<<<<<< HEAD
               <button
                 onClick={() => handleToggle(u._id)}
                 disabled={toggling === u._id}
@@ -217,17 +213,6 @@ function UsersTab() {
                 {u.isEmailVerified ? '☑ Email' : '☐ Email'}
               </button>
               {busy === u._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
-=======
-              <p className="mt-1 text-sm text-slate-500">{u.email}</p>
-              <p className="mt-0.5 text-sm text-slate-500">
-                Mobile: <span className="font-medium text-slate-700">{getUserMobile(u)}</span>
-              </p>
-              <p className="mt-0.5 text-xs text-slate-400">
-                Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
-                {' · '} Joined: {fmtDate(u.createdAt)}
-              </p>
-              {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
->>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
             </div>
           </div>
         ))}
@@ -479,21 +464,13 @@ function DealsTab() {
   const [busy,    setBusy]    = useState(null);
   const [actionErr, setActionErr] = useState({});
 
-<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await getAdminDeals({ limit: 50 });
       setDeals(r.deals); setTotal(r.total);
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.response?.data?.message || err.message); }
     finally { setLoading(false); }
-=======
-  useEffect(() => {
-    getAdminDeals({ limit: 50 })
-      .then((r) => { setDeals(r.deals); setTotal(r.total); })
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
->>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -601,21 +578,13 @@ function RFQsTab() {
   const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({});
 
-<<<<<<< HEAD
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await getAdminRFQs({ limit: 50 });
       setRFQs(r.rfqs); setTotal(r.total);
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err.response?.data?.message || err.message); }
     finally { setLoading(false); }
-=======
-  useEffect(() => {
-    getAdminRFQs({ limit: 50 })
-      .then((r) => { setRFQs(r.rfqs); setTotal(r.total); })
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
->>>>>>> 2d9d5c84455a92e1aed261ebabef5a70e9d9d4a7
   }, []);
   useEffect(() => { load(); }, [load]);
 
