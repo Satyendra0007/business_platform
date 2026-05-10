@@ -20,7 +20,12 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppShell, MetricCard } from './ui';
 import { useAuth } from '../hooks/useAuth';
+import { getCompanyById } from '../lib/companyService';
 import { getDealById, advanceDealStatus, getMessages, sendMessage, updateDealShipment } from '../lib/dealService';
+import { buildDocumentContext, uploadPdfToCloudinary } from '../utils/pdf';
+import { generateLOI } from '../utils/pdf/generateLOI';
+import { generateSPA } from '../utils/pdf/generateSPA';
+import { generateNDA } from '../utils/pdf/generateNDA';
 
 // ─── Stage lifecycle ──────────────────────────────────────────────────────────
 
@@ -131,12 +136,14 @@ const getAttachmentLabel = (attachment, index) => {
 const normalizeAttachmentUrl = (url) => {
   const value = String(url || '').trim();
   if (!value) return '';
+  if (/^data:/i.test(value)) return value;
   return /^https?:\/\//i.test(value) ? value : `https://${value.replace(/^\/+/, '')}`;
 };
 
 const buildAttachmentDownloadUrl = (attachment, fallbackName = '') => {
   const baseUrl = normalizeAttachmentUrl(attachment?.url);
   if (!baseUrl) return '';
+  if (/^data:/i.test(baseUrl)) return baseUrl;
 
   const attachmentName = String(attachment?.name || fallbackName || '').toLowerCase();
   const isDocument = /\.(pdf|docx?|xlsx?)$/.test(attachmentName) || ['pdf', 'doc', 'xls'].includes(String(attachment?.type || '').toLowerCase());
@@ -207,7 +214,17 @@ function getParticipantCards(deal, user) {
   ];
 }
 
-function ChatTab({ dealId, deal, user, onContactResolve, chatContacts }) {
+function ChatTab({
+  dealId,
+  deal,
+  user,
+  onContactResolve,
+  chatContacts,
+  documentLoadingKey,
+  documentStatus,
+  documentError,
+  onGenerateDocument,
+}) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState([]);
@@ -232,6 +249,12 @@ function ChatTab({ dealId, deal, user, onContactResolve, chatContacts }) {
   const counterpartySide = cards.find((card) => card.key !== activeSide?.key) || cards[1];
   const conversationName = counterpartySide?.personName || counterpartySide?.companyName || 'Counterparty';
   const conversationSubtext = [counterpartySide?.companyName, counterpartySide?.personEmail].filter(Boolean).join(' • ');
+
+  const documentActions = [
+    { key: 'loi', label: 'Generate LOI', tone: 'from-[#173b67] to-[#245c9d]' },
+    { key: 'spa', label: 'Generate SPA', tone: 'from-slate-900 to-slate-700' },
+    { key: 'nda', label: 'Generate NDA', tone: 'from-emerald-700 to-emerald-600' },
+  ];
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
@@ -462,6 +485,40 @@ function ChatTab({ dealId, deal, user, onContactResolve, chatContacts }) {
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           {messages.length} messages
         </div>
+      </div>
+
+      <div className="shrink-0 border-b border-slate-100 px-4 py-3 sm:px-5">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Documents</p>
+            <p className="text-sm text-slate-500">Generate a PDF and attach it straight into this chat.</p>
+          </div>
+          <div className="rounded-full bg-[#edf5ff] px-3 py-1 text-[11px] font-bold text-[#245c9d]">
+            LOI · SPA · NDA
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {documentActions.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onGenerateDocument?.(item.key)}
+              disabled={Boolean(documentLoadingKey)}
+              className={`inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r ${item.tone} px-4 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              {documentLoadingKey === item.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] font-medium text-slate-500">
+          {documentStatus || 'Generate a document and it will be attached to this chat.'}
+        </p>
+        {documentError ? (
+          <p className="mt-2 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            {documentError}
+          </p>
+        ) : null}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-0.5 sm:px-5 sm:py-1">
@@ -935,6 +992,11 @@ export default function DealPage() {
   const [shipmentError, setShipmentError] = useState('');
   const [updatingShipment, setUpdatingShipment] = useState(false);
   const [chatContacts, setChatContacts] = useState({ counterpartyUserName: '', counterpartyUserEmail: '' });
+  const [company, setCompany] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(Boolean(user?.companyId));
+  const [documentLoadingKey, setDocumentLoadingKey] = useState('');
+  const [documentStatus, setDocumentStatus] = useState('');
+  const [documentError, setDocumentError] = useState('');
 
   // ── Fetch deal ─────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -951,6 +1013,31 @@ export default function DealPage() {
   }, [dealId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!user?.companyId) {
+      setCompany(null);
+      setCompanyLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setCompanyLoading(true);
+    getCompanyById(user.companyId)
+      .then((result) => {
+        if (!cancelled) setCompany(result || null);
+      })
+      .catch(() => {
+        if (!cancelled) setCompany(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCompanyLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.companyId]);
 
   useEffect(() => {
     if (isShippingAgentRole && activeTab !== 'shipment') {
@@ -1003,6 +1090,63 @@ export default function DealPage() {
       return next;
     });
   }, []);
+
+  const handleGenerateDocument = useCallback(async (documentType) => {
+    if (!deal) {
+      setDocumentError('Deal details are not ready yet.');
+      return;
+    }
+
+    const generators = {
+      loi: generateLOI,
+      spa: generateSPA,
+      nda: generateNDA,
+    };
+    const labels = {
+      loi: 'LOI',
+      spa: 'SPA',
+      nda: 'NDA',
+    };
+
+    const generator = generators[documentType];
+    const label = labels[documentType];
+    if (!generator) {
+      setDocumentError('Unsupported document type.');
+      return;
+    }
+
+    setDocumentLoadingKey(documentType);
+    setDocumentStatus('');
+    setDocumentError('');
+
+    try {
+      const viewerRole = sameId(user?.companyId, deal?.supplierCompanyId) ? 'supplier' : 'buyer';
+      const context = buildDocumentContext({
+        user,
+        company,
+        deal,
+        viewerRole,
+      });
+      const result = await generator(context);
+      const attachmentUrl = await uploadPdfToCloudinary(result.blob, result.filename);
+      await sendMessage(dealId, {
+        text: `${label} document generated for ${context.dealName}.`,
+        attachments: [
+          {
+            url: attachmentUrl,
+            name: result.filename,
+            type: 'pdf',
+          },
+        ],
+        type: 'file',
+      });
+      setDocumentStatus(`${label} generated and attached to chat.`);
+    } catch (err) {
+      setDocumentError(err?.message || `Failed to generate ${label}.`);
+    } finally {
+      setDocumentLoadingKey('');
+    }
+  }, [company, deal, dealId, user]);
 
   // ── Loading / Error states ─────────────────────────────────────────────────
   if (loading) return (
@@ -1225,7 +1369,19 @@ export default function DealPage() {
 
             {/* Tab content */}
             <div className={`flex-1 min-h-0 ${activeTab === 'chat' ? 'overflow-hidden' : 'overflow-y-auto pr-1'}`}>
-              {activeTab === 'chat'     && <ChatTab     dealId={dealId} deal={deal} user={user} onContactResolve={handleContactResolve} chatContacts={chatContacts} />}
+              {activeTab === 'chat'     && (
+                <ChatTab
+                  dealId={dealId}
+                  deal={deal}
+                  user={user}
+                  onContactResolve={handleContactResolve}
+                  chatContacts={chatContacts}
+                  documentLoadingKey={documentLoadingKey}
+                  documentStatus={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+                  documentError={documentError}
+                  onGenerateDocument={handleGenerateDocument}
+                />
+              )}
               {activeTab === 'timeline' && <TimelineTab timeline={deal.timeline} />}
               {activeTab === 'shipment' && (
                 <ShipmentTab
