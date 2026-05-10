@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 import { AppShell, MetricCard } from './ui';
 import {
-  getUsers, toggleUserStatus,
-  getCompanies, verifyCompany,
-  getAdminDeals, getAdminRFQs
+  getUsers, toggleUserStatus, updateUserRole, updateUserPlan, verifyUser,
+  getCompanies, verifyCompany, toggleCompanyStatus, updateCompanyAdmin,
+  getAdminDeals, updateDealStatus, updateDealShipment, resolveDeal,
+  getAdminRFQs, updateRFQ, closeRFQ, removeRFQ
 } from '../lib/adminService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ function UsersTab() {
   const [error,    setError]    = useState('');
   const [toggling, setToggling] = useState(null);
   const [actionErr,setActionErr]= useState({});
+  const [busy, setBusy] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -105,6 +107,36 @@ function UsersTab() {
     } finally { setToggling(null); }
   };
 
+  const handleRoleChange = async (id, newRole) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const updated = await updateUserRole(id, [newRole]);
+      setUsers((prev) => prev.map((u) => u._id === id ? { ...u, roles: updated.roles } : u));
+    } catch (err) {
+      setActionErr((e) => ({ ...e, [id]: err.message }));
+    } finally { setBusy(null); }
+  };
+
+  const handlePlanChange = async (id, plan) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const updated = await updateUserPlan(id, plan);
+      setUsers((prev) => prev.map((u) => u._id === id ? { ...u, plan: updated.plan } : u));
+    } catch (err) {
+      setActionErr((e) => ({ ...e, [id]: err.message }));
+    } finally { setBusy(null); }
+  };
+
+  const handleVerifyToggle = async (id, field, current) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const updated = await verifyUser(id, { [field]: !current });
+      setUsers((prev) => prev.map((u) => u._id === id ? { ...u, [field]: updated[field] } : u));
+    } catch (err) {
+      setActionErr((e) => ({ ...e, [id]: err.message }));
+    } finally { setBusy(null); }
+  };
+
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
   if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
@@ -112,27 +144,54 @@ function UsersTab() {
     <Panel title={`Users — ${total} total`}>
       <div className="space-y-3">
         {users.map((u) => (
-          <div key={u._id} className="flex flex-col gap-2 rounded-[22px] bg-[#f5f9fd] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-semibold text-slate-900">{u.firstName} {u.lastName}</p>
-                <ActiveBadge active={u.isActive} />
+          <div key={u._id} className="flex flex-col gap-3 rounded-[22px] bg-[#f5f9fd] p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-slate-900">{u.firstName} {u.lastName}</p>
+                  <ActiveBadge active={u.isActive} />
+                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${u.plan === 'premium' ? 'border-violet-200 bg-violet-50 text-violet-700' : u.plan === 'business' ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>{u.plan || 'free'}</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">{u.email}</p>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
+                  {' · '} Joined: {fmtDate(u.createdAt)}
+                  {' · '} Phone: <span className={u.isPhoneVerified ? 'text-emerald-600' : 'text-rose-500'}>{u.isPhoneVerified ? '✓' : '✗'}</span>
+                  {' · '} Email: <span className={u.isEmailVerified ? 'text-emerald-600' : 'text-rose-500'}>{u.isEmailVerified ? '✓' : '✗'}</span>
+                </p>
+                {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
               </div>
-              <p className="mt-1 text-sm text-slate-500">{u.email}</p>
-              <p className="mt-0.5 text-xs text-slate-400">
-                Roles: <span className="font-semibold text-slate-600">{u.roles?.join(', ') || '—'}</span>
-                {' · '} Joined: {fmtDate(u.createdAt)}
-              </p>
-              {actionErr[u._id] && <p className="mt-1 text-xs font-medium text-rose-600">{actionErr[u._id]}</p>}
+              <button
+                onClick={() => handleToggle(u._id)}
+                disabled={toggling === u._id}
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${u.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+              >
+                {toggling === u._id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : u.isActive ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                {u.isActive ? 'Suspend' : 'Activate'}
+              </button>
             </div>
-            <button
-              onClick={() => handleToggle(u._id)}
-              disabled={toggling === u._id}
-              className={`shrink-0 inline-flex items-center gap-1.5 rounded-2xl px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${u.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
-            >
-              {toggling === u._id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : u.isActive ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              {u.isActive ? 'Deactivate' : 'Activate'}
-            </button>
+            {/* Inline controls row */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Role:</label>
+              <select value={u.roles?.[0] || ''} onChange={(e) => handleRoleChange(u._id, e.target.value)} disabled={busy === u._id}
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                <option value="buyer">Buyer</option><option value="supplier">Supplier</option><option value="admin">Admin</option><option value="shipping_agent">Shipping Agent</option>
+              </select>
+              <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Plan:</label>
+              <select value={u.plan || 'free'} onChange={(e) => handlePlanChange(u._id, e.target.value)} disabled={busy === u._id}
+                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                <option value="free">Free</option><option value="business">Business</option><option value="premium">Premium</option>
+              </select>
+              <button onClick={() => handleVerifyToggle(u._id, 'isPhoneVerified', u.isPhoneVerified)} disabled={busy === u._id}
+                className={`ml-2 rounded-lg px-2.5 py-1 text-[10px] font-bold transition disabled:opacity-50 ${u.isPhoneVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                {u.isPhoneVerified ? '☑ Phone' : '☐ Phone'}
+              </button>
+              <button onClick={() => handleVerifyToggle(u._id, 'isEmailVerified', u.isEmailVerified)} disabled={busy === u._id}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-bold transition disabled:opacity-50 ${u.isEmailVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                {u.isEmailVerified ? '☑ Email' : '☐ Email'}
+              </button>
+              {busy === u._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+            </div>
           </div>
         ))}
       </div>
@@ -171,6 +230,16 @@ function CompaniesTab() {
     } finally { setUpdating(null); }
   };
 
+  const handleToggleStatus = async (id) => {
+    setUpdating(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const updated = await toggleCompanyStatus(id);
+      setCompanies((prev) => prev.map((c) => c._id === id ? { ...c, isActive: updated.isActive } : c));
+    } catch (err) {
+      setActionErr((e) => ({ ...e, [id]: err.message }));
+    } finally { setUpdating(null); }
+  };
+
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
   if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
@@ -184,6 +253,7 @@ function CompaniesTab() {
             updating={updating}
             actionErr={actionErr[c._id]}
             onVerify={handleVerify}
+            onToggleStatus={handleToggleStatus}
           />
         ))}
       </div>
@@ -193,7 +263,7 @@ function CompaniesTab() {
 
 // ─── Expandable company card ──────────────────────────────────────────────────
 
-function CompanyCard({ company: c, updating, actionErr, onVerify }) {
+function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus }) {
   const [open, setOpen] = useState(false);
 
   const InfoRow = ({ label, value }) =>
@@ -220,6 +290,7 @@ function CompanyCard({ company: c, updating, actionErr, onVerify }) {
           <p className="text-xs text-slate-400">{c.country || '—'}{c.city ? `, ${c.city}` : ''}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <ActiveBadge active={c.isActive} />
           <VerifBadge status={c.verificationStatus} />
           <svg className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -310,6 +381,11 @@ function CompanyCard({ company: c, updating, actionErr, onVerify }) {
                 <RefreshCcw className="h-3 w-3" /> Reset to Pending
               </button>
             )}
+            <button onClick={() => onToggleStatus(c._id)} disabled={updating === c._id}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-60 ${c.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
+              {c.isActive ? <XCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+              {c.isActive ? 'Suspend' : 'Reactivate'}
+            </button>
           </div>
         </div>
       )}
@@ -320,19 +396,59 @@ function CompanyCard({ company: c, updating, actionErr, onVerify }) {
 
 // ─── Deals monitor tab ────────────────────────────────────────────────────────
 
+const DEAL_STAGES = ['inquiry','negotiation','agreement','payment','production','shipping_request','shipping','delivery','closed'];
+const VALID_TRANSITIONS = {
+  inquiry:['negotiation','closed'], negotiation:['agreement','closed'], agreement:['payment','closed'],
+  payment:['production','closed'], production:['shipping_request','closed'], shipping_request:['shipping','closed'],
+  shipping:['delivery','closed'], delivery:['closed'], closed:[]
+};
+const SHIPMENT_STATUSES = ['booking','loaded','in_transit','delivered'];
+
 function DealsTab() {
   const [deals,   setDeals]   = useState([]);
   const [total,   setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [busy,    setBusy]    = useState(null);
+  const [actionErr, setActionErr] = useState({});
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    getAdminDeals({ limit: 50 })
-      .then((r) => { setDeals(r.deals); setTotal(r.total); })
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
+    try {
+      const r = await getAdminDeals({ limit: 50 });
+      setDeals(r.deals); setTotal(r.total);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const handleStatus = async (id, status) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const res = await updateDealStatus(id, status, '[Admin override]');
+      setDeals((prev) => prev.map((d) => d._id === id ? { ...d, status: res.status } : d));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  const handleShipment = async (id, status) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const res = await updateDealShipment(id, status, '[Admin override]');
+      setDeals((prev) => prev.map((d) => d._id === id ? { ...d, shipment: res.shipment } : d));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  const handleResolve = async (id) => {
+    if (!confirm('Force-close this deal?')) return;
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      await resolveDeal(id, '[Admin force-resolved]');
+      setDeals((prev) => prev.map((d) => d._id === id ? { ...d, status: 'closed' } : d));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
   if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
@@ -343,22 +459,55 @@ function DealsTab() {
         <p className="py-8 text-center text-sm text-slate-400">No deals in the system yet.</p>
       ) : (
         <div className="space-y-3">
-          {deals.map((d) => (
-            <div key={d._id} className="grid gap-2 rounded-[22px] bg-[#f5f9fd] p-4 sm:grid-cols-4">
-              <div className="sm:col-span-2">
-                <p className="font-semibold text-slate-900">{d.productName || 'Unnamed Deal'}</p>
-                <p className="mt-0.5 text-xs text-slate-400">Created: {fmtDate(d.createdAt)}</p>
+          {deals.map((d) => {
+            const nextStages = VALID_TRANSITIONS[d.status] || [];
+            return (
+            <div key={d._id} className="rounded-[22px] bg-[#f5f9fd] p-4 space-y-2">
+              <div className="grid gap-2 sm:grid-cols-4">
+                <div className="sm:col-span-2">
+                  <p className="font-semibold text-slate-900">{d.productName || 'Unnamed Deal'}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">Created: {fmtDate(d.createdAt)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
+                  <p className="mt-0.5 text-sm font-semibold capitalize text-[#245c9d]">{d.status?.replace(/_/g, ' ')}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Price / Qty</p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-700">{fmtPrice(d.price)} · {d.quantity ?? '—'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
-                <p className="mt-0.5 text-sm font-semibold capitalize text-[#245c9d]">{d.status?.replace(/_/g, ' ')}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Price / Qty</p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-700">{fmtPrice(d.price)} · {d.quantity ?? '—'}</p>
-              </div>
+              {d.shipment?.status && (
+                <p className="text-[10px] text-slate-500">Shipment: <span className="font-bold capitalize text-slate-700">{d.shipment.status.replace(/_/g,' ')}</span></p>
+              )}
+              {actionErr[d._id] && <p className="text-xs font-medium text-rose-600">{actionErr[d._id]}</p>}
+              {d.status !== 'closed' && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+                  {nextStages.length > 0 && (
+                    <>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Advance:</label>
+                      <select defaultValue="" onChange={(e) => { if (e.target.value) handleStatus(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
+                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                        <option value="" disabled>Select stage…</option>
+                        {nextStages.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                      </select>
+                    </>
+                  )}
+                  <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Shipment:</label>
+                  <select defaultValue="" onChange={(e) => { if (e.target.value) handleShipment(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                    <option value="" disabled>Override…</option>
+                    {SHIPMENT_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                  </select>
+                  <button onClick={() => handleResolve(d._id)} disabled={busy === d._id}
+                    className="ml-auto inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50">
+                    <XCircle className="h-3 w-3" /> Resolve
+                  </button>
+                  {busy === d._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                </div>
+              )}
             </div>
-          ))}
+          );})}
         </div>
       )}
     </Panel>
@@ -372,14 +521,57 @@ function RFQsTab() {
   const [total,   setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [busy,    setBusy]    = useState(null);
+  const [actionErr, setActionErr] = useState({});
+  const [editing, setEditing] = useState(null);
+  const [editData, setEditData] = useState({});
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    getAdminRFQs({ limit: 50 })
-      .then((r) => { setRFQs(r.rfqs); setTotal(r.total); })
-      .catch((err) => setError(err.response?.data?.message || err.message))
-      .finally(() => setLoading(false));
+    try {
+      const r = await getAdminRFQs({ limit: 50 });
+      setRFQs(r.rfqs); setTotal(r.total);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const handleClose = async (id) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const res = await closeRFQ(id);
+      setRFQs((prev) => prev.map((r) => r._id === id ? { ...r, status: 'closed' } : r));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  const handleRemove = async (id) => {
+    if (!confirm('Remove this RFQ? (soft-delete)')) return;
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      await removeRFQ(id);
+      setRFQs((prev) => prev.filter((r) => r._id !== id));
+      setTotal((t) => t - 1);
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  const startEdit = (r) => {
+    setEditing(r._id);
+    setEditData({ productName: r.productName || '', quantity: r.quantity || '', category: r.category || '' });
+  };
+
+  const handleSaveEdit = async (id) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const payload = { ...editData };
+      if (payload.quantity) payload.quantity = Number(payload.quantity);
+      const updated = await updateRFQ(id, payload);
+      setRFQs((prev) => prev.map((r) => r._id === id ? { ...r, ...updated } : r));
+      setEditing(null);
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
 
   const STATUS_CLR = {
     open:        'text-sky-700',
@@ -398,19 +590,65 @@ function RFQsTab() {
       ) : (
         <div className="space-y-3">
           {rfqs.map((r) => (
-            <div key={r._id} className="grid gap-2 rounded-[22px] bg-[#f5f9fd] p-4 sm:grid-cols-4">
-              <div className="sm:col-span-2">
-                <p className="font-semibold text-slate-900">{r.productName || '—'}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{r.category || 'No category'} · {fmtDate(r.createdAt)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
-                <p className={`mt-0.5 text-sm font-semibold capitalize ${STATUS_CLR[r.status] || 'text-slate-600'}`}>{r.status?.replace(/_/g, ' ')}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Qty</p>
-                <p className="mt-0.5 text-sm font-semibold text-slate-700">{r.quantity ?? '—'}</p>
-              </div>
+            <div key={r._id} className="rounded-[22px] bg-[#f5f9fd] p-4 space-y-2">
+              {editing === r._id ? (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <input value={editData.productName} onChange={(e) => setEditData((d) => ({ ...d, productName: e.target.value }))}
+                      placeholder="Product Name" className="rounded-lg border border-slate-200 px-2 py-1 text-xs flex-1 min-w-[120px]" />
+                    <input value={editData.category} onChange={(e) => setEditData((d) => ({ ...d, category: e.target.value }))}
+                      placeholder="Category" className="rounded-lg border border-slate-200 px-2 py-1 text-xs w-28" />
+                    <input value={editData.quantity} onChange={(e) => setEditData((d) => ({ ...d, quantity: e.target.value }))} type="number"
+                      placeholder="Qty" className="rounded-lg border border-slate-200 px-2 py-1 text-xs w-20" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleSaveEdit(r._id)} disabled={busy === r._id}
+                      className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                      {busy === r._id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />} Save
+                    </button>
+                    <button onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-2 sm:grid-cols-4">
+                    <div className="sm:col-span-2">
+                      <p className="font-semibold text-slate-900">{r.productName || '—'}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">{r.category || 'No category'} · {fmtDate(r.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
+                      <p className={`mt-0.5 text-sm font-semibold capitalize ${STATUS_CLR[r.status] || 'text-slate-600'}`}>{r.status?.replace(/_/g, ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Qty</p>
+                      <p className="mt-0.5 text-sm font-semibold text-slate-700">{r.quantity ?? '—'}</p>
+                    </div>
+                  </div>
+                  {actionErr[r._id] && <p className="text-xs font-medium text-rose-600">{actionErr[r._id]}</p>}
+                  {r.status !== 'converted' && (
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+                      {r.status !== 'closed' && (
+                        <>
+                          <button onClick={() => startEdit(r)} disabled={busy === r._id}
+                            className="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
+                            <FileText className="h-3 w-3" /> Edit
+                          </button>
+                          <button onClick={() => handleClose(r._id)} disabled={busy === r._id}
+                            className="inline-flex items-center gap-1 rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 disabled:opacity-50">
+                            <XCircle className="h-3 w-3" /> Close
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => handleRemove(r._id)} disabled={busy === r._id}
+                        className="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50">
+                        <ShieldX className="h-3 w-3" /> Remove
+                      </button>
+                      {busy === r._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ))}
         </div>

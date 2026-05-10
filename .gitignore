@@ -1,6 +1,7 @@
 # Sensitive environment variables — never commit this file
 .env
 node_modules
+doc
 frontend flow.docx
 frontend flow.pdf
 tracker.md
