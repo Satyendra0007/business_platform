@@ -10,7 +10,9 @@ const {
   // Deals
   getDeals, getDealById, updateDealStatus, updateDealShipment, resolveDeal,
   // RFQs
-  getRFQs, getRFQById, updateRFQ, closeRFQ, removeRFQ
+  getRFQs, getRFQById, updateRFQ, closeRFQ, removeRFQ,
+  // Products
+  getProducts, getProductById, updateProduct, toggleProductStatus, removeProduct
 } = require('./admin.controller');
 
 // All admin routes: must be authenticated AND have admin role
@@ -45,5 +47,12 @@ router.get('/rfq/:id', getRFQById);
 router.put('/rfq/:id', updateRFQ);
 router.patch('/rfq/:id/close', closeRFQ);
 router.patch('/rfq/:id/remove', removeRFQ);
+
+// ─── Product Management ─────────────────────────────────────────────────────
+router.get('/products', getProducts);
+router.get('/products/:id', getProductById);
+router.put('/products/:id', updateProduct);
+router.patch('/products/:id/toggle-status', toggleProductStatus);
+router.patch('/products/:id/remove', removeProduct);
 
 module.exports = router;

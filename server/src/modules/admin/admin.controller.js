@@ -721,6 +721,123 @@ const removeRFQ = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. PRODUCT MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+
+// @route   GET /api/admin/products
+// @desc    Get all products (with optional search and status filter)
+const getProducts = async (req, res) => {
+  try {
+    const { page, limitValue, skip } = getPagination(req.query);
+    const { status, search } = req.query;
+
+    const query = { isDeleted: false };
+    if (status) {
+      if (status === 'active') query.isActive = true;
+      else if (status === 'inactive') query.isActive = false;
+    }
+    if (search) query.$text = { $search: search };
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .populate('companyId', 'name logo country verificationStatus')
+        .skip(skip)
+        .limit(limitValue)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    res.json({ success: true, count: products.length, total, totalPages: Math.ceil(total / limitValue), page, data: products });
+  } catch (error) {
+    console.error('[admin.getProducts]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// @route   GET /api/admin/products/:id
+// @desc    Get a single product by ID
+const getProductById = async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid product ID.' });
+    
+    const product = await Product.findById(req.params.id)
+      .populate('companyId', 'name logo email phone country city verificationStatus subscriptionPlan')
+      .lean();
+      
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
+    
+    res.json({ success: true, data: product });
+  } catch (error) {
+    console.error('[admin.getProductById]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// @route   PUT /api/admin/products/:id
+// @desc    Edit a product (title, category, price, MOQ, etc.)
+const updateProduct = async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid product ID.' });
+    
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
+    if (product.isDeleted) return res.status(400).json({ success: false, message: 'Cannot edit a deleted product.' });
+
+    const allowedUpdates = ['title', 'category', 'subcategory', 'description', 'price', 'unit', 'MOQ', 'availableQuantity', 'incoterm', 'countryOfOrigin', 'leadTime'];
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) product[field] = req.body[field];
+    });
+
+    await product.save();
+    res.json({ success: true, message: 'Product updated successfully.', data: product });
+  } catch (error) {
+    console.error('[admin.updateProduct]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// @route   PATCH /api/admin/products/:id/toggle-status
+// @desc    Toggle a product's active status (suspend/reactivate)
+const toggleProductStatus = async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid product ID.' });
+    
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
+    if (product.isDeleted) return res.status(400).json({ success: false, message: 'Cannot modify a deleted product.' });
+
+    product.isActive = !product.isActive;
+    await product.save();
+    
+    res.json({ success: true, message: `Product ${product.isActive ? 'activated' : 'deactivated'}.`, data: product });
+  } catch (error) {
+    console.error('[admin.toggleProductStatus]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// @route   PATCH /api/admin/products/:id/remove
+// @desc    Soft-delete a product
+const removeProduct = async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ success: false, message: 'Invalid product ID.' });
+    
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found.' });
+    if (product.isDeleted) return res.status(400).json({ success: false, message: 'Product is already removed.' });
+
+    product.isDeleted = true;
+    product.isActive = false; // also deactivate when removing
+    await product.save();
+    
+    res.json({ success: true, message: 'Product has been removed (soft-deleted).' });
+  } catch (error) {
+    console.error('[admin.removeProduct]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 
 module.exports = {
   // Users
@@ -730,5 +847,7 @@ module.exports = {
   // Deals
   getDeals, getDealById, updateDealStatus, updateDealShipment, resolveDeal,
   // RFQs
-  getRFQs, getRFQById, updateRFQ, closeRFQ, removeRFQ
+  getRFQs, getRFQById, updateRFQ, closeRFQ, removeRFQ,
+  // Products
+  getProducts, getProductById, updateProduct, toggleProductStatus, removeProduct
 };

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Building2, Mail, MessageSquare, Package, Palette, Sparkles } from 'lucide-react';
+import { Building2, Package, Phone, MessageSquare, Settings2 } from 'lucide-react';
 import DealSupportCardShell from '../DealSupportCardShell';
 import DealSupportIntakeForm from '../DealSupportIntakeForm';
 import { getUser } from '../../../lib/api';
 
 export default function PrivateLabelingSupportCard({ action, compact = false, onOpenForm }) {
   if (!compact) {
+    const user = getUser();
     return (
       <DealSupportIntakeForm
         icon={Package}
@@ -15,23 +16,37 @@ export default function PrivateLabelingSupportCard({ action, compact = false, on
         badge="Brand Build"
         ctaLabel="Submit Request"
         successTitle="Private labeling request sent"
-        successMessage="Your private labeling request has been sent to the startup team."
+        successMessage="Your private labeling request has been submitted. We will contact you shortly."
         validationMessage="Please complete the private labeling form."
         fields={[
           { name: 'companyName', label: 'Company name', icon: Building2, placeholder: 'Your company name' },
-          { name: 'brandName', label: 'Brand name', icon: Palette, placeholder: 'Planned private label brand' },
-          { name: 'productCategory', label: 'Product category', icon: Package, placeholder: 'Product line or category' },
-          { name: 'contactEmail', label: 'Contact email', icon: Mail, type: 'email', placeholder: 'name@company.com' },
+          { name: 'name', label: 'Contact name', icon: Package, placeholder: 'Your full name' },
+          { name: 'phoneNumber', label: 'Phone number', icon: Phone, type: 'tel', placeholder: '+49 123 456 7890' },
           {
-            name: 'notes',
-            label: 'Request details',
+            name: 'inquiryType',
+            label: 'Inquiry type',
+            icon: Settings2,
+            as: 'select',
+            options: [
+              { label: 'Select type', value: '' },
+              { label: 'Help', value: 'help' },
+              { label: 'Request', value: 'request' },
+              { label: 'Suggestion', value: 'suggestion' },
+            ],
+          },
+          {
+            name: 'reason',
+            label: 'Reason',
             icon: MessageSquare,
             as: 'textarea',
             fullWidth: true,
-            placeholder: 'Share what you want to build under your own label',
+            rows: 3,
+            placeholder: 'Describe what you need for private labeling',
           },
         ]}
-        initialValues={{ contactEmail: getUser()?.email || '' }}
+        initialValues={{
+          phoneNumber: user?.phone || '',
+        }}
       />
     );
   }

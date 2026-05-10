@@ -12,7 +12,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, Building2, Briefcase, FileText, Package,
+  Users, Building2, Briefcase, FileText, Package, Headphones,
   Loader2, AlertCircle, CheckCircle2,
   XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw, ExternalLink, File
 } from 'lucide-react';
@@ -22,10 +22,10 @@ import {
   getCompanies, verifyCompany, toggleCompanyStatus, updateCompanyAdmin,
   getAdminDeals, updateDealStatus, updateDealShipment, resolveDeal,
   getAdminRFQs, updateRFQ, closeRFQ, removeRFQ,
-  getAdminProducts
+  getAdminProducts,
+  getServiceRequests, updateServiceRequestStatus
 } from '../lib/adminService';
 import { deleteProduct } from '../lib/productManagementService';
-import ProductGrid from './products/ProductGrid';
 import Pagination from './common/Pagination';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -712,47 +712,68 @@ function RFQsTab() {
 // ─── Products monitor tab ────────────────────────────────────────────────────
 
 function ProductsTab() {
-  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [deleting, setDeleting] = useState(null);
+  const [busy, setBusy] = useState(null);
+  const [actionErr, setActionErr] = useState({});
+  const [editing, setEditing] = useState(null);
+  const [editData, setEditData] = useState({});
+
+  const PRODUCT_LIMIT = 20;
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const r = await getAdminProducts({ page, limit: PRODUCT_LIMIT });
       setProducts(r.products);
       setTotal(r.total);
       setTotalPages(r.totalPages);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }, [page]);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleEdit = (product) => {
-    navigate(`/products/edit/${product._id}`);
+  const handleToggleStatus = async (id) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const res = await toggleAdminProductStatus(id);
+      setProducts((prev) => prev.map((p) => p._id === id ? { ...p, isActive: res.isActive } : p));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
   };
 
-  const handleDelete = async (product) => {
-    if (!window.confirm(`Delete "${product.title}" from the catalog?`)) return;
-    setDeleting(product._id);
+  const handleRemove = async (id) => {
+    if (!confirm('Remove this product? (soft-delete)')) return;
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
     try {
-      await deleteProduct(product._id);
-      await load();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setDeleting(null);
-    }
+      await removeAdminProduct(id);
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+      setTotal((t) => t - 1);
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  const startEdit = (p) => {
+    setEditing(p._id);
+    setEditData({ title: p.title || '', category: p.category || '', price: p.price || '', MOQ: p.MOQ || '' });
+  };
+
+  const handleSaveEdit = async (id) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      const payload = { ...editData };
+      if (payload.price) payload.price = Number(payload.price);
+      if (payload.MOQ) payload.MOQ = Number(payload.MOQ);
+      const res = await updateAdminProduct(id, payload);
+      setProducts((prev) => prev.map((p) => p._id === id ? { ...p, ...res } : p));
+      setEditing(null);
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
@@ -760,29 +781,308 @@ function ProductsTab() {
 
   return (
     <Panel title={`All Products — ${total} total`}>
-      <div className="space-y-4">
-        <ProductGrid
-          products={products}
-          loading={false}
-          error={''}
-          onRetry={load}
-          onClear={() => {}}
-          management
-          showOwner
-          onEditProduct={handleEdit}
-          onDeleteProduct={handleDelete}
-          deletingProductId={deleting}
-        />
-        {totalPages > 1 && (
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            limit={PRODUCT_LIMIT}
-            onPage={setPage}
-          />
-        )}
+      {products.length === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-400">No products found.</p>
+      ) : (
+        <div className="space-y-3">
+          {products.map((p) => (
+            <div key={p._id} className="rounded-[22px] bg-[#f5f9fd] p-4 space-y-2">
+              {editing === p._id ? (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <input value={editData.title} onChange={(e) => setEditData((d) => ({ ...d, title: e.target.value }))}
+                      placeholder="Title" className="rounded-lg border border-slate-200 px-2 py-1 text-xs flex-1 min-w-[120px]" />
+                    <input value={editData.category} onChange={(e) => setEditData((d) => ({ ...d, category: e.target.value }))}
+                      placeholder="Category" className="rounded-lg border border-slate-200 px-2 py-1 text-xs w-28" />
+                    <input value={editData.price} onChange={(e) => setEditData((d) => ({ ...d, price: e.target.value }))} type="number"
+                      placeholder="Price" className="rounded-lg border border-slate-200 px-2 py-1 text-xs w-20" />
+                    <input value={editData.MOQ} onChange={(e) => setEditData((d) => ({ ...d, MOQ: e.target.value }))} type="number"
+                      placeholder="MOQ" className="rounded-lg border border-slate-200 px-2 py-1 text-xs w-20" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleSaveEdit(p._id)} disabled={busy === p._id}
+                      className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                      {busy === p._id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />} Save
+                    </button>
+                    <button onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-200">Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Image */}
+                    <div className="h-16 w-16 shrink-0 rounded-lg bg-slate-100 overflow-hidden border border-slate-200 flex items-center justify-center">
+                      {p.images && p.images.length > 0 ? (
+                        <img src={p.images[0]} alt="product" className="h-full w-full object-cover" />
+                      ) : (
+                        <Package className="h-6 w-6 text-slate-300" />
+                      )}
+                    </div>
+                    
+                    {/* Details */}
+                    <div className="flex-1 grid gap-2 sm:grid-cols-3">
+                      <div className="sm:col-span-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-900">{p.title || '—'}</p>
+                          <ActiveBadge active={p.isActive} />
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {p.category || 'No category'}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-indigo-600 flex items-center gap-1">
+                          <Building2 className="h-3 w-3" /> {p.companyId?.name || 'Unknown Company'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Price / Unit</p>
+                        <p className="mt-0.5 text-sm font-semibold text-slate-700">{fmtPrice(p.price)} {p.unit ? `/ ${p.unit}` : ''}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">MOQ</p>
+                        <p className="mt-0.5 text-sm font-semibold text-slate-700">{p.MOQ ?? '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {actionErr[p._id] && <p className="text-xs font-medium text-rose-600">{actionErr[p._id]}</p>}
+                  
+                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+                    <button onClick={() => startEdit(p)} disabled={busy === p._id}
+                      className="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
+                      <Package className="h-3 w-3" /> Edit
+                    </button>
+                    <button onClick={() => handleToggleStatus(p._id)} disabled={busy === p._id}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-60 ${p.isActive ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
+                      {p.isActive ? <XCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                      {p.isActive ? 'Suspend' : 'Reactivate'}
+                    </button>
+                    <button onClick={() => handleRemove(p._id)} disabled={busy === p._id}
+                      className="inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50">
+                      <ShieldX className="h-3 w-3" /> Remove
+                    </button>
+                    {busy === p._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {totalPages > 1 && (
+        <div className="mt-4">
+          <Pagination page={page} totalPages={totalPages} total={total} limit={PRODUCT_LIMIT} onPage={setPage} />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+// ─── Service Requests admin tab ───────────────────────────────────────────────
+
+const CATEGORY_LABELS = {
+  legal_document_review: 'Legal Doc Review',
+  legal_support: 'Legal Support',
+  tradification: 'Tradification',
+  credibility_report: 'Credibility Report',
+  private_labeling: 'Private Labeling',
+  business_expansion: 'Business Expansion',
+};
+
+const STATUS_STYLES = {
+  pending:   'border-amber-100 bg-amber-50 text-amber-700',
+  contacted: 'border-sky-200 bg-sky-50 text-sky-700',
+  completed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+};
+
+const CATEGORY_STYLES = {
+  legal_document_review: 'border-violet-200 bg-violet-50 text-violet-700',
+  legal_support: 'border-sky-200 bg-sky-50 text-sky-700',
+  tradification: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  credibility_report: 'border-amber-200 bg-amber-50 text-amber-700',
+  private_labeling: 'border-pink-200 bg-pink-50 text-pink-700',
+  business_expansion: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+};
+
+const SR_STATUSES = ['pending', 'contacted', 'completed'];
+const SR_CATEGORIES = Object.keys(CATEGORY_LABELS);
+
+function ServiceRequestsTab() {
+  const [requests, setRequests] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(null);
+  const [actionErr, setActionErr] = useState({});
+  const [expanded, setExpanded] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const params = { page, limit: 20 };
+      if (filterCategory) params.category = filterCategory;
+      if (filterStatus) params.status = filterStatus;
+      const r = await getServiceRequests(params);
+      setRequests(r.requests);
+      setTotal(r.total);
+      setTotalPages(r.totalPages);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }, [page, filterCategory, filterStatus]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleStatusChange = async (id, status) => {
+    setBusy(id); setActionErr((e) => ({ ...e, [id]: '' }));
+    try {
+      await updateServiceRequestStatus(id, status);
+      setRequests((prev) => prev.map((r) => r._id === id ? { ...r, status } : r));
+    } catch (err) { setActionErr((e) => ({ ...e, [id]: err.message })); }
+    finally { setBusy(null); }
+  };
+
+  if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+
+  return (
+    <Panel title={`Service Requests — ${total} total`}>
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category:</label>
+        <select
+          value={filterCategory}
+          onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+        >
+          <option value="">All</option>
+          {SR_CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>)}
+        </select>
+        <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Status:</label>
+        <select
+          value={filterStatus}
+          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+        >
+          <option value="">All</option>
+          {SR_STATUSES.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+        </select>
       </div>
+
+      {requests.length === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-400">No service requests found.</p>
+      ) : (
+        <div className="space-y-2">
+          {requests.map((r) => {
+            const isOpen = expanded === r._id;
+            const userName = r.createdBy
+              ? `${r.createdBy.firstName || ''} ${r.createdBy.lastName || ''}`.trim() || r.createdBy.email
+              : 'Unknown';
+            const companyName = r.companyId?.name || r.formData?.companyName || '—';
+
+            return (
+              <div key={r._id} className={`overflow-hidden rounded-[20px] border transition-all ${isOpen ? 'border-[#245c9d]/30 bg-white shadow-md' : 'border-slate-200 bg-[#f5f9fd]'}`}>
+                {/* Header row */}
+                <button
+                  onClick={() => setExpanded(isOpen ? null : r._id)}
+                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#173b67,#245c9d)] text-xs font-black text-white">
+                    <Headphones className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-semibold text-slate-900">{r.formData?.name || userName}</p>
+                    <p className="text-xs text-slate-400">{companyName} · {fmtDate(r.createdAt)}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${CATEGORY_STYLES[r.category] || ''}`}>
+                      {CATEGORY_LABELS[r.category] || r.category}
+                    </span>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${STATUS_STYLES[r.status] || ''}`}>
+                      {r.status}
+                    </span>
+                    <svg className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+
+                {/* Expanded detail */}
+                {isOpen && (
+                  <div className="border-t border-slate-100 px-4 pb-3 pt-3 space-y-3">
+                    {/* User info */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-1">
+                      <InfoRow label="Submitted by" value={userName} />
+                      <InfoRow label="Email" value={r.createdBy?.email} />
+                      <InfoRow label="Phone" value={r.formData?.phoneNumber || r.createdBy?.phone || '—'} />
+                      <InfoRow label="Company" value={companyName} />
+                    </div>
+
+                    {/* formData fields */}
+                    <div className="rounded-[18px] border border-slate-200 bg-white p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Form Details</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-1">
+                        {Object.entries(r.formData || {}).map(([key, val]) => (
+                          <InfoRow key={key} label={key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())} value={String(val)} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Attachments */}
+                    {r.attachments && r.attachments.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Attachments ({r.attachments.length})</p>
+                        <div className="flex flex-wrap gap-2">
+                          {r.attachments.map((att, i) => (
+                            <a key={i} href={att.url} target="_blank" rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#d8e2ef] bg-[#f4f8fc] px-2.5 py-1 text-[11px] font-semibold text-[#245c9d] hover:bg-[#edf5ff] transition">
+                              <File className="h-3 w-3" />
+                              {att.originalName || `File ${i + 1}`}
+                              <ExternalLink className="h-3 w-3 opacity-50" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {actionErr[r._id] && <p className="text-xs font-medium text-rose-600">{actionErr[r._id]}</p>}
+
+                    {/* Status update */}
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Update status:</label>
+                      {SR_STATUSES.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleStatusChange(r._id, s)}
+                          disabled={busy === r._id || r.status === s}
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-40 ${
+                            s === 'completed' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            : s === 'contacted' ? 'bg-sky-50 text-sky-700 hover:bg-sky-100'
+                            : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                          }`}
+                        >
+                          {s === 'completed' && <CheckCircle2 className="h-3 w-3" />}
+                          {s === 'contacted' && <ShieldCheck className="h-3 w-3" />}
+                          {s === 'pending' && <ShieldAlert className="h-3 w-3" />}
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </button>
+                      ))}
+                      {busy === r._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {totalPages > 1 && (
+        <div className="mt-4">
+          <Pagination page={page} totalPages={totalPages} total={total} limit={20} onPage={setPage} />
+        </div>
+      )}
     </Panel>
   );
 }
@@ -792,18 +1092,19 @@ function ProductsTab() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const TABS = [
-  { key: 'users',     label: 'Users',     icon: Users     },
-  { key: 'companies', label: 'Companies', icon: Building2 },
-  { key: 'products',  label: 'Products',  icon: Package   },
-  { key: 'deals',     label: 'Deals',     icon: Briefcase },
-  { key: 'rfqs',      label: 'RFQs',      icon: FileText  },
+  { key: 'users',           label: 'Users',     icon: Users      },
+  { key: 'companies',       label: 'Companies', icon: Building2  },
+  { key: 'products',        label: 'Products',  icon: Package    },
+  { key: 'deals',           label: 'Deals',     icon: Briefcase  },
+  { key: 'rfqs',            label: 'RFQs',      icon: FileText   },
+  { key: 'serviceRequests', label: 'Requests',  icon: Headphones },
 ];
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
 
   // Summary counts — load once on mount
-  const [counts, setCounts] = useState({ users: '—', companies: '—', products: '—', deals: '—', rfqs: '—' });
+  const [counts, setCounts] = useState({ users: '—', companies: '—', products: '—', deals: '—', rfqs: '—', serviceRequests: '—' });
   useEffect(() => {
     Promise.all([
       getUsers({ limit: 1 }),
@@ -811,8 +1112,9 @@ export default function AdminPage() {
       getAdminProducts({ limit: 1 }),
       getAdminDeals({ limit: 1 }),
       getAdminRFQs({ limit: 1 }),
-    ]).then(([u, c, p, d, r]) => {
-      setCounts({ users: u.total, companies: c.total, products: p.total, deals: d.total, rfqs: r.total });
+      getServiceRequests({ limit: 1 }),
+    ]).then(([u, c, p, d, r, sr]) => {
+      setCounts({ users: u.total, companies: c.total, products: p.total, deals: d.total, rfqs: r.total, serviceRequests: sr.total });
     }).catch(() => {}); // counts are decorative — fail silently
   }, []);
 
@@ -824,12 +1126,13 @@ export default function AdminPage() {
       <div className="space-y-6">
 
         {/* ── Summary metrics ─────────────────────────────────────────────── */}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           <MetricCard label="Total Users"     value={counts.users} />
           <MetricCard label="Companies"       value={counts.companies} />
           <MetricCard label="Products"        value={counts.products} />
           <MetricCard label="Active Deals"    value={counts.deals} />
           <MetricCard label="Total RFQs"      value={counts.rfqs} />
+          <MetricCard label="Requests"        value={counts.serviceRequests} />
         </div>
 
         {/* ── Tab bar ─────────────────────────────────────────────────────── */}
@@ -860,11 +1163,12 @@ export default function AdminPage() {
 
           {/* Tab content */}
           <div className="p-6">
-            {activeTab === 'users'     && <UsersTab />}
-            {activeTab === 'companies' && <CompaniesTab />}
-            {activeTab === 'products'  && <ProductsTab />}
-            {activeTab === 'deals'     && <DealsTab />}
-            {activeTab === 'rfqs'      && <RFQsTab />}
+            {activeTab === 'users'           && <UsersTab />}
+            {activeTab === 'companies'       && <CompaniesTab />}
+            {activeTab === 'products'        && <ProductsTab />}
+            {activeTab === 'deals'           && <DealsTab />}
+            {activeTab === 'rfqs'            && <RFQsTab />}
+            {activeTab === 'serviceRequests' && <ServiceRequestsTab />}
           </div>
         </div>
 

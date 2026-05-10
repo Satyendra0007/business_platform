@@ -238,3 +238,61 @@ export const getAdminProducts = async (params = {}) => {
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to load products.'); }
 };
+
+export const getAdminProductById = async (id) => {
+  try {
+    const { data: res } = await api.get(`/admin/products/${id}`);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load product.'); }
+};
+
+export const updateAdminProduct = async (id, data) => {
+  try {
+    const { data: res } = await api.put(`/admin/products/${id}`, data);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to update product.'); }
+};
+
+export const toggleAdminProductStatus = async (id) => {
+  try {
+    const { data: res } = await api.patch(`/admin/products/${id}/toggle-status`);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to toggle product status.'); }
+};
+
+export const removeAdminProduct = async (id) => {
+  try {
+    const { data: res } = await api.patch(`/admin/products/${id}/remove`);
+    if (res.success) return true;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to remove product.'); }
+};
+
+// ─── Service Requests (admin) ────────────────────────────────────────────────
+
+export const getServiceRequests = async (params = {}) => {
+  try {
+    const { data: res } = await api.get('/admin/service-requests', { params });
+    if (res.success) return { requests: res.data, total: res.total, totalPages: res.totalPages };
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load service requests.'); }
+};
+
+export const getServiceRequestById = async (id) => {
+  try {
+    const { data: res } = await api.get(`/admin/service-requests/${id}`);
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load service request.'); }
+};
+
+export const updateServiceRequestStatus = async (id, status) => {
+  try {
+    const { data: res } = await api.patch(`/admin/service-requests/${id}/status`, { status });
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to update request status.'); }
+};
