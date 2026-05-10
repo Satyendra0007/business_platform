@@ -17,9 +17,16 @@ import {
   Timer,
 } from 'lucide-react';
 import { AppShell } from '../components/ui';
+import DealDocumentActions from '../components/deal-documents/DealDocumentActions';
 import { useAuth } from '../hooks/useAuth';
+import { getCompanyById } from '../lib/companyService';
+import { sendMessage } from '../lib/dealService';
 import { createRFQ, getIncomingRFQs } from '../lib/rfqService';
 import { getMyRFQs } from '../lib/rfqService';
+import { buildDocumentContext, uploadPdfToCloudinary } from '../utils/pdf';
+import { generateLOI } from '../utils/pdf/generateLOI';
+import { generateSPA } from '../utils/pdf/generateSPA';
+import { generateNDA } from '../utils/pdf/generateNDA';
 
 const CATEGORY_OPTIONS = [
   'Food & Agriculture',
@@ -273,6 +280,11 @@ export default function DealRequestPage() {
   const [buyerLoading, setBuyerLoading] = useState(true);
   const [buyerError, setBuyerError] = useState('');
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [company, setCompany] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(Boolean(user?.companyId));
+  const [documentLoadingKey, setDocumentLoadingKey] = useState('');
+  const [documentStatus, setDocumentStatus] = useState('');
+  const [documentError, setDocumentError] = useState('');
 
   const canCreate = user?.roles?.includes('buyer');
   const isSupplier = user?.roles?.includes('supplier');
@@ -333,10 +345,100 @@ export default function DealRequestPage() {
     return loadBuyerRequests();
   }, [isSupplier, loadIncomingRequests, loadBuyerRequests]);
 
+  useEffect(() => {
+    if (!user?.companyId) {
+      setCompany(null);
+      setCompanyLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setCompanyLoading(true);
+
+    getCompanyById(user.companyId)
+      .then((result) => {
+        if (!cancelled) setCompany(result || null);
+      })
+      .catch(() => {
+        if (!cancelled) setCompany(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCompanyLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.companyId]);
+
   const update = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError('');
   };
+
+  const generateDocument = useCallback(async (documentType) => {
+    if (!selectedRequest) {
+      setDocumentError('Please select a deal request before generating a document.');
+      return;
+    }
+
+    const generators = {
+      loi: generateLOI,
+      spa: generateSPA,
+      nda: generateNDA,
+    };
+    const labels = {
+      loi: 'LOI',
+      spa: 'SPA',
+      nda: 'NDA',
+    };
+
+    const generator = generators[documentType];
+    const label = labels[documentType];
+
+    if (!generator) {
+      setDocumentError('Unsupported document type.');
+      return;
+    }
+
+    setDocumentLoadingKey(documentType);
+    setDocumentStatus('');
+    setDocumentError('');
+
+    try {
+      const context = buildDocumentContext({
+        user,
+        company,
+        request: selectedRequest,
+        documentType,
+        viewerRole: isSupplier ? 'supplier' : 'buyer',
+      });
+
+      const result = await generator(context);
+
+      if (selectedRequest.dealId) {
+        const attachmentUrl = await uploadPdfToCloudinary(result.blob, result.filename);
+        await sendMessage(selectedRequest.dealId, {
+          text: `${label} document generated for ${context.dealName}.`,
+          attachments: [
+            {
+              url: attachmentUrl,
+              name: result.filename,
+              type: 'pdf',
+            },
+          ],
+          type: 'file',
+        });
+        setDocumentStatus(`${label} generated and attached to chat.`);
+      } else {
+        setDocumentStatus(`${label} generated and downloaded.`);
+      }
+    } catch (err) {
+      setDocumentError(err?.message || `Failed to generate ${label}.`);
+    } finally {
+      setDocumentLoadingKey('');
+    }
+  }, [company, isSupplier, selectedRequest, user]);
 
   if (isSupplier) {
     const openCount = incomingRequests.filter((request) => !request.dealId).length;
@@ -407,6 +509,15 @@ export default function DealRequestPage() {
             onClose={() => setSelectedRequest(null)}
             navigate={navigate}
           />
+          {selectedRequest && (
+            <DealDocumentActions
+              request={selectedRequest}
+              loadingKey={documentLoadingKey}
+              onGenerate={generateDocument}
+              statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+              errorMessage={documentError}
+            />
+          )}
         </div>
       </AppShell>
     );
@@ -500,6 +611,15 @@ export default function DealRequestPage() {
               isSupplier={false}
               onClose={() => setSelectedRequest(null)}
               navigate={navigate}
+            />
+          )}
+          {!isSupplier && selectedRequest && (
+            <DealDocumentActions
+              request={selectedRequest}
+              loadingKey={documentLoadingKey}
+              onGenerate={generateDocument}
+              statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+              errorMessage={documentError}
             />
           )}
         </div>
@@ -719,6 +839,17 @@ export default function DealRequestPage() {
             onClose={() => setSelectedRequest(null)}
             navigate={navigate}
           />
+          {selectedRequest && (
+            <div className="mt-4">
+              <DealDocumentActions
+                request={selectedRequest}
+                loadingKey={documentLoadingKey}
+                onGenerate={generateDocument}
+                statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+                errorMessage={documentError}
+              />
+            </div>
+          )}
         </div>
       )}
     </AppShell>
