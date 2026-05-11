@@ -24,7 +24,7 @@ export const PLANS = {
   business: {
     name: 'Business',
     badge: 'Scale',
-    price: '$49 / month',
+    price: '$29 / month',
     color: 'blue',
     maxActiveDeals:   5,
     maxTotalDeals:    Infinity,
@@ -35,7 +35,7 @@ export const PLANS = {
   premium: {
     name: 'Premium',
     badge: 'Pro',
-    price: '$99 / month',
+    price: '$59 / month',
     color: 'amber',
     maxActiveDeals:   Infinity,
     maxTotalDeals:    Infinity,

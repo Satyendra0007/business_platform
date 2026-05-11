@@ -319,14 +319,6 @@ function LandingPage() {
 
           </div>
 
-          <div className="relative mt-5 sm:mt-6 lg:mt-7">
-            <Reveal delay={220} effect="up">
-              <div className="mx-auto w-full max-w-6xl">
-                <EarlyAccessPromo variant="card" />
-              </div>
-            </Reveal>
-          </div>
-
           {/* Stats Bar */}
           <div className="relative mt-5 left-0 right-0 sm:mt-6 lg:mt-8">
             <Reveal delay={400} effect="zoom">
