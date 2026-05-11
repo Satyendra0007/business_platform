@@ -39,7 +39,7 @@ const plans = [
   {
     name: 'Business',
     badge: 'Scale',
-    price: '$49 / month',
+    price: '$29 / month',
     icon: Building2,
     summary: 'Built for active traders who manage several deals at once.',
     metrics: [
@@ -57,7 +57,7 @@ const plans = [
   {
     name: 'Premium',
     badge: 'Pro',
-    price: '$99 / month',
+    price: '$59 / month',
     icon: Star,
     highlighted: true,
     summary: 'The premium plan for serious traders who want faster and safer closes.',
@@ -162,7 +162,7 @@ export default function PremiumMembershipSection({ compact = false }) {
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
-              Premium: €99 / month
+              Premium: $59 / month
             </div>
           </div>
 

@@ -133,11 +133,11 @@ export default function PlanStatusBanner() {
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-slate-500">
                 {planKey === 'premium'
                   ? 'Unlimited deals, chats, and documents — priority shipping.'
                   : planKey === 'business'
-                  ? `$49/month · Max ${planConfig.maxActiveDeals} active deals.`
+                  ? `$29/month · Max ${planConfig.maxActiveDeals} active deals.`
                   : phaseInfo.description}
               </p>
             </div>

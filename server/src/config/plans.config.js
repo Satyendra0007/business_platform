@@ -27,7 +27,7 @@ const PLANS = {
   business: {
     name: 'Business',
     badge: 'Scale',
-    price: '$49 / month',
+    price: '$29 / month',
     maxActiveDeals:   5,
     maxTotalDeals:    Infinity,
     maxChats:         5,          // max active chat threads
@@ -37,7 +37,7 @@ const PLANS = {
   premium: {
     name: 'Premium',
     badge: 'Pro',
-    price: '$99 / month',
+    price: '$59 / month',
     maxActiveDeals:   Infinity,
     maxTotalDeals:    Infinity,
     maxChats:         Infinity,
