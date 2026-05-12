@@ -40,7 +40,6 @@ import { getProductVisual } from '../lib/productVisuals';
 import { getPrimaryRole, hasRole } from '../lib/userRole';
 import { navByRole } from '../lib/navConstants';
 import CompanyBanner from './dashboard/CompanyBanner';
-import PremiumPlansBanner from './dashboard/PremiumPlansBanner';
 import PhoneVerificationBanner from './dashboard/PhoneVerificationBanner';
 
 const SIDEBAR_ICON_BY_PATH = {
@@ -944,7 +943,45 @@ function DashboardPage() {
                 </div>
               ) : null}
 
-              <PremiumPlansBanner />
+              <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#0c1f38_0%,#11305a_58%,#1a4a87_100%)] px-5 py-5 text-white shadow-[0_16px_50px_rgba(15,23,42,0.12)] sm:px-6 sm:py-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="max-w-2xl">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-200">
+                      Plan status
+                    </div>
+                    <h2 className="mt-3 text-3xl font-black tracking-tight">
+                      Stay ahead of your next deal wave
+                    </h2>
+                    <p className="mt-2 max-w-xl text-sm text-sky-100/85">
+                      You are currently on the <span className="font-bold text-white">{planConfig.name}</span> plan with {dealLimitText}.
+                      Review the next tier when your team needs more room.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[28rem]">
+                    <div className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/70">Plan</p>
+                      <p className="mt-1 text-lg font-black text-white">{planConfig.name}</p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/70">Deal limit</p>
+                      <p className="mt-1 text-lg font-black text-white">{dealLimitText}</p>
+                    </div>
+                    <div className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/70">Current deals</p>
+                      <p className="mt-1 text-lg font-black text-white">{counts.activeDeals}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/premium-plans')}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-black text-[#0f2846] transition hover:-translate-y-0.5"
+                  >
+                    Review plans
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </section>
 
               <div className="space-y-4">
                 <CompanyBanner />

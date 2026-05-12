@@ -18,9 +18,7 @@ import productHealthBeautyA from '../assets/product-health-beauty-a.png';
 import productHealthBeautyB from '../assets/product-health-beauty-b.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
-import { PublicLayout, Reveal, Marquee } from '../components/ui';
-import EarlyAccessPromo from '../components/landing/EarlyAccessPromo';
-import ProductShowcaseCarousel from '../components/landing/ProductShowcaseCarousel';
+import { PublicLayout, Reveal } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
@@ -256,8 +254,35 @@ function LandingPage() {
     }
   ];
 
+  const featuredMarkets = [
+    {
+      title: 'Sunflower oil lane',
+      image: productOilBulk,
+      summary: 'Keep negotiations, vessel updates, and documents aligned in one place.',
+      badge: '2,500 MT',
+    },
+    {
+      title: 'Steel pipe supply',
+      image: productPipesBulk,
+      summary: 'Track quotes, approvals, and logistics without switching tools.',
+      badge: 'Verified supply',
+    },
+    {
+      title: 'Refined sugar trade',
+      image: productSugarGemini,
+      summary: 'Surface trusted listings with pricing and status at a glance.',
+      badge: 'Live listing',
+    },
+    {
+      title: 'Heavy machinery',
+      image: productHeavyMachineryBulk,
+      summary: 'Move complex orders forward with one shared deal timeline.',
+      badge: 'Deal ready',
+    },
+  ];
+
   return (
-    <PublicLayout topSlot={<EarlyAccessPromo variant="banner" />}>
+    <PublicLayout>
       <div className="space-y-5 pb-12 sm:space-y-6 sm:pb-14 lg:space-y-8 lg:pb-16">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
@@ -413,37 +438,101 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 3: LIVE PRODUCT SHOWCASE --- */}
-        <section className="px-0 pt-0 pb-5 sm:px-1 lg:px-0 xl:px-0">
+        {/* --- SECTION 3: FEATURED DEAL LANE --- */}
+        <section className="rounded-[30px] border border-slate-200 bg-white px-4 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
           <Reveal effect="up">
-            <ProductShowcaseCarousel />
-          </Reveal>
-        </section>
-
-        {/* --- SECTION 6: MOVING REVIEWS --- */}
-        <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-8 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-10 animate-float-slow">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(229,169,61,0.08),transparent_40%)] pointer-events-none" />
-          <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent animate-shimmer" />
-
-          <Reveal effect="up">
-            <div className="relative mx-auto mb-8 max-w-4xl px-4 text-center sm:px-6 lg:px-16">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.2)] backdrop-blur transition-all duration-700 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)]">
-                Trusted by Trade Leaders
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d8e4f1] bg-[#f5f9fe] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#245c9d]">
+                  Featured lanes
+                </div>
+                <h2 className="mt-3 text-3xl font-black tracking-tight text-[#0A2540]">
+                  Built for live commodity execution
+                </h2>
               </div>
-              <h2 className="mt-4 text-3xl font-black leading-[0.95] tracking-tight text-white lg:text-4xl">
-                Proven across $2B+ in executed trade deals
-              </h2>
-              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 sm:text-base cursor-default hover:text-slate-300 transition-colors">
-                Supply chain directors, shipping agents, and procurement heads across 30+ countries use TRADAFY to move physical commodities with complete clarity.
+              <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
+                A static view of the product flow so teams can scan opportunities quickly without a moving carousel.
               </p>
             </div>
           </Reveal>
 
-          <div className="relative flex flex-col px-2 sm:px-4 lg:px-8">
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-[#050e1c] to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-[#050e1c] to-transparent" />
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {featuredMarkets.map((market, index) => (
+              <Reveal key={market.title} delay={index * 100} effect="up">
+                <article className="group overflow-hidden rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fafc_100%)] shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(15,23,42,0.09)]">
+                  <div className="relative h-44 overflow-hidden">
+                    <img
+                      src={market.image}
+                      alt={market.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,37,64,0.06)_0%,rgba(10,37,64,0.54)_100%)]" />
+                    <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+                      {market.badge}
+                    </div>
+                  </div>
+                  <div className="space-y-2 p-4">
+                    <h3 className="text-[1.02rem] font-black tracking-tight text-[#143a6a]">{market.title}</h3>
+                    <p className="text-sm leading-relaxed text-slate-500">{market.summary}</p>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </div>
+        </section>
 
-            <Marquee items={reviews} direction="left" speed="normal" className="py-2" />
+        {/* --- SECTION 4: TRUST SIGNALS --- */}
+        <section className="rounded-[30px] border border-[#0f1d38] bg-[#050e1c] px-4 py-6 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:px-6 sm:py-8 lg:px-8">
+          <Reveal effect="up">
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-sky-300 backdrop-blur">
+                Trusted by trade operators
+              </div>
+              <h2 className="mt-4 text-3xl font-black leading-[0.95] tracking-tight text-white lg:text-4xl">
+                Proven across real deals, not just presentation screens
+              </h2>
+              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-300 sm:text-base">
+                Supply chain directors, shipping teams, and sourcing leads use TRADAFY to keep the entire deal thread visible.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            {reviews.slice(0, 4).map((review, index) => (
+              <Reveal key={review.name} delay={index * 100} effect="up">
+                <article className="flex h-full flex-col rounded-[24px] border border-white/10 bg-white/5 p-4 text-left backdrop-blur">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={review.avatar}
+                      alt={review.name}
+                      className="h-12 w-12 rounded-2xl object-cover ring-1 ring-white/15"
+                    />
+                    <div>
+                      <p className="font-bold text-white">{review.name}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-sky-200/70">
+                        {review.role}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm leading-relaxed text-slate-300">
+                    “{review.content}”
+                  </p>
+                  <div className="mt-4 flex items-center gap-3 border-t border-white/10 pt-4">
+                    <img
+                      src={review.productImage}
+                      alt={review.product}
+                      className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/10"
+                    />
+                    <div>
+                      <p className="text-[11px] font-bold text-white">{review.company}</p>
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-sky-300">
+                        {review.product}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
           </div>
         </section>
       </div>
