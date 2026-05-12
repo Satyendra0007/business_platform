@@ -19,6 +19,7 @@ import productHealthBeautyB from '../assets/product-health-beauty-b.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
 import { PublicLayout, Reveal } from '../components/ui';
+import ProductShowcaseCarousel from '../components/landing/ProductShowcaseCarousel';
 import { useNavigate } from 'react-router-dom';
 
 // --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
@@ -254,33 +255,6 @@ function LandingPage() {
     }
   ];
 
-  const featuredMarkets = [
-    {
-      title: 'Sunflower oil lane',
-      image: productOilBulk,
-      summary: 'Keep negotiations, vessel updates, and documents aligned in one place.',
-      badge: '2,500 MT',
-    },
-    {
-      title: 'Steel pipe supply',
-      image: productPipesBulk,
-      summary: 'Track quotes, approvals, and logistics without switching tools.',
-      badge: 'Verified supply',
-    },
-    {
-      title: 'Refined sugar trade',
-      image: productSugarGemini,
-      summary: 'Surface trusted listings with pricing and status at a glance.',
-      badge: 'Live listing',
-    },
-    {
-      title: 'Heavy machinery',
-      image: productHeavyMachineryBulk,
-      summary: 'Move complex orders forward with one shared deal timeline.',
-      badge: 'Deal ready',
-    },
-  ];
-
   return (
     <PublicLayout>
       <div className="space-y-5 pb-12 sm:space-y-6 sm:pb-14 lg:space-y-8 lg:pb-16">
@@ -438,48 +412,10 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 3: FEATURED DEAL LANE --- */}
-        <section className="rounded-[30px] border border-slate-200 bg-white px-4 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] sm:px-6 sm:py-6 lg:px-8 lg:py-7">
-          <Reveal effect="up">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d8e4f1] bg-[#f5f9fe] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#245c9d]">
-                  Featured lanes
-                </div>
-                <h2 className="mt-3 text-3xl font-black tracking-tight text-[#0A2540]">
-                  Built for live commodity execution
-                </h2>
-              </div>
-              <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
-                A static view of the product flow so teams can scan opportunities quickly without a moving carousel.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {featuredMarkets.map((market, index) => (
-              <Reveal key={market.title} delay={index * 100} effect="up">
-                <article className="group overflow-hidden rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f7fafc_100%)] shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(15,23,42,0.09)]">
-                  <div className="relative h-44 overflow-hidden">
-                    <img
-                      src={market.image}
-                      alt={market.title}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-                    />
-                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,37,64,0.06)_0%,rgba(10,37,64,0.54)_100%)]" />
-                    <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white backdrop-blur-sm">
-                      {market.badge}
-                    </div>
-                  </div>
-                  <div className="space-y-2 p-4">
-                    <h3 className="text-[1.02rem] font-black tracking-tight text-[#143a6a]">{market.title}</h3>
-                    <p className="text-sm leading-relaxed text-slate-500">{market.summary}</p>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </section>
+        {/* --- SECTION 3: LIVE PRODUCT SHOWCASE --- */}
+        <Reveal effect="up">
+          <ProductShowcaseCarousel />
+        </Reveal>
 
         {/* --- SECTION 4: TRUST SIGNALS --- */}
         <section className="rounded-[30px] border border-[#0f1d38] bg-[#050e1c] px-4 py-6 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:px-6 sm:py-8 lg:px-8">
