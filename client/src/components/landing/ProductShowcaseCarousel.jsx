@@ -25,13 +25,6 @@ const fmtPrice = (value, unit) => {
   return `$${formatted}${unit ? ` / ${unit}` : ''}`;
 };
 
-const fmtDate = (value) => {
-  if (!value) return 'Recently listed';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Recently listed';
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
-};
-
 const getFallbackTone = (category = '') => {
   const value = category.toLowerCase();
   if (value.includes('food') || value.includes('agri') || value.includes('agriculture')) return 'from-emerald-500/20 via-white to-amber-400/10';
@@ -181,14 +174,10 @@ function ProductTile({ product, onSelect, onHover }) {
           })}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="pt-1">
           <div className="rounded-[18px] bg-white/8 px-3 py-2">
             <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/65">Price</div>
             <div className="mt-1 text-[0.92rem] font-black text-white">{fmtPrice(product.price, product.unit)}</div>
-          </div>
-          <div className="rounded-[18px] bg-white/8 px-3 py-2 text-right">
-            <div className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-100/65">Updated</div>
-            <div className="mt-1 text-[0.86rem] font-black text-white">{fmtDate(product.createdAt)}</div>
           </div>
         </div>
 

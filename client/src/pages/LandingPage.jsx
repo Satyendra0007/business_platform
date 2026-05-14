@@ -18,8 +18,8 @@ import productHealthBeautyA from '../assets/product-health-beauty-a.png';
 import productHealthBeautyB from '../assets/product-health-beauty-b.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
+import promoBanner from '../assets/tradafy-promo-banner.jpeg';
 import { PublicLayout, Reveal, Marquee } from '../components/ui';
-import EarlyAccessPromo from '../components/landing/EarlyAccessPromo';
 import ProductShowcaseCarousel from '../components/landing/ProductShowcaseCarousel';
 import { useNavigate } from 'react-router-dom';
 
@@ -257,7 +257,17 @@ function LandingPage() {
   ];
 
   return (
-    <PublicLayout topSlot={<EarlyAccessPromo variant="banner" />}>
+    <PublicLayout
+      topSlot={(
+        <section className="w-full overflow-hidden bg-[#0d1f43]">
+          <img
+            src={promoBanner}
+            alt="Tradafy promotion banner"
+            className="block h-[220px] w-full object-contain object-center"
+          />
+        </section>
+      )}
+    >
       <div className="space-y-5 pb-12 sm:space-y-6 sm:pb-14 lg:space-y-8 lg:pb-16">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
@@ -414,13 +424,11 @@ function LandingPage() {
         </section>
 
         {/* --- SECTION 3: LIVE PRODUCT SHOWCASE --- */}
-        <section className="px-0 pt-0 pb-5 sm:px-1 lg:px-0 xl:px-0">
-          <Reveal effect="up">
-            <ProductShowcaseCarousel />
-          </Reveal>
-        </section>
+        <Reveal effect="up">
+          <ProductShowcaseCarousel />
+        </Reveal>
 
-        {/* --- SECTION 6: MOVING REVIEWS --- */}
+        {/* --- SECTION 4: TRUST SIGNALS --- */}
         <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-8 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-10 animate-float-slow">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(229,169,61,0.08),transparent_40%)] pointer-events-none" />
           <div className="absolute left-1/2 top-0 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent animate-shimmer" />
@@ -433,8 +441,8 @@ function LandingPage() {
               <h2 className="mt-4 text-3xl font-black leading-[0.95] tracking-tight text-white lg:text-4xl">
                 Proven across $2B+ in executed trade deals
               </h2>
-              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 sm:text-base cursor-default hover:text-slate-300 transition-colors">
-                Supply chain directors, shipping agents, and procurement heads across 30+ countries use TRADAFY to move physical commodities with complete clarity.
+              <p className="mt-4 text-sm font-medium leading-relaxed text-slate-400 sm:text-base">
+                Supply chain directors, shipping teams, and sourcing leads use TRADAFY to keep the entire deal thread visible.
               </p>
             </div>
           </Reveal>
