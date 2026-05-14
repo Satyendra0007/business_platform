@@ -20,6 +20,7 @@ import { PLAN_LIMIT_CODES } from '../lib/plans.config';
 const CODE_TO_REASON = {
   PLAN_LIMIT_ACTIVE_DEALS:  'activeDeals',
   PLAN_LIMIT_TOTAL_DEALS:   'totalDeals',
+  PLAN_LIMIT_PRODUCTS:      'products',
   PLAN_LIMIT_CHAT:          'chats',
   PLAN_LIMIT_DOCUMENTS:     'documents',
   PHASE_LOCKED_CHAT:        'phase_chat',
@@ -61,15 +62,13 @@ export function useUpgradeModal() {
     }
   }, [showUpgrade]);
 
-  const UpgradeModalElement = (
-    <UpgradeModal
-      isOpen={modal.isOpen}
-      onClose={hideUpgrade}
-      reason={modal.reason}
-      message={modal.message}
-      plan={user?.plan || 'free'}
-    />
-  );
+  const UpgradeModalElement = React.createElement(UpgradeModal, {
+    isOpen: modal.isOpen,
+    onClose: hideUpgrade,
+    reason: modal.reason,
+    message: modal.message,
+    plan: user?.plan || 'free',
+  });
 
   return { upgradeModal: modal, showUpgrade, hideUpgrade, guardAction, UpgradeModalElement };
 }

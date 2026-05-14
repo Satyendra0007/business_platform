@@ -12,6 +12,7 @@ const express    = require('express');
 const { protect } = require('../../middleware/auth.middleware');
 const {
   createCheckoutSession,
+  createServiceCheckoutSession,
   handleWebhook,
   getBillingStatus,
 } = require('./billing.controller');
@@ -28,6 +29,7 @@ webhookRouter.post(
 const billingRouter = express.Router();
 billingRouter.use(protect);
 billingRouter.post('/create-checkout-session', createCheckoutSession);
+billingRouter.post('/service-checkout', createServiceCheckoutSession);
 billingRouter.get('/status', getBillingStatus);
 
 module.exports = { webhookRouter, billingRouter };

@@ -58,7 +58,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'canceled', 'past_due', 'trialing', 'unpaid', null],
     default: null
-  }
+  },
+
+  // Premium feature quotas
+  credibilityReportsUsed: { type: Number, default: 0 },
+  credibilityCycleStart: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // IMPROVEMENT 6: Critical pre-save hook that hashes passwords natively via bcryptjs

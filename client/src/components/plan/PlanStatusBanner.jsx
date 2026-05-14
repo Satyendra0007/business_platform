@@ -135,9 +135,9 @@ export default function PlanStatusBanner() {
               </div>
                 <p className="mt-0.5 text-xs text-slate-500">
                 {planKey === 'premium'
-                  ? 'Unlimited deals, chats, and documents — priority shipping.'
+                  ? 'Unlimited deals, products, chats, and documents — priority shipping.'
                   : planKey === 'business'
-                  ? `$29/month · Max ${planConfig.maxActiveDeals} active deals.`
+                  ? `$29/month · Max ${planConfig.maxActiveDeals} active deals · ${formatLimit(planConfig.maxProducts)} Product Listings.`
                   : phaseInfo.description}
               </p>
             </div>

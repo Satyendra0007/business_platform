@@ -26,6 +26,7 @@ const plans = [
     summary: 'Get started with one real deal before the workspace soft-limits.',
     metrics: [
       ['Deals', '1 full deal -> max 3 total'],
+      ['Products', '1 onboarding listing'],
       ['Chat', 'Limited / locked after trial'],
       ['Documents', 'Limited'],
       ['Shipping', 'Basic access'],
@@ -37,13 +38,14 @@ const plans = [
     bestFor: 'First-time users',
   },
   {
-    name: 'Business',
+    name: 'Activate',
     badge: 'Scale',
     price: '$29 / month',
     icon: Building2,
     summary: 'Built for active traders who manage several deals at once.',
     metrics: [
       ['Deals', 'Max 5 active'],
+      ['Products', '5 Product Listings'],
       ['Chat', 'Max 5 active'],
       ['Documents', 'Max 50'],
       ['Shipping', 'Standard bids'],
@@ -63,6 +65,7 @@ const plans = [
     summary: 'The premium plan for serious traders who want faster and safer closes.',
     metrics: [
       ['Deals', 'Unlimited'],
+      ['Products', 'Unlimited'],
       ['Chat', 'Unlimited'],
       ['Documents', 'Unlimited'],
       ['Shipping', 'Priority bids'],
@@ -155,10 +158,10 @@ export default function PremiumMembershipSection({ compact = false }) {
                 TRADAFY Pricing Overview
               </div>
               <h2 className="mt-3 text-[1.55rem] font-black tracking-tight text-[#0A2540] sm:text-[1.9rem]">
-                Free, Business, and Premium plans built for real trade execution.
+                Free, Activate, and Premium plans built for real trade execution.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                Clear pricing, clear limits, and real upgrade triggers. Users get value first, then move into Business or Premium when their deal activity grows.
+                Clear pricing, clear limits, and real upgrade triggers. Users get value first, then move into Activate or Premium when their deal activity grows.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-700">
@@ -318,10 +321,10 @@ export default function PremiumMembershipSection({ compact = false }) {
             TRADAFY Pricing Overview
           </div>
           <h2 className={`mt-2 font-black tracking-tight sm:text-4xl ${compact ? 'text-[2rem] text-[#0A2540] lg:text-[2.4rem]' : 'text-[2rem] text-white lg:text-[2.9rem]'}`}>
-            Free, Business, and Premium plans built for real trade execution.
+            Free, Activate, and Premium plans built for real trade execution.
           </h2>
           <p className={`mt-2 max-w-3xl text-sm leading-7 sm:text-[15px] ${bodyTone}`}>
-            Clear pricing, clear limits, and real upgrade triggers. Users get value first, then move into Business or Premium when their deal activity grows.
+            Clear pricing, clear limits, and real upgrade triggers. Users get value first, then move into Activate or Premium when their deal activity grows.
           </p>
         </div>
 

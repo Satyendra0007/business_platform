@@ -296,3 +296,14 @@ export const updateServiceRequestStatus = async (id, status) => {
     throw new Error(res.message);
   } catch (error) { handleError(error, 'Failed to update request status.'); }
 };
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export const getAdminAnalytics = async () => {
+  try {
+    const { data: res } = await api.get('/admin/analytics');
+    if (res.success) return res.data;
+    throw new Error(res.message);
+  } catch (error) { handleError(error, 'Failed to load analytics.'); }
+};
+

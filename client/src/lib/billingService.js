@@ -23,6 +23,18 @@ export const createCheckoutSession = async (plan) => {
 };
 
 /**
+ * POST /billing/service-checkout
+ *
+ * @param {string} category 'credibility_report' or 'legal_document_review'
+ * @param {object} formData
+ * @returns {Promise<{paid: boolean, url?: string}>}
+ */
+export const createServiceCheckoutSession = async (category, formData) => {
+  const res = await api.post('/billing/service-checkout', { category, formData });
+  return res.data; // { paid, url }
+};
+
+/**
  * GET /billing/status
  *
  * Returns the current billing status for the logged-in user.

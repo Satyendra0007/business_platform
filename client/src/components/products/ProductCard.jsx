@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import { categoryAccent, categoryEmoji, fmtPrice } from './productCardUtils';
+import TrustBadge from '../marketplace/TrustBadge';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -41,7 +42,9 @@ export default function ProductCard({
   const image     = product.images?.[0];
   const accent    = categoryAccent(product.category);
   const initials  = (product.title || '').slice(0, 2).toUpperCase();
-  const companyName = product.companyId?.name || product.companyName || product.company?.name || '';
+  const companyObj = product.companyId || product.company || {};
+  const companyName = companyObj.name || product.companyName || '';
+  const trustType = companyObj.plan === 'premium' ? 'premium' : companyObj.verificationStatus === 'approved' ? 'verified' : companyObj.verificationStatus === 'pending' ? 'pending' : 'unverified';
   const manageMode = management && (onEdit || onDelete);
 
   return (
@@ -74,6 +77,11 @@ export default function ProductCard({
             {manageMode && (
               <div className={`rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${product.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                 {product.isActive ? 'Active' : 'Inactive'}
+              </div>
+            )}
+            {!manageMode && (product.companyId || product.company) && (
+              <div className="-ml-1 scale-90 origin-left">
+                <TrustBadge type={trustType} />
               </div>
             )}
           </div>

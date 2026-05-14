@@ -12,7 +12,10 @@ import api from './api';
 
 function handleError(error, fallback) {
   const msg = error.response?.data?.message || error.response?.data?.message || error.message || fallback;
-  throw new Error(msg);
+  const normalized = new Error(msg);
+  normalized.response = error.response;
+  normalized.code = error.response?.data?.code || error.code;
+  throw normalized;
 }
 
 /**

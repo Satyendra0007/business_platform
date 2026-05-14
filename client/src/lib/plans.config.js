@@ -6,12 +6,12 @@
  *   Phase 2 → totalDeals 2–3: Soft limited (nudge shown, features work)
  *   Phase 3 → totalDeals >= 3: Hard locked (chat, docs, timeline, shipping blocked)
  *
- * Business & Premium → Phase 0 (no restrictions)
+ * Activate & Premium → Phase 0 (no restrictions)
  */
 
 export const PLANS = {
   free: {
-    name: 'Free',
+    name: 'Buyer Access',
     badge: 'Starter',
     price: '$0',
     color: 'slate',
@@ -19,10 +19,12 @@ export const PLANS = {
     maxTotalDeals:    3,
     maxChats:         Infinity,   // gated by phase
     maxDocuments:     Infinity,   // gated by phase
+    maxProducts:      1,          // onboarding: allows first product, then upgrade required
     shippingPriority: 0,
   },
   business: {
-    name: 'Business',
+    // DB enum remains 'business'; display name is Activate.
+    name: 'Activate',
     badge: 'Scale',
     price: '$29 / month',
     color: 'blue',
@@ -30,6 +32,7 @@ export const PLANS = {
     maxTotalDeals:    Infinity,
     maxChats:         5,
     maxDocuments:     50,
+    maxProducts:      5,
     shippingPriority: 1,
   },
   premium: {
@@ -41,6 +44,7 @@ export const PLANS = {
     maxTotalDeals:    Infinity,
     maxChats:         Infinity,
     maxDocuments:     Infinity,
+    maxProducts:      Infinity,
     shippingPriority: 2,
   },
 };
@@ -73,6 +77,7 @@ export const PHASE_INFO = {
 export const PLAN_LIMIT_CODES = {
   PLAN_LIMIT_TOTAL_DEALS:   { reason: 'totalDeals',  feature: null },
   PLAN_LIMIT_ACTIVE_DEALS:  { reason: 'activeDeals', feature: null },
+  PLAN_LIMIT_PRODUCTS:      { reason: 'products',    feature: 'products' },
   PLAN_LIMIT_CHAT:          { reason: 'chats',       feature: 'chat' },
   PLAN_LIMIT_DOCUMENTS:     { reason: 'documents',   feature: 'documents' },
   PHASE_LOCKED_CHAT:        { reason: 'phase',       feature: 'chat' },

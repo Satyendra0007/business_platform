@@ -4,6 +4,7 @@ const Company = require('../company/company.model');
 const Deal = require('../deal/deal.model');
 const RFQ = require('../rfq/rfq.model');
 const Product = require('../product/product.model');
+const ServiceRequest = require('../serviceRequest/serviceRequest.model');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -13,6 +14,64 @@ const getPagination = (query) => {
   const limitValue = Math.min(parseInt(query.limit || 20), 50);
   const skip = (page - 1) * limitValue;
   return { page, limitValue, skip };
+};
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+
+// @route   GET /api/admin/analytics
+// @desc    Aggregate platform-wide operational metrics (all queries run in parallel)
+const getAnalytics = async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalSuppliers,
+      totalBuyers,
+      totalShippingAgents,
+      totalCompanies,
+      verifiedCompanies,
+      pendingVerifications,
+      totalProducts,
+      activeProducts,
+      totalRFQs,
+      activeDeals,
+      premiumUsers,
+      activateUsers,
+      credibilityReports,
+      legalReviews,
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ roles: 'supplier' }),
+      User.countDocuments({ roles: 'buyer' }),
+      User.countDocuments({ roles: 'shipping_agent' }),
+      Company.countDocuments({ isDeleted: false }),
+      Company.countDocuments({ isDeleted: false, verificationStatus: 'verified' }),
+      Company.countDocuments({ isDeleted: false, verificationStatus: { $in: ['pending', 'submitted'] } }),
+      Product.countDocuments({ isDeleted: false }),
+      Product.countDocuments({ isDeleted: false, isActive: true }),
+      RFQ.countDocuments({}),
+      Deal.countDocuments({ status: { $in: ['active', 'open', 'in_progress'] } }),
+      User.countDocuments({ plan: 'premium', subscriptionStatus: 'active' }),
+      User.countDocuments({ plan: 'business', subscriptionStatus: 'active' }),
+      ServiceRequest.countDocuments({ category: 'credibility_report' }),
+      ServiceRequest.countDocuments({ category: 'legal_document_review' }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        users: { total: totalUsers, suppliers: totalSuppliers, buyers: totalBuyers, shippingAgents: totalShippingAgents },
+        companies: { total: totalCompanies, verified: verifiedCompanies, pendingVerification: pendingVerifications },
+        products: { total: totalProducts, active: activeProducts },
+        deals: { active: activeDeals },
+        rfqs: { total: totalRFQs },
+        subscriptions: { premium: premiumUsers, activate: activateUsers },
+        services: { credibilityReports, legalReviews },
+      },
+    });
+  } catch (error) {
+    console.error('[admin.getAnalytics]', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 };
 
 // ─── USER MANAGEMENT ─────────────────────────────────────────────────────────
@@ -317,20 +376,34 @@ const verifyCompany = async (req, res) => {
     }
 
     company.verificationStatus = verificationStatus;
-    // Stamp the exact time of approval
     if (verificationStatus === 'verified') company.verifiedAt = new Date();
+
+    // Recompute trust score on verification change
+    const linkedUser = await User.findOne({ companyId: company._id }).select('plan subscriptionStatus').lean();
+    const { computeTrustScore } = require('../../lib/trustScore');
+    const { score, visibilityBoost } = computeTrustScore({
+      verificationStatus: company.verificationStatus,
+      isActive: company.isActive,
+      documents: company.documents,
+      userPlan: linkedUser?.plan || 'free',
+      subscriptionStatus: linkedUser?.subscriptionStatus || null,
+    });
+    company.trustScore = score;
+    company.visibilityBoost = visibilityBoost;
+
     await company.save();
 
     res.json({
       success: true,
       message: `Company verification status set to '${verificationStatus}'.`,
-      data: { _id: company._id, name: company.name, verificationStatus: company.verificationStatus }
+      data: { _id: company._id, name: company.name, verificationStatus: company.verificationStatus, trustScore: company.trustScore }
     });
   } catch (error) {
     console.error('[admin.verifyCompany]', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 
 // @route   GET /api/admin/companies/:id
 // @desc    Full company detail view (all fields including documents)
@@ -840,6 +913,8 @@ const removeProduct = async (req, res) => {
 };
 
 module.exports = {
+  // Analytics
+  getAnalytics,
   // Users
   getUsers, getUserById, updateUser, toggleUserStatus, updateUserRole, updateUserPlan, verifyUser,
   // Companies

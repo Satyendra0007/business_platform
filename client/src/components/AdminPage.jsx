@@ -1,11 +1,13 @@
 /**
- * AdminPage.jsx — Admin control center.
+ * AdminPage.jsx � Admin control center.
  *
  * Tabs:
- *  Users     → list all users, toggle active/inactive
- *  Companies → list all companies with documents + set verification status
- *  Deals     → read-only monitor of all deals
- *  RFQs      → read-only monitor of all RFQs
+ *  Analytics   ? platform-wide operational metrics
+ *  Moderation  ? pending verifications + service requests queue
+ *  Users       ? list all users, toggle active/inactive
+ *  Companies   ? list all companies with documents + set verification status
+ *  Deals       ? read-only monitor of all deals
+ *  RFQs        ? read-only monitor of all RFQs
  *
  * All data from real API via adminService.js. Zero mock data.
  */
@@ -13,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Building2, Briefcase, FileText, Package, Headphones,
+  BarChart3, ShieldOff,
   Loader2, AlertCircle, CheckCircle2,
   XCircle, ShieldCheck, ShieldX, ShieldAlert, RefreshCcw, ExternalLink, File
 } from 'lucide-react';
@@ -22,14 +25,14 @@ import {
   getCompanies, verifyCompany, toggleCompanyStatus, updateCompanyAdmin,
   getAdminDeals, updateDealStatus, updateDealShipment, resolveDeal,
   getAdminRFQs, updateRFQ, closeRFQ, removeRFQ,
-  getAdminProducts,
-  getServiceRequests, updateServiceRequestStatus
+  getAdminProducts, updateAdminProduct, toggleAdminProductStatus, removeAdminProduct,
+  getServiceRequests, updateServiceRequestStatus,
+  getAdminAnalytics,
 } from '../lib/adminService';
 import { deleteProduct } from '../lib/productManagementService';
 import Pagination from './common/Pagination';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// --- Helpers ------------------------------------------------------------------
 const fmtDate = (d) => d
   ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   : '—';
@@ -44,11 +47,11 @@ const getUserMobile = (user) => user?.phone ?? user?.Phone ?? user?.mobile ?? us
 
 function VerifBadge({ status }) {
   const map = {
-    draft:     { cls: 'bg-slate-50   text-slate-600  border-slate-200',  icon: FileText,    label: 'Draft' },
-    submitted: { cls: 'bg-sky-50     text-sky-700    border-sky-200',     icon: ShieldAlert, label: 'Submitted' },
-    pending:   { cls: 'bg-amber-50   text-amber-700  border-amber-100',   icon: ShieldAlert, label: 'Pending' },
-    verified:  { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ShieldCheck,  label: 'Verified' },
-    rejected:  { cls: 'bg-rose-50    text-rose-700   border-rose-100',    icon: ShieldX,     label: 'Rejected' },
+    draft: { cls: 'bg-slate-50   text-slate-600  border-slate-200', icon: FileText, label: 'Draft' },
+    submitted: { cls: 'bg-sky-50     text-sky-700    border-sky-200', icon: ShieldAlert, label: 'Submitted' },
+    pending: { cls: 'bg-amber-50   text-amber-700  border-amber-100', icon: ShieldAlert, label: 'Pending' },
+    verified: { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ShieldCheck, label: 'Verified' },
+    rejected: { cls: 'bg-rose-50    text-rose-700   border-rose-100', icon: ShieldX, label: 'Rejected' },
   };
   const s = map[status] || map.pending;
   const Icon = s.icon;
@@ -97,12 +100,12 @@ const PRODUCT_LIMIT = 12;
 // ─── Users tab ────────────────────────────────────────────────────────────────
 
 function UsersTab() {
-  const [users,    setUsers]    = useState([]);
-  const [total,    setTotal]    = useState(0);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
+  const [users, setUsers] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [toggling, setToggling] = useState(null);
-  const [actionErr,setActionErr]= useState({});
+  const [actionErr, setActionErr] = useState({});
   const [busy, setBusy] = useState(null);
 
   const load = useCallback(async () => {
@@ -157,7 +160,7 @@ function UsersTab() {
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
-  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
   return (
     <Panel title={`Users — ${total} total`}>
@@ -202,7 +205,7 @@ function UsersTab() {
               <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Plan:</label>
               <select value={u.plan || 'free'} onChange={(e) => handlePlanChange(u._id, e.target.value)} disabled={busy === u._id}
                 className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
-                <option value="free">Free</option><option value="business">Business</option><option value="premium">Premium</option>
+                <option value="free">Free</option><option value="business">Activate</option><option value="premium">Premium</option>
               </select>
               <button onClick={() => handleVerifyToggle(u._id, 'isPhoneVerified', u.isPhoneVerified)} disabled={busy === u._id}
                 className={`ml-2 rounded-lg px-2.5 py-1 text-[10px] font-bold transition disabled:opacity-50 ${u.isPhoneVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
@@ -225,10 +228,10 @@ function UsersTab() {
 
 function CompaniesTab() {
   const [companies, setCompanies] = useState([]);
-  const [total,     setTotal]     = useState(0);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
-  const [updating,  setUpdating]  = useState(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(null);
   const [actionErr, setActionErr] = useState({});
 
   const load = useCallback(async () => {
@@ -263,7 +266,7 @@ function CompaniesTab() {
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
-  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
   return (
     <Panel title={`Companies — ${total} total`}>
@@ -321,7 +324,7 @@ function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus
       {open && (
         <div className="border-t border-slate-100 px-4 pb-3 pt-3 space-y-3">
           <div className="flex flex-col sm:flex-row gap-4">
-            
+
             {(c.logo || c.coverImage) && (
               <div className="shrink-0 flex flex-col gap-2">
                 {c.logo && <img src={c.logo} alt="Logo" className="h-12 w-12 rounded object-cover border border-slate-200 bg-white" />}
@@ -335,15 +338,15 @@ function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus
 
               {/* Details grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-1 mt-1">
-                <InfoRow label="Type"       value={c.companyType} />
-                <InfoRow label="Industry"   value={c.industry} />
-                <InfoRow label="Location"   value={[c.city, c.country].filter(Boolean).join(', ')} />
-                <InfoRow label="Employees"  value={c.numberOfEmployees} />
-                <InfoRow label="Est."       value={c.yearEstablished} />
+                <InfoRow label="Type" value={c.companyType} />
+                <InfoRow label="Industry" value={c.industry} />
+                <InfoRow label="Location" value={[c.city, c.country].filter(Boolean).join(', ')} />
+                <InfoRow label="Employees" value={c.numberOfEmployees} />
+                <InfoRow label="Est." value={c.yearEstablished} />
                 <InfoRow label="Registered" value={fmtDate(c.createdAt)} />
-                <InfoRow label="Plan"       value={c.subscriptionPlan} />
-                <InfoRow label="Owner"      value={registeredByName} />
-                <InfoRow label="Products"   value={c.productCount ? `${c.productCount} item${c.productCount === 1 ? '' : 's'}` : '0'} />
+                <InfoRow label="Plan" value={c.subscriptionPlan} />
+                <InfoRow label="Owner" value={registeredByName} />
+                <InfoRow label="Products" value={c.productCount ? `${c.productCount} item${c.productCount === 1 ? '' : 's'}` : '0'} />
                 {c.website && <InfoRow label="Web" value={<a href={c.website} target="_blank" rel="noreferrer" className="text-[#245c9d] hover:underline decoration-1">{c.website.replace(/^https?:\/\//, '').split('/')[0]}</a>} />}
               </div>
 
@@ -448,20 +451,20 @@ function CompanyCard({ company: c, updating, actionErr, onVerify, onToggleStatus
 
 // ─── Deals monitor tab ────────────────────────────────────────────────────────
 
-const DEAL_STAGES = ['inquiry','negotiation','agreement','payment','production','shipping_request','shipping','delivery','closed'];
+const DEAL_STAGES = ['inquiry', 'negotiation', 'agreement', 'payment', 'production', 'shipping_request', 'shipping', 'delivery', 'closed'];
 const VALID_TRANSITIONS = {
-  inquiry:['negotiation','closed'], negotiation:['agreement','closed'], agreement:['payment','closed'],
-  payment:['production','closed'], production:['shipping_request','closed'], shipping_request:['shipping','closed'],
-  shipping:['delivery','closed'], delivery:['closed'], closed:[]
+  inquiry: ['negotiation', 'closed'], negotiation: ['agreement', 'closed'], agreement: ['payment', 'closed'],
+  payment: ['production', 'closed'], production: ['shipping_request', 'closed'], shipping_request: ['shipping', 'closed'],
+  shipping: ['delivery', 'closed'], delivery: ['closed'], closed: []
 };
-const SHIPMENT_STATUSES = ['booking','loaded','in_transit','delivered'];
+const SHIPMENT_STATUSES = ['booking', 'loaded', 'in_transit', 'delivered'];
 
 function DealsTab() {
-  const [deals,   setDeals]   = useState([]);
-  const [total,   setTotal]   = useState(0);
+  const [deals, setDeals] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-  const [busy,    setBusy]    = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(null);
   const [actionErr, setActionErr] = useState({});
 
   const load = useCallback(async () => {
@@ -503,7 +506,7 @@ function DealsTab() {
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
-  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
   return (
     <Panel title={`All Deals — ${total} total`}>
@@ -514,52 +517,53 @@ function DealsTab() {
           {deals.map((d) => {
             const nextStages = VALID_TRANSITIONS[d.status] || [];
             return (
-            <div key={d._id} className="rounded-[22px] bg-[#f5f9fd] p-4 space-y-2">
-              <div className="grid gap-2 sm:grid-cols-4">
-                <div className="sm:col-span-2">
-                  <p className="font-semibold text-slate-900">{d.productName || 'Unnamed Deal'}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">Created: {fmtDate(d.createdAt)}</p>
+              <div key={d._id} className="rounded-[22px] bg-[#f5f9fd] p-4 space-y-2">
+                <div className="grid gap-2 sm:grid-cols-4">
+                  <div className="sm:col-span-2">
+                    <p className="font-semibold text-slate-900">{d.productName || 'Unnamed Deal'}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Created: {fmtDate(d.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
+                    <p className="mt-0.5 text-sm font-semibold capitalize text-[#245c9d]">{d.status?.replace(/_/g, ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Price / Qty</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-700">{fmtPrice(d.price)} · {d.quantity ?? '—'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</p>
-                  <p className="mt-0.5 text-sm font-semibold capitalize text-[#245c9d]">{d.status?.replace(/_/g, ' ')}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Price / Qty</p>
-                  <p className="mt-0.5 text-sm font-semibold text-slate-700">{fmtPrice(d.price)} · {d.quantity ?? '—'}</p>
-                </div>
+                {d.shipment?.status && (
+                  <p className="text-[10px] text-slate-500">Shipment: <span className="font-bold capitalize text-slate-700">{d.shipment.status.replace(/_/g, ' ')}</span></p>
+                )}
+                {actionErr[d._id] && <p className="text-xs font-medium text-rose-600">{actionErr[d._id]}</p>}
+                {d.status !== 'closed' && (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
+                    {nextStages.length > 0 && (
+                      <>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Advance:</label>
+                        <select defaultValue="" onChange={(e) => { if (e.target.value) handleStatus(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                          <option value="" disabled>Select stage…</option>
+                          {nextStages.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                        </select>
+                      </>
+                    )}
+                    <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Shipment:</label>
+                    <select defaultValue="" onChange={(e) => { if (e.target.value) handleShipment(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
+                      <option value="" disabled>Override…</option>
+                      {SHIPMENT_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+                    </select>
+                    <button onClick={() => handleResolve(d._id)} disabled={busy === d._id}
+                      className="ml-auto inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50">
+                      <XCircle className="h-3 w-3" /> Resolve
+                    </button>
+                    {busy === d._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                  </div>
+                )}
               </div>
-              {d.shipment?.status && (
-                <p className="text-[10px] text-slate-500">Shipment: <span className="font-bold capitalize text-slate-700">{d.shipment.status.replace(/_/g,' ')}</span></p>
-              )}
-              {actionErr[d._id] && <p className="text-xs font-medium text-rose-600">{actionErr[d._id]}</p>}
-              {d.status !== 'closed' && (
-                <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
-                  {nextStages.length > 0 && (
-                    <>
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Advance:</label>
-                      <select defaultValue="" onChange={(e) => { if (e.target.value) handleStatus(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
-                        <option value="" disabled>Select stage…</option>
-                        {nextStages.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-                      </select>
-                    </>
-                  )}
-                  <label className="ml-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Shipment:</label>
-                  <select defaultValue="" onChange={(e) => { if (e.target.value) handleShipment(d._id, e.target.value); e.target.value = ''; }} disabled={busy === d._id}
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50">
-                    <option value="" disabled>Override…</option>
-                    {SHIPMENT_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-                  </select>
-                  <button onClick={() => handleResolve(d._id)} disabled={busy === d._id}
-                    className="ml-auto inline-flex items-center gap-1 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50">
-                    <XCircle className="h-3 w-3" /> Resolve
-                  </button>
-                  {busy === d._id && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
-                </div>
-              )}
-            </div>
-          );})}
+            );
+          })}
         </div>
       )}
     </Panel>
@@ -569,11 +573,11 @@ function DealsTab() {
 // ─── RFQ monitor tab ──────────────────────────────────────────────────────────
 
 function RFQsTab() {
-  const [rfqs,    setRFQs]    = useState([]);
-  const [total,   setTotal]   = useState(0);
+  const [rfqs, setRFQs] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-  const [busy,    setBusy]    = useState(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(null);
   const [actionErr, setActionErr] = useState({});
   const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({});
@@ -626,14 +630,14 @@ function RFQsTab() {
   };
 
   const STATUS_CLR = {
-    open:        'text-sky-700',
+    open: 'text-sky-700',
     in_progress: 'text-amber-700',
-    converted:   'text-emerald-700',
-    closed:      'text-slate-400',
+    converted: 'text-emerald-700',
+    closed: 'text-slate-400',
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
-  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
   return (
     <Panel title={`All RFQs — ${total} total`}>
@@ -777,7 +781,7 @@ function ProductsTab() {
   };
 
   if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
-  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (error) return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
 
   return (
     <Panel title={`All Products — ${total} total`}>
@@ -818,7 +822,7 @@ function ProductsTab() {
                         <Package className="h-6 w-6 text-slate-300" />
                       )}
                     </div>
-                    
+
                     {/* Details */}
                     <div className="flex-1 grid gap-2 sm:grid-cols-3">
                       <div className="sm:col-span-1">
@@ -844,7 +848,7 @@ function ProductsTab() {
                     </div>
                   </div>
                   {actionErr[p._id] && <p className="text-xs font-medium text-rose-600">{actionErr[p._id]}</p>}
-                  
+
                   <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2">
                     <button onClick={() => startEdit(p)} disabled={busy === p._id}
                       className="inline-flex items-center gap-1 rounded-xl bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 disabled:opacity-50">
@@ -888,7 +892,7 @@ const CATEGORY_LABELS = {
 };
 
 const STATUS_STYLES = {
-  pending:   'border-amber-100 bg-amber-50 text-amber-700',
+  pending: 'border-amber-100 bg-amber-50 text-amber-700',
   contacted: 'border-sky-200 bg-sky-50 text-sky-700',
   completed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
 };
@@ -1057,11 +1061,10 @@ function ServiceRequestsTab() {
                           key={s}
                           onClick={() => handleStatusChange(r._id, s)}
                           disabled={busy === r._id || r.status === s}
-                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-40 ${
-                            s === 'completed' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            : s === 'contacted' ? 'bg-sky-50 text-sky-700 hover:bg-sky-100'
-                            : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-40 ${s === 'completed' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : s === 'contacted' ? 'bg-sky-50 text-sky-700 hover:bg-sky-100'
+                                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                            }`}
                         >
                           {s === 'completed' && <CheckCircle2 className="h-3 w-3" />}
                           {s === 'contacted' && <ShieldCheck className="h-3 w-3" />}
@@ -1087,21 +1090,210 @@ function ServiceRequestsTab() {
   );
 }
 
+// ─── Analytics Tab ────────────────────────────────────────────────────────────
+
+function StatGroup({ title, color = 'slate', stats }) {
+  const colorMap = {
+    blue:   'bg-blue-50 border-blue-200 text-blue-700',
+    violet: 'bg-violet-50 border-violet-200 text-violet-700',
+    emerald:'bg-emerald-50 border-emerald-200 text-emerald-700',
+    amber:  'bg-amber-50 border-amber-200 text-amber-700',
+    slate:  'bg-slate-50 border-slate-200 text-slate-600',
+  };
+  return (
+    <div className="rounded-[22px] border border-slate-100 bg-[#f8fafc] p-4">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{title}</p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map(({ label, value }) => (
+          <div key={label} className={`rounded-2xl border px-4 py-3 ${colorMap[color] || colorMap.slate}`}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{label}</p>
+            <p className="mt-1 text-2xl font-black">{value ?? '—'}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsTab() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getAdminAnalytics()
+      .then(setData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
+  if (error)   return <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>;
+  if (!data)   return null;
+
+  return (
+    <div className="space-y-4">
+      <StatGroup title="Users" color="blue" stats={[
+        { label: 'Total Users',     value: data.users?.total },
+        { label: 'Suppliers',       value: data.users?.suppliers },
+        { label: 'Buyers',          value: data.users?.buyers },
+        { label: 'Shipping Agents', value: data.users?.shippingAgents },
+      ]} />
+      <StatGroup title="Companies" color="emerald" stats={[
+        { label: 'Total',           value: data.companies?.total },
+        { label: 'Verified',        value: data.companies?.verified },
+        { label: 'Pending Review',  value: data.companies?.pendingVerification },
+      ]} />
+      <StatGroup title="Products & Deals" color="slate" stats={[
+        { label: 'Total Products',  value: data.products?.total },
+        { label: 'Active Products', value: data.products?.active },
+        { label: 'Total RFQs',      value: data.rfqs?.total },
+        { label: 'Active Deals',    value: data.deals?.active },
+      ]} />
+      <StatGroup title="Subscriptions" color="violet" stats={[
+        { label: 'Premium Users',   value: data.subscriptions?.premium },
+        { label: 'Activate Users',  value: data.subscriptions?.activate },
+      ]} />
+      <StatGroup title="Services" color="amber" stats={[
+        { label: 'Credibility Reports', value: data.services?.credibilityReports },
+        { label: 'Legal Reviews',       value: data.services?.legalReviews },
+      ]} />
+    </div>
+  );
+}
+
+// ─── Moderation Tab ───────────────────────────────────────────────────────────
+
+function ModerationTab() {
+  const [pendingCompanies, setPendingCompanies] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(null);
+  const [msg, setMsg] = useState({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [c, r] = await Promise.all([
+        getCompanies({ status: 'pending', limit: 20 }),
+        getServiceRequests({ status: 'pending', limit: 20 }),
+      ]);
+      setPendingCompanies(c.companies || []);
+      setPendingRequests(r.requests || []);
+    } catch (err) {
+      console.error('[ModerationTab]', err);
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleVerify = async (id, status) => {
+    setBusy(id);
+    try {
+      await verifyCompany(id, status);
+      setMsg((m) => ({ ...m, [id]: `✓ Set to ${status}` }));
+      setPendingCompanies((prev) => prev.filter((c) => c._id !== id));
+    } catch (err) {
+      setMsg((m) => ({ ...m, [id]: err.message }));
+    } finally { setBusy(null); }
+  };
+
+  const handleReqStatus = async (id, status) => {
+    setBusy(id);
+    try {
+      await updateServiceRequestStatus(id, status);
+      setMsg((m) => ({ ...m, [id]: `✓ ${status}` }));
+      setPendingRequests((prev) => prev.filter((r) => r._id !== id));
+    } catch (err) {
+      setMsg((m) => ({ ...m, [id]: err.message }));
+    } finally { setBusy(null); }
+  };
+
+  if (loading) return <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-slate-300" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <Panel title={`Pending Company Verifications — ${pendingCompanies.length}`}>
+        {pendingCompanies.length === 0
+          ? <p className="text-sm text-slate-400">No pending verifications. ✓</p>
+          : (
+            <div className="space-y-3">
+              {pendingCompanies.map((c) => (
+                <div key={c._id} className="flex flex-col gap-2 rounded-[20px] bg-[#f5f9fd] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-slate-900">{c.name}</p>
+                    <p className="text-xs text-slate-500">{c.country} · {c.industry || '—'} · {fmtDate(c.createdAt)}</p>
+                    <p className="text-xs text-slate-400">{c.documents?.length || 0} document(s) uploaded</p>
+                    {msg[c._id] && <p className="mt-1 text-xs font-medium text-emerald-600">{msg[c._id]}</p>}
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button onClick={() => handleVerify(c._id, 'verified')} disabled={busy === c._id}
+                      className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60">
+                      {busy === c._id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Approve
+                    </button>
+                    <button onClick={() => handleVerify(c._id, 'rejected')} disabled={busy === c._id}
+                      className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60">
+                      <ShieldX className="h-3.5 w-3.5" /> Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+      </Panel>
+
+      <Panel title={`Pending Service Requests — ${pendingRequests.length}`}>
+        {pendingRequests.length === 0
+          ? <p className="text-sm text-slate-400">No pending requests. ✓</p>
+          : (
+            <div className="space-y-3">
+              {pendingRequests.map((r) => (
+                <div key={r._id} className="flex flex-col gap-2 rounded-[20px] bg-[#f5f9fd] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold capitalize text-slate-900">{r.category?.replace(/_/g, ' ')}</p>
+                    <p className="text-xs text-slate-500">{r.createdBy?.firstName} {r.createdBy?.lastName} · {r.createdBy?.email}</p>
+                    <p className="text-xs text-slate-400">
+                      Payment: <span className={r.paymentStatus === 'paid' ? 'text-emerald-600 font-semibold' : 'text-amber-600'}>{r.paymentStatus}</span>
+                      {r.paymentAmount > 0 ? ` · $${r.paymentAmount}` : ''} · {fmtDate(r.createdAt)}
+                    </p>
+                    {msg[r._id] && <p className="mt-1 text-xs font-medium text-emerald-600">{msg[r._id]}</p>}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <button onClick={() => handleReqStatus(r._id, 'reviewing')} disabled={busy === r._id}
+                      className="rounded-2xl bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-60">Reviewing</button>
+                    <button onClick={() => handleReqStatus(r._id, 'completed')} disabled={busy === r._id}
+                      className="inline-flex items-center gap-1 rounded-2xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Done</button>
+                    <button onClick={() => handleReqStatus(r._id, 'rejected')} disabled={busy === r._id}
+                      className="inline-flex items-center gap-1 rounded-2xl bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60">
+                      <XCircle className="h-3.5 w-3.5" /> Reject</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+      </Panel>
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ══════════════════════════════════════════════════════════════════════════════
 
 const TABS = [
-  { key: 'users',           label: 'Users',     icon: Users      },
-  { key: 'companies',       label: 'Companies', icon: Building2  },
-  { key: 'products',        label: 'Products',  icon: Package    },
-  { key: 'deals',           label: 'Deals',     icon: Briefcase  },
-  { key: 'rfqs',            label: 'RFQs',      icon: FileText   },
-  { key: 'serviceRequests', label: 'Requests',  icon: Headphones },
+  { key: 'analytics',       label: 'Analytics',  icon: BarChart3 },
+  { key: 'moderation',      label: 'Moderation', icon: ShieldOff },
+  { key: 'users',           label: 'Users',      icon: Users },
+  { key: 'companies',       label: 'Companies',  icon: Building2 },
+  { key: 'products',        label: 'Products',   icon: Package },
+  { key: 'deals',           label: 'Deals',      icon: Briefcase },
+  { key: 'rfqs',            label: 'RFQs',       icon: FileText },
+  { key: 'serviceRequests', label: 'Requests',   icon: Headphones },
 ];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('analytics');
 
   // Summary counts — load once on mount
   const [counts, setCounts] = useState({ users: '—', companies: '—', products: '—', deals: '—', rfqs: '—', serviceRequests: '—' });
@@ -1115,7 +1307,7 @@ export default function AdminPage() {
       getServiceRequests({ limit: 1 }),
     ]).then(([u, c, p, d, r, sr]) => {
       setCounts({ users: u.total, companies: c.total, products: p.total, deals: d.total, rfqs: r.total, serviceRequests: sr.total });
-    }).catch(() => {}); // counts are decorative — fail silently
+    }).catch(() => { }); // counts are decorative — fail silently
   }, []);
 
   return (
@@ -1127,12 +1319,12 @@ export default function AdminPage() {
 
         {/* ── Summary metrics ─────────────────────────────────────────────── */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <MetricCard label="Total Users"     value={counts.users} />
-          <MetricCard label="Companies"       value={counts.companies} />
-          <MetricCard label="Products"        value={counts.products} />
-          <MetricCard label="Active Deals"    value={counts.deals} />
-          <MetricCard label="Total RFQs"      value={counts.rfqs} />
-          <MetricCard label="Requests"        value={counts.serviceRequests} />
+          <MetricCard label="Total Users" value={counts.users} />
+          <MetricCard label="Companies" value={counts.companies} />
+          <MetricCard label="Products" value={counts.products} />
+          <MetricCard label="Active Deals" value={counts.deals} />
+          <MetricCard label="Total RFQs" value={counts.rfqs} />
+          <MetricCard label="Requests" value={counts.serviceRequests} />
         </div>
 
         {/* ── Tab bar ─────────────────────────────────────────────────────── */}
@@ -1145,11 +1337,10 @@ export default function AdminPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
-                    active
+                  className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${active
                       ? 'bg-[linear-gradient(135deg,#173b67,#245c9d)] text-white shadow-md'
                       : 'bg-[#f4f8fc] text-slate-600 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {tab.label}
@@ -1163,11 +1354,13 @@ export default function AdminPage() {
 
           {/* Tab content */}
           <div className="p-6">
-            {activeTab === 'users'           && <UsersTab />}
-            {activeTab === 'companies'       && <CompaniesTab />}
-            {activeTab === 'products'        && <ProductsTab />}
-            {activeTab === 'deals'           && <DealsTab />}
-            {activeTab === 'rfqs'            && <RFQsTab />}
+            {activeTab === 'analytics' && <AnalyticsTab />}
+            {activeTab === 'moderation' && <ModerationTab />}
+            {activeTab === 'users' && <UsersTab />}
+            {activeTab === 'companies' && <CompaniesTab />}
+            {activeTab === 'products' && <ProductsTab />}
+            {activeTab === 'deals' && <DealsTab />}
+            {activeTab === 'rfqs' && <RFQsTab />}
             {activeTab === 'serviceRequests' && <ServiceRequestsTab />}
           </div>
         </div>

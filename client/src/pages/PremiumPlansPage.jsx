@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
@@ -26,6 +26,7 @@ import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-r
 import { useAuth } from '../hooks/useAuth';
 import { getPrimaryRole } from '../lib/userRole';
 import { createCheckoutSession } from '../lib/billingService';
+import { useSupplierOnboarding } from '../hooks/useSupplierOnboarding';
 
 const SIDE_NAV = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -39,7 +40,7 @@ const SIDE_NAV = [
 const PLAN_DATA = [
   {
     key: 'free',
-    name: 'Starter',
+    name: 'Buyer Access',
     badge: 'Test the platform',
     price: '$0',
     period: '',
@@ -49,6 +50,7 @@ const PLAN_DATA = [
     cta: 'Start your first deal',
     features: [
       '1 full deal (fully unlocked)',
+      '1 onboarding product listing',
       'Up to 3 total deals',
       'Chat (limited after first deal)',
       'Basic document flow',
@@ -57,7 +59,7 @@ const PLAN_DATA = [
   },
   {
     key: 'business',
-    name: 'Active',
+    name: 'Activate',
     badge: 'For active traders',
     price: '$29',
     period: '/ month',
@@ -67,6 +69,7 @@ const PLAN_DATA = [
     cta: 'Scale your deals',
     features: [
       'Up to 5 active deals',
+      '5 Product Listings',
       'Full chat access',
       'Extended document flow',
       'Standard shipping bids',
@@ -75,16 +78,17 @@ const PLAN_DATA = [
   },
   {
     key: 'premium',
-    name: 'Professional',
+    name: 'Premium',
     badge: 'Recommended',
     price: '$59',
     period: '/ month',
     color: 'amber',
     summary: 'Close deals faster with structured execution and reduced risk.',
     bestFor: 'Serious traders',
-    cta: 'Upgrade to Professional',
+    cta: 'Upgrade to Premium',
     features: [
       'Unlimited deals',
+      'Unlimited product listings',
       'Priority shipping bids',
       'Advanced document flow',
       'Light legal review included',
@@ -416,6 +420,12 @@ export default function PremiumPlansPage() {
   const [checkoutError, setCheckoutError] = useState('');
 
   const userRole = getPrimaryRole(user);
+  const { isSupplier, onboardingComplete, loading: onboardingLoading } = useSupplierOnboarding();
+
+  // Block pricing visibility for suppliers who haven't completed onboarding
+  if (isSupplier && !onboardingLoading && !onboardingComplete) {
+    return <Navigate to="/dashboard" replace />;
+  }
   const currentPlan = String(user?.plan || user?.subscriptionPlan || 'free').toLowerCase().trim();
   const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Guest';
   const roleLabel =

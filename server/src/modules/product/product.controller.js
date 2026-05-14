@@ -23,15 +23,21 @@ const createProduct = async (req, res) => {
       return res.status(403).json({ success: false, message: 'You must be linked to a Company before listing products.' });
     }
 
-    // IMPROVEMENT 7 + IMPROVEMENT 4: Only select the field we need to check — avoids fetching the full document
+    // Check the company exists and determine its verification status
     const company = await Company.findById(req.user.companyId).select('verificationStatus').lean();
-    if (!company || company.verificationStatus !== 'verified') {
-      return res.status(403).json({ success: false, message: 'Your company must be verified before creating product listings.' });
+    if (!company) {
+      return res.status(403).json({ success: false, message: 'Your company could not be found. Please contact support.' });
     }
+
+    // Allow product creation, but mark inactive if company is not yet verified.
+    // This preserves marketplace moderation — unverified products stay hidden
+    // from public listings (getProducts filters by isActive: true).
+    const isCompanyVerified = company.verificationStatus === 'verified';
 
     const product = await Product.create({
       ...data,
-      companyId: req.user.companyId
+      companyId: req.user.companyId,
+      isActive: isCompanyVerified,
     });
 
     res.status(201).json({ success: true, data: product });
@@ -82,13 +88,37 @@ const getProducts = async (req, res) => {
     const skip       = (pageValue - 1) * limitValue;
 
     const [products, total] = await Promise.all([
-      Product.find(query)
-        .select('title price unit MOQ images category countryOfOrigin companyId leadTime isActive createdAt')
-
-        .skip(skip)
-        .limit(limitValue)
-        .sort(sortOption)
-        .lean(),
+      Product.aggregate([
+        { $match: query },
+        { 
+          $lookup: {
+            from: 'companies',
+            localField: 'companyId',
+            foreignField: '_id',
+            as: 'companyDoc'
+          }
+        },
+        { $unwind: { path: '$companyDoc', preserveNullAndEmptyArrays: true } },
+        { 
+          $addFields: { 
+            trustScore: { $ifNull: ['$companyDoc.trustScore', 0] },
+            visibilityBoost: { $ifNull: ['$companyDoc.visibilityBoost', false] }
+          } 
+        },
+        // Sort: Premium/boosted first, then by trust score, then newest
+        { $sort: { visibilityBoost: -1, trustScore: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limitValue },
+        {
+          $project: {
+            title: 1, price: 1, unit: 1, MOQ: 1, images: 1, category: 1, 
+            countryOfOrigin: 1, companyId: 1, leadTime: 1, isActive: 1, createdAt: 1,
+            'company.name': '$companyDoc.name',
+            'company.verificationStatus': '$companyDoc.verificationStatus',
+            'company.visibilityBoost': '$companyDoc.visibilityBoost'
+          }
+        }
+      ]),
       Product.countDocuments(query)
     ]);
 

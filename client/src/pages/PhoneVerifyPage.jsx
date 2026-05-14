@@ -239,17 +239,8 @@ export default function PhoneVerifyPage() {
       {/* ── RIGHT: Form panel ─────────────────────────────────────────────── */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
 
-        {/* Skip link */}
-        {step < 2 && (
-          <div className="mb-8 w-full max-w-xl flex justify-end">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <X className="h-3.5 w-3.5" /> Skip for now
-            </button>
-          </div>
-        )}
+
+
 
         <div className="w-full max-w-xl">
 

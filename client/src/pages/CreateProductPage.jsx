@@ -3,22 +3,26 @@
  * POST /api/products (companyId set by server from JWT).
  */
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, ShieldCheck, AlertCircle, Building2, Loader2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, ShieldCheck, AlertCircle, Building2, Loader2, ArrowRight, Package, Sparkles } from 'lucide-react';
 import { AppShell } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { getCompanyById } from '../lib/companyService';
 import { createProduct } from '../lib/productManagementService';
 import ProductForm from '../components/products/ProductForm';
+import { useUpgradeModal } from '../hooks/useUpgradeModal';
 
 export default function CreateProductPage() {
-  const { user } = useAuth();
+  const { user, fetchUser } = useAuth();
   const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
+  const onboardingMode = searchParams.get('onboarding') === '1';
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
   const [done,    setDone]    = useState(false);
   const [company, setCompany] = useState(null);
   const [companyLoading, setCompanyLoading] = useState(Boolean(user?.companyId));
+  const { guardAction, UpgradeModalElement } = useUpgradeModal();
 
   useEffect(() => {
     let cancelled = false;
@@ -49,9 +53,13 @@ export default function CreateProductPage() {
   const handleSubmit = async (data) => {
     setLoading(true); setError('');
     try {
-      await createProduct(data);
+      const product = await guardAction(() => createProduct(data));
+      if (!product) return;
       setDone(true);
-      setTimeout(() => navigate('/supplier/products'), 2200);
+      // Refresh user context so onboarding guard knows product exists
+      try { await fetchUser(); } catch { /* non-blocking */ }
+      const redirectTarget = onboardingMode ? '/dashboard' : '/supplier/products';
+      setTimeout(() => navigate(redirectTarget), 2200);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -61,14 +69,30 @@ export default function CreateProductPage() {
 
   if (done) {
     return (
-      <AppShell title="Product Created">
-        <div className="flex flex-col items-center gap-5 rounded-[28px] border border-emerald-200 bg-emerald-50 py-24 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
-            <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+      <AppShell title={onboardingMode ? 'Workspace Activated' : 'Product Created'}>
+        <div className={`flex flex-col items-center gap-5 rounded-[28px] border py-24 text-center ${
+          onboardingMode
+            ? 'border-[#E5A93D]/30 bg-[linear-gradient(180deg,#fffbf0,#fff8e7)]'
+            : 'border-emerald-200 bg-emerald-50'
+        }`}>
+          <div className={`flex h-20 w-20 items-center justify-center rounded-full ${
+            onboardingMode ? 'bg-[#E5A93D]/15' : 'bg-emerald-100'
+          }`}>
+            {onboardingMode
+              ? <Sparkles className="h-10 w-10 text-[#E5A93D]" />
+              : <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+            }
           </div>
           <div>
-            <p className="text-2xl font-bold text-slate-800">Product listed!</p>
-            <p className="mt-2 text-sm text-slate-500">Redirecting to your catalogue…</p>
+            <p className="text-2xl font-bold text-slate-800">
+              {onboardingMode ? 'Your supplier workspace is now active!' : 'Product listed!'}
+            </p>
+            <p className="mt-2 text-sm text-slate-500">
+              {onboardingMode
+                ? 'Redirecting to your dashboard…'
+                : 'Redirecting to your catalogue…'
+              }
+            </p>
           </div>
         </div>
       </AppShell>
@@ -85,7 +109,7 @@ export default function CreateProductPage() {
     );
   }
 
-  if (!companyLoading && (!user?.companyId || company?.verificationStatus !== 'verified')) {
+  if (!companyLoading && !user?.companyId) {
     const status = company?.verificationStatus || 'no-company';
     return (
       <AppShell
@@ -152,15 +176,52 @@ export default function CreateProductPage() {
   return (
     <AppShell
       title="Create Product"
-      subtitle="Fill in the product details below. Required fields are marked with *."
+      subtitle={onboardingMode
+        ? 'Add your first product to activate your supplier workspace.'
+        : 'Fill in the product details below. Required fields are marked with *.'
+      }
     >
       <div className="mx-auto max-w-2xl">
+        {/* Onboarding progress header */}
+        {onboardingMode && (
+          <div className="mb-6 rounded-[20px] border border-[#E5A93D]/25 bg-[linear-gradient(135deg,#0A2540,#143a6a)] p-4 shadow-[0_12px_30px_rgba(10,37,64,0.15)]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E5A93D]/20 text-[#E5A93D]">
+                <Package className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#E5A93D]">Step 2 of 2</p>
+                <p className="text-sm font-bold text-white">Add your first product to activate your workspace</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-1/2 rounded-full bg-[linear-gradient(90deg,#E5A93D,#f0c260)]" />
+              </div>
+              <span className="text-xs font-bold text-white/60">1/2</span>
+            </div>
+          </div>
+        )}
+
+        {/* Info banner when company exists but verification is pending */}
+        {company && company.verificationStatus !== 'verified' && (
+          <div className="mb-6 flex items-start gap-3 rounded-[20px] border border-sky-200 bg-[linear-gradient(135deg,#f0f8ff,#e8f4fd)] px-5 py-4">
+            <AlertCircle className="h-5 w-5 shrink-0 text-sky-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-slate-800">Company verification pending</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                You can create products now. They will become visible on the public marketplace once your company is verified by our team.
+              </p>
+            </div>
+          </div>
+        )}
         <ProductForm
           onSubmit={handleSubmit}
           isLoading={loading}
-          submitLabel="Publish Product"
+          submitLabel={onboardingMode ? 'Publish & Activate Workspace' : 'Publish Product'}
           error={error}
         />
+        {UpgradeModalElement}
       </div>
     </AppShell>
   );

@@ -41,6 +41,8 @@ import { getPrimaryRole, hasRole } from '../lib/userRole';
 import { navByRole } from '../lib/navConstants';
 import CompanyBanner from './dashboard/CompanyBanner';
 import PhoneVerificationBanner from './dashboard/PhoneVerificationBanner';
+import SupplierOnboardingBanner from './dashboard/SupplierOnboardingBanner';
+import { useSupplierOnboarding } from '../hooks/useSupplierOnboarding';
 
 const SIDEBAR_ICON_BY_PATH = {
   '/dashboard': LayoutDashboard,
@@ -525,6 +527,7 @@ function DashboardPage() {
   const { pathname } = useLocation();
   const role = getPrimaryRole(user);
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.name || 'Buyer User';
+  const { isSupplier, onboardingComplete, hasCompany, hasProduct, loading: onboardingLoading } = useSupplierOnboarding();
 
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState('');
@@ -743,6 +746,8 @@ function DashboardPage() {
   const dealLimit = planConfig.maxActiveDeals;
   const dealLimitText = isUnlimited(dealLimit) ? 'Unlimited' : `${activeDealCount} / ${formatLimit(dealLimit)} deals`;
   const dealLimitPct = isUnlimited(dealLimit) ? 100 : Math.min((activeDealCount / dealLimit) * 100, 100);
+  const productLimit = planConfig.maxProducts;
+  const productLimitText = isUnlimited(productLimit) ? 'Unlimited products' : `${formatLimit(productLimit)} Product Listings`;
 
   const verificationStatus = company?.verificationStatus || (user?.companyId ? 'pending' : 'none');
   const verificationTone =
@@ -809,7 +814,13 @@ function DashboardPage() {
         </button>
 
         <div className="mt-6 space-y-2">
-          {(navByRole[role] || navByRole.buyer).map((item) => (
+          {(navByRole[role] || navByRole.buyer)
+            .filter((item) => {
+              // Hide Premium Plans for suppliers who haven't completed onboarding
+              if (isSupplier && !onboardingComplete && item.path === '/premium-plans') return false;
+              return true;
+            })
+            .map((item) => (
             <SidebarLink
               key={item.path}
               item={item}
@@ -943,7 +954,12 @@ function DashboardPage() {
                 </div>
               ) : null}
 
-              <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#0c1f38_0%,#11305a_58%,#1a4a87_100%)] px-5 py-5 text-white shadow-[0_16px_50px_rgba(15,23,42,0.12)] sm:px-6 sm:py-6">
+              {/* Supplier onboarding banner — replaces plan section for incomplete suppliers */}
+              {isSupplier && !onboardingComplete ? (
+                <SupplierOnboardingBanner hasCompany={hasCompany} hasProduct={hasProduct} />
+              ) : (
+                <>
+                  <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#0c1f38_0%,#11305a_58%,#1a4a87_100%)] px-5 py-5 text-white shadow-[0_16px_50px_rgba(15,23,42,0.12)] sm:px-6 sm:py-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="max-w-2xl">
                     <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-200">
@@ -953,7 +969,7 @@ function DashboardPage() {
                       Stay ahead of your next deal wave
                     </h2>
                     <p className="mt-2 max-w-xl text-sm text-sky-100/85">
-                      You are currently on the <span className="font-bold text-white">{planConfig.name}</span> plan with {dealLimitText}.
+                      You are currently on the <span className="font-bold text-white">{planConfig.name}</span> plan with {dealLimitText} and {productLimitText}.
                       Review the next tier when your team needs more room.
                     </p>
                   </div>
@@ -968,8 +984,8 @@ function DashboardPage() {
                       <p className="mt-1 text-lg font-black text-white">{dealLimitText}</p>
                     </div>
                     <div className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/70">Current deals</p>
-                      <p className="mt-1 text-lg font-black text-white">{counts.activeDeals}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-100/70">Product limit</p>
+                      <p className="mt-1 text-lg font-black text-white">{productLimitText}</p>
                     </div>
                   </div>
 
@@ -987,6 +1003,8 @@ function DashboardPage() {
                 <CompanyBanner />
                 <PhoneVerificationBanner />
               </div>
+                </>
+              )}
 
               <section className="grid gap-4 xl:grid-cols-[1fr_760px]">
                 <div>

@@ -30,7 +30,7 @@ export function usePlan() {
 
   /**
    * Returns true if the current value is at or beyond the plan's limit.
-   * @param {'activeDeals'|'totalDeals'|'chats'|'documents'} limitKey
+   * @param {'activeDeals'|'totalDeals'|'chats'|'documents'|'products'} limitKey
    * @param {number} currentValue
    */
   const isAtLimit = (limitKey, currentValue) => {
@@ -39,6 +39,7 @@ export function usePlan() {
       totalDeals:  planConfig.maxTotalDeals,
       chats:       planConfig.maxChats,
       documents:   planConfig.maxDocuments,
+      products:    planConfig.maxProducts,
     };
     const limit = limitMap[limitKey];
     if (limit === undefined) return false;

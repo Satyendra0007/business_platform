@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { getCompanyById } from '../lib/companyService';
 import { AppShell } from '../components/ui';
+import TrustBadge from '../components/marketplace/TrustBadge';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,22 +25,7 @@ const fmtDate = (d) => d
   ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   : '—';
 
-function StatusBadge({ status }) {
-  const map = {
-    draft:     { cls: 'border-slate-200  bg-slate-50   text-slate-600',  icon: FileText,    label: 'Draft' },
-    submitted: { cls: 'border-sky-200    bg-sky-50     text-sky-700',    icon: ShieldAlert, label: 'Submitted' },
-    pending:   { cls: 'border-amber-200  bg-amber-50   text-amber-700',  icon: Clock,       label: 'Pending' },
-    verified:  { cls: 'border-emerald-200 bg-emerald-50 text-emerald-700', icon: ShieldCheck, label: 'Verified' },
-    rejected:  { cls: 'border-rose-200   bg-rose-50    text-rose-700',   icon: ShieldX,     label: 'Rejected' },
-  };
-  const s = map[status] || map.pending;
-  const Icon = s.icon;
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${s.cls}`}>
-      <Icon className="h-3.5 w-3.5" /> {s.label}
-    </span>
-  );
-}
+/* StatusBadge removed in favor of TrustBadge */
 
 function InfoRow({ icon: Icon, label, value }) {
   if (!value) return null;
@@ -136,7 +122,7 @@ export default function CompanyDetailPage() {
                   {[company.companyType, company.industry].filter(Boolean).join(' · ') || 'Company'}
                 </p>
                 <div className="mt-2">
-                  <StatusBadge status={company.verificationStatus} />
+                  <TrustBadge company={company} size="md" />
                 </div>
               </div>
             </div>

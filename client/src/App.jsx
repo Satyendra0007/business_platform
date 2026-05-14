@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { useSupplierOnboarding } from './hooks/useSupplierOnboarding';
 import MarketingTracker from './components/MarketingTracker';
 
 // ─── Page imports ─────────────────────────────────────────────────────────────
@@ -52,6 +53,27 @@ function RequireAuth() {
   return <Outlet />;
 }
 
+/**
+ * Global phone verification gate — redirects unverified users to /phone/verify.
+ *
+ * Sits between RequireAuth and all workspace/onboarding routes.
+ * Admins are exempt. /phone/verify itself is placed OUTSIDE this guard.
+ */
+function RequirePhoneVerified() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Admins are exempt from phone verification
+  if (user.roles?.includes('admin')) return <Outlet />;
+
+  // If phone not verified, redirect to verification page
+  if (!user.isPhoneVerified) {
+    return <Navigate to="/phone/verify" replace />;
+  }
+
+  return <Outlet />;
+}
+
 /** Redirects non-admin users to /dashboard. */
 function RequireAdmin() {
   const { user } = useAuth();
@@ -65,6 +87,40 @@ function RequireSupplier() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (!user.roles?.includes('supplier')) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
+/**
+ * Supplier onboarding gate — redirects Suppliers with incomplete
+ * onboarding to the appropriate setup step.
+ *
+ * Exempted roles: admin, shipping_agent, buyer (all pass through).
+ * Exempted routes: onboarding destinations are placed OUTSIDE this
+ * guard in the route tree to prevent redirect loops.
+ */
+function RequireSupplierOnboarding() {
+  const { user } = useAuth();
+  const { isSupplier, loading, onboardingComplete, currentStep } = useSupplierOnboarding();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Non-suppliers always pass through
+  if (!isSupplier) return <Outlet />;
+
+  // While checking product count, render nothing (avoids flash)
+  if (loading) return null;
+
+  // Onboarding complete — allow normal access
+  if (onboardingComplete) return <Outlet />;
+
+  // Redirect to the appropriate onboarding step
+  if (currentStep === 'company') {
+    return <Navigate to="/company/setup?onboarding=1&next=/supplier/products/create" replace />;
+  }
+  if (currentStep === 'product') {
+    return <Navigate to="/supplier/products/create?onboarding=1" replace />;
+  }
+
   return <Outlet />;
 }
 
@@ -105,30 +161,40 @@ export default function App() {
 
         {/* ── Authenticated ── */}
         <Route element={<RequireAuth />}>
-          <Route path="/deal-request" element={<DealRequestPage />} />
-          <Route path="/dashboard"              element={<DashboardPage />} />
-          <Route path="/company/setup"           element={<CompanySetupPage />} />
-          <Route path="/company/:id"             element={<CompanyDetailPage />} />
-          <Route path="/company/:id/edit"        element={<EditCompanyPage />} />
-          <Route path="/my-rfqs"                 element={<RFQListPage incoming={false} />} />
-          <Route path="/incoming-rfqs"           element={<RFQListPage incoming={true} />} />
-          <Route path="/rfq/:rfqId/edit"         element={<EditRFQPage />} />
-          <Route path="/deals"                   element={<DealsPage />} />
-          <Route path="/deal/:dealId"            element={<DealPage />} />
-          <Route path="/deal/:dealId/edit"       element={<EditDealPage />} />
-          <Route path="/transport-bids"          element={<TransportBidsPage />} />
-          <Route path="/deal-support"            element={<DealSupportPage />} />
-          <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
+          {/* Phone verify page MUST be outside the phone guard (prevents loops) */}
           <Route path="/phone/verify"             element={<PhoneVerifyPage />} />
           <Route path="/billing/success"          element={<BillingSuccessPage />} />
-          <Route path="/deal-support/verification" element={<DealVerificationPage />} />
-          <Route path="/deal-support/legal-review" element={<DealSupportLegalReviewPage />} />
-          <Route path="/deal-support/legal-support" element={<DealSupportLegalSupportPage />} />
-          <Route path="/deal-support/tradify-label" element={<DealSupportTradifyLabelPage />} />
-          <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
-          <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
-          <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
-          <Route path="/products/edit/:productId" element={<EditProductPage />} />
+
+          {/* Everything below requires phone verification first */}
+          <Route element={<RequirePhoneVerified />}>
+            {/* Onboarding destination routes — outside supplier onboarding guard */}
+            <Route path="/company/setup"           element={<CompanySetupPage />} />
+            <Route path="/company/:id"             element={<CompanyDetailPage />} />
+            <Route path="/company/:id/edit"        element={<EditCompanyPage />} />
+
+            {/* Workspace routes — guarded by Supplier onboarding */}
+            <Route element={<RequireSupplierOnboarding />}>
+              <Route path="/dashboard"              element={<DashboardPage />} />
+              <Route path="/deal-request" element={<DealRequestPage />} />
+              <Route path="/my-rfqs"                 element={<RFQListPage incoming={false} />} />
+              <Route path="/incoming-rfqs"           element={<RFQListPage incoming={true} />} />
+              <Route path="/rfq/:rfqId/edit"         element={<EditRFQPage />} />
+              <Route path="/deals"                   element={<DealsPage />} />
+              <Route path="/deal/:dealId"            element={<DealPage />} />
+              <Route path="/deal/:dealId/edit"       element={<EditDealPage />} />
+              <Route path="/transport-bids"          element={<TransportBidsPage />} />
+              <Route path="/deal-support"            element={<DealSupportPage />} />
+              <Route path="/request-quote/:productId" element={<RequestQuotePage />} />
+              <Route path="/deal-support/verification" element={<DealVerificationPage />} />
+              <Route path="/deal-support/legal-review" element={<DealSupportLegalReviewPage />} />
+              <Route path="/deal-support/legal-support" element={<DealSupportLegalSupportPage />} />
+              <Route path="/deal-support/tradify-label" element={<DealSupportTradifyLabelPage />} />
+              <Route path="/deal-support/custom-service" element={<DealSupportCustomServicePage />} />
+              <Route path="/deal-support/credibility-report" element={<DealSupportCredibilityPage />} />
+              <Route path="/deal-support/private-labeling" element={<DealSupportPrivateLabelingPage />} />
+              <Route path="/products/edit/:productId" element={<EditProductPage />} />
+            </Route>
+          </Route>
         </Route>
 
         {/* ── Admin only ── */}

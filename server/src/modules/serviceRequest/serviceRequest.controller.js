@@ -32,6 +32,23 @@ const createServiceRequest = async (req, res) => {
       });
     }
 
+    // Gating Logic
+    if (['credibility_report', 'legal_document_review'].includes(category)) {
+      return res.status(403).json({
+        success: false,
+        message: 'This service requires payment or a premium quota. Please use the billing checkout flow.',
+      });
+    }
+
+    if (category === 'tradification') {
+      if (req.user.plan !== 'premium' || req.user.subscriptionStatus !== 'active') {
+        return res.status(403).json({
+          success: false,
+          message: 'Tradification requires an active Premium subscription.',
+        });
+      }
+    }
+
     const serviceRequest = await ServiceRequest.create({
       createdBy: req.user._id,
       companyId: req.user.companyId || null,

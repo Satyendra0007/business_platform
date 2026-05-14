@@ -13,7 +13,7 @@
  */
 import React, { useState } from 'react';
 import {
-  X, ArrowRight, Star, Layers, FileText,
+  X, ArrowRight, Star, Layers, FileText, Package,
   MessageSquare, Ship, TrendingUp, Zap, ShieldCheck, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,7 @@ const REASON_CONFIG = {
     icon: TrendingUp,
     title: 'Upgrade to Continue',
     copy: 'To continue and secure your deal, upgrade your plan.',
-    detail: "You've used all 3 deal slots on the Free plan. Upgrade to keep going.",
+    detail: "You've used all 3 deal slots on the Buyer Access plan. Upgrade to keep going.",
     color: 'blue',
     isPhase: true,
   },
@@ -54,12 +54,20 @@ const REASON_CONFIG = {
     color: 'violet',
     isPhase: false,
   },
+  products: {
+    icon: Package,
+    title: 'Product Listing Limit Reached',
+    copy: 'Upgrade to Activate to add more products.',
+    detail: 'Activate includes 5 Product Listings. Premium keeps product listings unlimited.',
+    color: 'blue',
+    isPhase: false,
+  },
   // Phase locks (freemium)
   phase_chat: {
     icon: MessageSquare,
     title: 'Upgrade to Keep Chatting',
     copy: 'To continue and secure your deal, upgrade your plan.',
-    detail: 'Chat is limited on the Free plan after your first deal.',
+    detail: 'Chat is limited on the Buyer Access plan after your first deal.',
     color: 'emerald',
     isPhase: true,
   },
@@ -67,7 +75,7 @@ const REASON_CONFIG = {
     icon: FileText,
     title: 'Upgrade to Upload Documents',
     copy: 'To continue and secure your deal, upgrade your plan.',
-    detail: 'Document management requires a Business or Premium plan after your trial deal.',
+    detail: 'Document management requires an Activate or Premium plan after your trial deal.',
     color: 'violet',
     isPhase: true,
   },
@@ -83,7 +91,7 @@ const REASON_CONFIG = {
     icon: Ship,
     title: 'Upgrade for Shipping Access',
     copy: 'To continue and secure your deal, upgrade your plan.',
-    detail: 'Shipping bid interactions require a Business or Premium plan.',
+    detail: 'Shipping bid interactions require an Activate or Premium plan.',
     color: 'sky',
     isPhase: true,
   },
@@ -91,7 +99,7 @@ const REASON_CONFIG = {
     icon: Zap,
     title: 'Upgrade Your Plan',
     copy: 'Unlock full deal execution to proceed.',
-    detail: 'Upgrade to Business or Premium to unlock this feature.',
+    detail: 'Upgrade to Activate or Premium to unlock this feature.',
     color: 'amber',
     isPhase: false,
   },
@@ -223,6 +231,7 @@ export default function UpgradeModal({ isOpen, onClose, reason = 'generic', mess
                     </div>
                     <ul className={`mt-2 space-y-1 text-[11px] ${isPremium ? 'text-sky-100/80' : 'text-slate-600'}`}>
                       <li>→ {isFinite(p.maxActiveDeals) ? `${p.maxActiveDeals} active deals` : 'Unlimited deals'}</li>
+                      <li>→ {isFinite(p.maxProducts) ? `${p.maxProducts} product listings` : 'Unlimited products'}</li>
                       <li>→ {isFinite(p.maxChats) ? `${p.maxChats} chat threads` : 'Unlimited chat'}</li>
                       <li>→ {isFinite(p.maxDocuments) ? `${p.maxDocuments} docs` : 'Unlimited docs'}</li>
                       {isPremium && <li>→ Priority shipping bids</li>}

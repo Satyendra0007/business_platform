@@ -11,12 +11,20 @@
 
 let stripeClient = null;
 const User = require('../user/user.model');
+const ServiceRequest = require('../serviceRequest/serviceRequest.model');
 
 // ─── Plan → Stripe Price ID map ───────────────────────────────────────────────
 // Set STRIPE_BUSINESS_PRICE_ID and STRIPE_PREMIUM_PRICE_ID in server .env
 const PLAN_PRICE_IDS = {
   business: process.env.STRIPE_BUSINESS_PRICE_ID,
   premium: process.env.STRIPE_PREMIUM_PRICE_ID,
+};
+
+// ─── Service → Stripe Price ID map ────────────────────────────────────────────
+// Set these in server .env (e.g. STRIPE_CREDIBILITY_REPORT_PRICE_ID, STRIPE_LEGAL_REVIEW_PRICE_ID)
+const SERVICE_PRICE_IDS = {
+  credibility_report: process.env.STRIPE_CREDIBILITY_REPORT_PRICE_ID || 'dummy_credibility',
+  legal_document_review: process.env.STRIPE_LEGAL_REVIEW_PRICE_ID || 'dummy_legal',
 };
 
 // ─── Plan key from Stripe Price ID (reverse lookup for webhook) ───────────────
@@ -208,7 +216,45 @@ const handleWebhook = async (req, res) => {
       case 'checkout.session.completed': {
         const session = event.data.object;
 
-        // Only handle subscription checkouts
+        // Handle one-time service payments
+        if (session.mode === 'payment') {
+          const userId = session.metadata?.userId;
+          const serviceType = session.metadata?.serviceType;
+          const formDataRaw = session.metadata?.formData;
+
+          if (!userId || !serviceType) {
+            console.error('[Webhook] Missing metadata for payment session:', session.id);
+            break;
+          }
+
+          let formData = {};
+          try {
+            if (formDataRaw) formData = JSON.parse(formDataRaw);
+          } catch (e) {
+            console.error('[Webhook] Error parsing formData:', e.message);
+          }
+
+          // Create the ServiceRequest now that payment is successful
+          await ServiceRequest.create({
+            createdBy: userId,
+            category: serviceType,
+            formData,
+            paymentStatus: 'paid',
+            paymentAmount: session.amount_total / 100, // stored in cents
+            stripeSessionId: session.id,
+            paymentIntentId: session.payment_intent,
+          });
+
+          // If this was a credibility report, increment usage
+          if (serviceType === 'credibility_report') {
+            await User.findByIdAndUpdate(userId, { $inc: { credibilityReportsUsed: 1 } });
+          }
+
+          console.log(`[Webhook] ✓ Created paid service request for ${userId} (${serviceType})`);
+          break;
+        }
+
+        // Only handle subscription checkouts below
         if (session.mode !== 'subscription') break;
 
         const userId = session.metadata?.userId;
@@ -240,7 +286,11 @@ const handleWebhook = async (req, res) => {
 
         await User.findOneAndUpdate(
           { stripeSubscriptionId: subId },
-          { subscriptionStatus: 'active' }
+          { 
+            subscriptionStatus: 'active',
+            credibilityReportsUsed: 0,
+            credibilityCycleStart: new Date(),
+          }
         );
         break;
       }
@@ -313,6 +363,83 @@ const handleWebhook = async (req, res) => {
 };
 
 // ───────────────────────────────────────────────────────────────────────────────
+// @desc    Create a Stripe Checkout session for one-time service payment
+// @route   POST /api/billing/service-checkout
+// @access  Private (protect)
+// ───────────────────────────────────────────────────────────────────────────────
+const createServiceCheckoutSession = async (req, res) => {
+  try {
+    const { category, formData } = req.body;
+    const user = req.user;
+
+    if (!['credibility_report', 'legal_document_review'].includes(category)) {
+      return res.status(400).json({ success: false, message: 'Invalid paid service category.' });
+    }
+
+    let isFree = false;
+
+    if (category === 'legal_document_review') {
+      if (user.plan === 'premium') isFree = true;
+    } else if (category === 'credibility_report') {
+      if (user.plan === 'premium' && (user.credibilityReportsUsed || 0) < 3) {
+        isFree = true;
+      }
+    }
+
+    if (isFree) {
+      // Create request immediately without Stripe
+      const serviceRequest = await ServiceRequest.create({
+        createdBy: user._id,
+        category,
+        formData: formData || {},
+        paymentStatus: 'included',
+      });
+      
+      if (category === 'credibility_report') {
+        await User.findByIdAndUpdate(user._id, { $inc: { credibilityReportsUsed: 1 } });
+      }
+
+      return res.json({ success: true, paid: false, message: 'Service request created (included in plan).', data: serviceRequest });
+    }
+
+    const priceId = SERVICE_PRICE_IDS[category];
+    if (!priceId) {
+      return res.status(500).json({ success: false, message: 'Stripe service price missing on server.' });
+    }
+
+    let stripeCustomerId = user.stripeCustomerId;
+    if (!stripeCustomerId) {
+      stripeCustomerId = await createOrRefreshStripeCustomer(user);
+    }
+
+    const stripe = getStripeClient();
+    const frontendUrl = getFrontendUrl();
+
+    // Serialize formData to string for metadata. Must fit within 500 chars limit per key.
+    // If formData is large, we stringify and truncate. For safety, keeping it simple.
+    const metadataFormData = formData ? JSON.stringify(formData).substring(0, 500) : '';
+
+    const session = await stripe.checkout.sessions.create({
+      customer: stripeCustomerId,
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      metadata: {
+        userId: user._id.toString(),
+        serviceType: category,
+        formData: metadataFormData,
+      },
+      success_url: `${frontendUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}&service=${category}`,
+      cancel_url: `${frontendUrl}/deal-support`,
+    });
+
+    res.json({ success: true, paid: true, url: session.url });
+  } catch (err) {
+    console.error('[createServiceCheckoutSession]', err);
+    res.status(500).json({ success: false, message: 'Failed to create checkout session.' });
+  }
+};
+
+// ───────────────────────────────────────────────────────────────────────────────
 // @desc    Get current billing/subscription status for the logged-in user
 // @route   GET /api/billing/status
 // @access  Private (protect)
@@ -334,4 +461,4 @@ const getBillingStatus = async (req, res) => {
   }
 };
 
-module.exports = { createCheckoutSession, handleWebhook, getBillingStatus };
+module.exports = { createCheckoutSession, createServiceCheckoutSession, handleWebhook, getBillingStatus };

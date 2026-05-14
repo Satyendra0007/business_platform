@@ -12,11 +12,16 @@ const {
   // RFQs
   getRFQs, getRFQById, updateRFQ, closeRFQ, removeRFQ,
   // Products
-  getProducts, getProductById, updateProduct, toggleProductStatus, removeProduct
+  getProducts, getProductById, updateProduct, toggleProductStatus, removeProduct,
+  // Analytics
+  getAnalytics,
 } = require('./admin.controller');
 
 // All admin routes: must be authenticated AND have admin role
 router.use(protect, requireAdmin);
+
+// ─── Analytics ──────────────────────────────────────────────────────────
+router.get('/analytics', getAnalytics);
 
 // ─── User Management ────────────────────────────────────────────────────────
 router.get('/users', getUsers);

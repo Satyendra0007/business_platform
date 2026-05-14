@@ -47,6 +47,14 @@ const serviceRequestSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'paid', 'included', 'failed'],
+      default: 'unpaid',
+    },
+    paymentIntentId: { type: String, default: null },
+    paymentAmount: { type: Number, default: 0 },
+    stripeSessionId: { type: String, default: null },
     attachments: [attachmentSchema],
   },
   { timestamps: true }

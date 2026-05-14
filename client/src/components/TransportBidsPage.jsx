@@ -24,6 +24,7 @@ import {
   getShippingBids, acceptBid,
   listOpenRequests, submitBid
 } from '../lib/shippingService';
+import TrustBadge from './marketplace/TrustBadge';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -287,10 +288,15 @@ function DealFreightCard({ deal, navigate }) {
                               <ShipWheel className="h-5 w-5" />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-slate-800">
-                                {bid.agentId?.firstName} {bid.agentId?.lastName}
-                              </p>
-                              <p className="text-[10px] text-slate-400">Submitted {fmtDate(bid.createdAt)}</p>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-bold text-slate-800">
+                                  {bid.agentId?.firstName} {bid.agentId?.lastName}
+                                </p>
+                                {bid.agentId && bid.agentId.plan && (
+                                  <TrustBadge company={{ plan: bid.agentId.plan }} />
+                                )}
+                              </div>
+                              <p className="mt-0.5 text-[10px] text-slate-400">Submitted {fmtDate(bid.createdAt)}</p>
                             </div>
                           </div>
                         </div>

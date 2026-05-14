@@ -26,18 +26,19 @@ import { buildDocumentContext, uploadPdfToCloudinary } from '../utils/pdf';
 import { generateLOI } from '../utils/pdf/generateLOI';
 import { generateSPA } from '../utils/pdf/generateSPA';
 import { generateNDA } from '../utils/pdf/generateNDA';
+import TrustBadge from './marketplace/TrustBadge';
 
 // ─── Stage lifecycle ──────────────────────────────────────────────────────────
 
 const STAGES = [
-  { key: 'inquiry',          label: 'Inquiry' },
+  { key: 'inquiry',          label: 'RFQ Accepted' },
   { key: 'negotiation',      label: 'Negotiation' },
-  { key: 'agreement',        label: 'Agreement' },
+  { key: 'agreement',        label: 'Deal Created' },
   { key: 'payment',          label: 'Payment' },
   { key: 'production',       label: 'Production' },
-  { key: 'shipping_request', label: 'Shipping' },
+  { key: 'shipping_request', label: 'Shipment Requested' },
   { key: 'shipping',         label: 'In Transit' },
-  { key: 'delivery',         label: 'Delivery' },
+  { key: 'delivery',         label: 'Delivered' },
   { key: 'closed',           label: 'Closed' },
 ];
 
@@ -189,6 +190,7 @@ function getParticipantCards(deal, user) {
       personName: buyerName,
       personEmail: deal?.buyerUserEmail || deal?.buyerUser?.email || (!buyerIsSelf ? fallbackCounterpartyEmail : '') || '—',
       companyName: deal?.buyerCompanyName || deal?.buyerCompany?.name || 'Buyer company',
+      companyObj: deal?.buyerCompany || { _id: deal?.buyerCompanyId },
       origin: deal?.buyerCompanyOrigin || fmtCompanyOrigin(deal?.buyerCompany),
       industry: deal?.buyerCompanyIndustry || deal?.buyerCompany?.industry || '—',
       website: deal?.buyerCompanyWebsite || deal?.buyerCompany?.website || '',
@@ -204,6 +206,7 @@ function getParticipantCards(deal, user) {
       personName: supplierName,
       personEmail: deal?.supplierUserEmail || deal?.supplierUser?.email || (!supplierIsSelf ? fallbackCounterpartyEmail : '') || '—',
       companyName: deal?.supplierCompanyName || deal?.supplierCompany?.name || 'Supplier company',
+      companyObj: deal?.supplierCompany || { _id: deal?.supplierCompanyId },
       origin: deal?.supplierCompanyOrigin || fmtCompanyOrigin(deal?.supplierCompany),
       industry: deal?.supplierCompanyIndustry || deal?.supplierCompany?.industry || '—',
       website: deal?.supplierCompanyWebsite || deal?.supplierCompany?.website || '',
@@ -738,25 +741,24 @@ function TimelineTab({ timeline = [] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-0 pl-6 ml-4 mt-2 mb-2">
+      <div className="absolute left-0 top-6 bottom-6 w-[2px] bg-slate-200" />
       {[...timeline].reverse().map((item, i) => (
-        <div key={i} className="rounded-[22px] border border-[#e2ebf4] bg-[#f8fbff] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eaf3ff] text-[#245c9d]">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold capitalize text-[#173b67]">
-                {item.stage?.replace(/_/g, ' ') || 'Stage updated'}
-              </p>
-              <p className="text-xs text-slate-400">{fmtDate(item.updatedAt)}</p>
-            </div>
+        <div key={i} className="relative mb-6">
+          <div className="absolute -left-[35px] top-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-white bg-[#eaf3ff] text-[#245c9d] shadow-sm">
+            <CheckCircle2 className="h-4 w-4" />
           </div>
-          {item.notes && (
-            <p className="mt-3 border-l-2 border-[#d0e4f7] pl-3 text-sm leading-6 text-slate-600 italic">
-              {item.notes}
+          <div className="rounded-[22px] border border-[#e2ebf4] bg-[#f8fbff] p-4">
+            <p className="text-sm font-semibold capitalize text-[#173b67]">
+              {item.stage?.replace(/_/g, ' ') || 'Stage updated'}
             </p>
-          )}
+            <p className="text-xs text-slate-400">{fmtDate(item.updatedAt)}</p>
+            {item.notes && (
+              <p className="mt-3 border-l-2 border-[#d0e4f7] pl-3 text-sm leading-6 text-slate-600 italic">
+                {item.notes}
+              </p>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -840,17 +842,24 @@ function ShipmentTab({ deal, canUpdateShipment, onShipmentUpdate, updatingShipme
             <p className="mt-1 text-sm text-slate-500">
               Shipment details are updated by the assigned shipping agent after a bid is accepted.
             </p>
-            <div className="mt-5 space-y-3">
+            <div className="relative mt-5 pl-8 space-y-6">
+              <div className="absolute left-3.5 top-6 bottom-6 w-[2px] bg-slate-200" />
               {['booking', 'loaded', 'in_transit', 'delivered'].map((step, i) => {
                 const done = shipment?.status === step ||
                   ['booking','loaded','in_transit','delivered']
                     .slice(0, ['booking','loaded','in_transit','delivered'].indexOf(shipment?.status) + 1)
                     .includes(step);
                 return (
-                  <div key={step} className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${done ? 'border-emerald-200 bg-emerald-50' : 'border-[#e2ebf4] bg-white'}`}>
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${done ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{i + 1}</div>
-                    <p className={`text-sm font-semibold capitalize ${done ? 'text-emerald-700' : 'text-slate-500'}`}>{step.replace(/_/g, ' ')}</p>
-                    {done && <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-500" />}
+                  <div key={step} className="relative">
+                    <div className={`absolute -left-[45px] top-1/2 -translate-y-1/2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-xs font-bold shadow-sm ${done ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                      {i + 1}
+                    </div>
+                    <div className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${done ? 'border-emerald-200 bg-emerald-50' : 'border-[#e2ebf4] bg-white'}`}>
+                      <p className={`text-sm font-semibold capitalize ${done ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {step === 'booking' ? 'Shipment Booked' : step.replace(/_/g, ' ')}
+                      </p>
+                      {done && <CheckCircle2 className="ml-auto h-4 w-4 text-emerald-500" />}
+                    </div>
                   </div>
                 );
               })}
@@ -920,7 +929,10 @@ function DealParticipantsCard({ deal, user, chatContacts }) {
                 <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
                   {card.isSelf ? 'Your user profile' : 'Counterparty user profile'}
                 </p>
-                <p className="truncate text-sm font-semibold text-slate-700">{card.companyName}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <p className="truncate text-sm font-semibold text-slate-700">{card.companyName}</p>
+                  {card.companyObj && <TrustBadge company={card.companyObj} />}
+                </div>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                   <MapPin className="h-3.5 w-3.5" />
                   {card.origin}
@@ -1268,27 +1280,25 @@ export default function DealPage() {
         {/* ── Stage progress bar ───────────────────────────────────────────── */}
         <section className="rounded-[28px] border border-[#d8e2ef] bg-white p-5 shadow-[0_22px_60px_rgba(15,23,42,0.06)]">
           <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Deal Lifecycle</p>
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
+          <div className="flex items-start overflow-x-auto pb-4 pt-2 no-scrollbar">
             {STAGES.map((step, index) => {
               const active = activeStepIndex >= index;
               const current = activeStepIndex === index;
               return (
-                <div
-                  key={step.key}
-                  className={`rounded-[18px] border p-3 text-center ${
-                    current ? 'border-sky-300 bg-sky-50' :
-                    active  ? 'border-[#b8cfe8] bg-[#edf5ff]' :
-                              'border-[#e2ebf4] bg-white'
-                  }`}
-                >
-                  <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                <div key={step.key} className="relative flex flex-col items-center flex-1 min-w-[80px]">
+                  {index !== 0 && (
+                    <div className={`absolute right-[50%] top-4 -z-0 h-[2px] w-full ${
+                      active ? 'bg-[linear-gradient(135deg,#173b67,#245c9d)]' : 'bg-slate-100'
+                    }`} />
+                  )}
+                  <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ring-4 ring-white shadow-sm ${
                     current ? 'bg-sky-500 text-white' :
                     active  ? 'bg-[linear-gradient(135deg,#173b67,#245c9d)] text-white' :
                               'bg-slate-100 text-slate-400'
                   }`}>
                     {index + 1}
                   </div>
-                  <p className={`mt-2 text-[10px] font-semibold leading-tight ${active ? 'text-[#173b67]' : 'text-slate-400'}`}>
+                  <p className={`mt-3 text-center text-[10px] font-semibold leading-tight ${active ? 'text-[#173b67]' : 'text-slate-400'}`}>
                     {step.label}
                   </p>
                 </div>

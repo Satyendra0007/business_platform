@@ -3,7 +3,7 @@
  *
  * Unified middleware for plan limits + freemium phase access control.
  *
- * Phase system (FREE users only — Business/Premium skip all phase checks):
+ * Phase system (FREE users only — Activate/Premium skip all phase checks):
  *   Phase 1 (totalDeals <= 1): Full access — trial deal
  *   Phase 2 (totalDeals 2–3): Features work, response includes upgradeNudge: true
  *   Phase 3 (totalDeals >= 3): Chat / docs / timeline / shipping BLOCKED
@@ -14,6 +14,7 @@
 
 const Deal    = require('../modules/deal/deal.model');
 const Message = require('../modules/chat/message.model');
+const Product = require('../modules/product/product.model');
 const { getPlan, isUnlimited, getPhase, PHASE_INFO, isFeatureBlocked } = require('../config/plans.config');
 
 // ─── Shared response helpers ──────────────────────────────────────────────────
@@ -29,6 +30,9 @@ const limitResponse = (res, { code, message, plan, phase = null, limit = null, c
     phase,
     limit:   limit !== null && !isUnlimited(limit) ? limit : 'unlimited',
     current,
+    upgradeRequired: true,
+    currentPlan: plan,
+    currentLimit: limit !== null && !isUnlimited(limit) ? limit : 'unlimited',
   });
 
 // ─── Core helper: get total deals for a company ───────────────────────────────
@@ -44,6 +48,12 @@ const getActiveDeals = async (companyId) =>
     isDeleted: false,
     status: { $ne: 'closed' },
     $or: [{ buyerCompanyId: companyId }, { supplierCompanyId: companyId }]
+  });
+
+const getCurrentProducts = async (companyId) =>
+  Product.countDocuments({
+    companyId,
+    isDeleted: false,
   });
 
 // ─── MIDDLEWARE 1: checkDealLimit ─────────────────────────────────────────────
@@ -164,7 +174,7 @@ const checkPhaseAccess = (featureType) => async (req, res, next) => {
 
 // ─── MIDDLEWARE 3: checkChatLimit ─────────────────────────────────────────────
 /**
- * For Business users: limits chat to maxChats distinct deal threads.
+ * For Activate users: limits chat to maxChats distinct deal threads.
  * For Free users: phase-based access (handled by checkPhaseAccess — call BOTH).
  * For Premium: no limit.
  *
@@ -210,7 +220,7 @@ const checkChatLimit = async (req, res, next) => {
 
 // ─── MIDDLEWARE 4: checkDocumentLimit ─────────────────────────────────────────
 /**
- * For Business users: limits documents to maxDocuments per company.
+ * For Activate users: limits documents to maxDocuments per company.
  * For Free users: phase-based access (checkPhaseAccess handles this).
  * For Premium: no limit.
  *
@@ -251,9 +261,53 @@ const checkDocumentLimit = async (req, res, next) => {
   }
 };
 
+// ─── MIDDLEWARE 5: checkProductLimit ─────────────────────────────────────────
+/**
+ * Blocks POST /products when the user's company has hit its plan product cap.
+ *
+ * Onboarding compatibility:
+ *   - The first non-deleted product is always allowed, including when the
+ *     company is still pending verification and the listing is hidden.
+ *
+ * Requires: req.user.companyId, req.user.plan
+ */
+const checkProductLimit = async (req, res, next) => {
+  try {
+    const plan       = req.user.plan || 'free';
+    const planConfig = getPlan(plan);
+
+    if (plan === 'premium' || isUnlimited(planConfig.maxProducts)) return next();
+    if (!req.user.companyId) return next();
+
+    const currentProducts = await getCurrentProducts(req.user.companyId);
+
+    // Supplier onboarding must be able to create the first product before upgrade.
+    if (currentProducts === 0) return next();
+
+    if (currentProducts >= planConfig.maxProducts) {
+      return limitResponse(res, {
+        code:    'PLAN_LIMIT_PRODUCTS',
+        message: plan === 'free'
+          ? 'Upgrade to Activate to add more products.'
+          : `Your ${planConfig.name} plan allows up to ${planConfig.maxProducts} product listing${planConfig.maxProducts === 1 ? '' : 's'}. Upgrade to add more.`,
+        plan,
+        phase:   null,
+        limit:   planConfig.maxProducts,
+        current: currentProducts,
+      });
+    }
+
+    next();
+  } catch (err) {
+    console.error('[checkProductLimit]', err.message);
+    next();
+  }
+};
+
 module.exports = {
   checkDealLimit,
   checkPhaseAccess,
   checkChatLimit,
   checkDocumentLimit,
+  checkProductLimit,
 };

@@ -10,28 +10,31 @@
  *   Phase 2 → totalDeals 2–3  : Soft limits  (features work, upgrade nudge shown)
  *   Phase 3 → totalDeals >= 3 : Hard lock    (chat / docs / timeline / shipping blocked)
  *
- * Business & Premium users are always on Phase 0 (no restrictions).
+ * Activate & Premium users are always on Phase 0 (no restrictions).
  */
 
 const PLANS = {
   free: {
-    name: 'Free',
+    name: 'Buyer Access',
     badge: 'Starter',
     price: '$0',
-    maxActiveDeals:   1,          // max deals not in 'closed' state
-    maxTotalDeals:    3,          // max deals ever created (including closed)
-    maxChats:         Infinity,   // chat gated by phase, not a simple count
-    maxDocuments:     Infinity,   // docs gated by phase, not a count
+    maxActiveDeals:   1,
+    maxTotalDeals:    3,
+    maxChats:         Infinity,
+    maxDocuments:     Infinity,
+    maxProducts:      1,          // onboarding: allows first product, then upgrade required
     shippingPriority: 0,
   },
   business: {
-    name: 'Business',
+    // DB enum: 'business' — display name: 'Activate'
+    name: 'Activate',
     badge: 'Scale',
     price: '$29 / month',
     maxActiveDeals:   5,
     maxTotalDeals:    Infinity,
-    maxChats:         5,          // max active chat threads
+    maxChats:         5,
     maxDocuments:     50,
+    maxProducts:      5,          // Activate plan: up to 5 product listings
     shippingPriority: 1,
   },
   premium: {
@@ -42,7 +45,8 @@ const PLANS = {
     maxTotalDeals:    Infinity,
     maxChats:         Infinity,
     maxDocuments:     Infinity,
-    shippingPriority: 2,          // bids sorted first
+    maxProducts:      Infinity,   // unlimited
+    shippingPriority: 2,
   },
 };
 
@@ -59,9 +63,9 @@ const isUnlimited = (value) => !isFinite(value);
 
 /**
  * Determines the freemium phase for a FREE user based on their total deal count.
- * Business and Premium users always return phase 0 (no restrictions).
+ * Activate and Premium users always return phase 0 (no restrictions).
  *
- * Phase 0 → paid plan (Business / Premium) — no restrictions, skip all phase checks
+ * Phase 0 → paid plan (Activate / Premium) — no restrictions, skip all phase checks
  * Phase 1 → totalDeals <= 1  — full trial experience
  * Phase 2 → totalDeals 2–3  — soft limits, show upgrade nudge
  * Phase 3 → totalDeals >= 3  — hard lock: chat, docs, timeline, shipping blocked

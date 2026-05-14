@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { createCompany } from '../lib/companyService';
 import { saveUser } from '../lib/api';
+import { hasRole } from '../lib/userRole';
 import tradafyLogo from '../assets/Tradafy_logo_comparison_on_navy_backdrops-3-removebg-preview.png';
 import { AvatarUploader, DocumentUploader } from '../components/company/CompanyUploaders';
 
@@ -97,6 +98,23 @@ export default function CompanySetupPage() {
   const [searchParams] = useSearchParams();
   const nextPath = searchParams.get('next');
   const onboardingMode = searchParams.get('onboarding') === '1';
+  const isSupplier = hasRole(user, 'supplier');
+  // Suppliers in onboarding mode MUST complete company setup (no skip)
+  const canSkip = !(isSupplier && onboardingMode);
+
+  // If the user already has a company, don't show the setup form again
+  // — redirect to the next step (product creation) or dashboard
+  useEffect(() => {
+    if (user?.companyId) {
+      if (nextPath) {
+        navigate(nextPath, { replace: true });
+      } else if (isSupplier && onboardingMode) {
+        navigate('/supplier/products/create?onboarding=1', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user?.companyId, nextPath, isSupplier, onboardingMode, navigate]);
 
   const [step, setStep] = useState(0); // 0=basics 1=details 2=documents 3=done
   const [loading, setLoading] = useState(false);
@@ -221,7 +239,7 @@ export default function CompanySetupPage() {
       {/* RIGHT — form */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
         {/* Skip link */}
-        {step < 3 && (
+        {step < 3 && canSkip && (
           <div className="mb-8 w-full max-w-xl flex justify-end">
             <button
               onClick={() => navigate('/dashboard')}

@@ -10,7 +10,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import { submitDealSupportRequest } from '../../../lib/dealSupportService';
+import { createServiceCheckoutSession } from '../../../lib/billingService';
 import { getUser } from '../../../lib/api';
+import { usePlan } from '../../../hooks/usePlan';
 import DealSupportCardShell from '../DealSupportCardShell';
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
@@ -55,6 +57,8 @@ function Select(props) {
 
 export default function LegalDocumentReviewCard({ compact = false, action, onOpenForm }) {
   const user = getUser();
+  const { plan } = usePlan();
+  const isPremium = plan === 'premium';
 
   const [form, setForm] = useState({
     companyName: '',
@@ -167,11 +171,13 @@ export default function LegalDocumentReviewCard({ compact = false, action, onOpe
         }
       }
 
-      await submitDealSupportRequest({
-        sectionKey: 'legal-review',
-        fields: form,
-        attachments,
-      });
+      const { paid, url } = await createServiceCheckoutSession('legal_document_review', { ...form, attachments });
+
+      if (paid && url) {
+        window.location.href = url;
+        return;
+      }
+
       setSubmitted(true);
     } catch (submitError) {
       setError(submitError.message || 'Failed to send the review request.');
@@ -229,6 +235,11 @@ export default function LegalDocumentReviewCard({ compact = false, action, onOpe
           <p className="mt-1.5 text-sm leading-6 text-slate-500">
             Submit contracts, LOIs, or SPA drafts for legal review. Attach PDF or DOCX files.
           </p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="rounded-[10px] bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">
+              {isPremium ? 'Included in Premium' : 'Activate: $5'}
+            </span>
+          </div>
         </div>
       </div>
 

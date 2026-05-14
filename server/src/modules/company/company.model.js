@@ -50,7 +50,11 @@ const companySchema = new mongoose.Schema({
 
   // Metadata
   isActive: { type: Boolean, default: true },
-  isDeleted: { type: Boolean, default: false }
+  isDeleted: { type: Boolean, default: false },
+
+  // Marketplace trust & visibility
+  trustScore: { type: Number, default: 0, min: 0, max: 100 },
+  visibilityBoost: { type: Boolean, default: false },
 
 }, { timestamps: true });
 

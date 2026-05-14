@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
 import { submitDealSupportRequest } from '../../lib/dealSupportService';
+import { createServiceCheckoutSession } from '../../lib/billingService';
 
 function Field({ field, value, onChange }) {
   const Icon = field.icon;
@@ -91,13 +92,29 @@ export default function DealSupportIntakeForm({
 
     try {
       setLoading(true);
+
+      if (['credibility-report', 'legal-document-review'].includes(sectionKey)) {
+        // Map hyphens back to underscores for backend enum
+        const categoryEnum = sectionKey.replace(/-/g, '_');
+        const { paid, url } = await createServiceCheckoutSession(categoryEnum, form);
+        
+        if (paid && url) {
+          window.location.href = url; // Redirect to Stripe checkout
+          return;
+        } else {
+          // If it was free (included in Premium quota), it created the request automatically
+          setSubmitted(true);
+          return;
+        }
+      }
+
       await submitDealSupportRequest({
         sectionKey,
         fields: form,
       });
       setSubmitted(true);
     } catch (submitError) {
-      setError(submitError.message || 'Something went wrong. Please try again.');
+      setError(submitError.response?.data?.message || submitError.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
