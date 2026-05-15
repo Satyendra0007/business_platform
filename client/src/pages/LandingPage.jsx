@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   CheckCircle2,
-  XCircle,
-  Ship,
-  Bell,
-  Settings,
+  Clock3,
+  FileText,
+  Globe2,
   MessageSquare,
-  Star
+  ShieldCheck,
+  Ship,
+  Star,
+  Truck
 } from 'lucide-react';
 import heroShip from '../assets/hero-ship.png';
-import bgNegotiation from '../assets/bg-negotiation.jpg';
 import productPipesBulk from '../assets/product-pipes-bulk.jpg';
 import productOilBulk from '../assets/product-oil-bulk.jpg';
 import productSugarGemini from '../assets/product-sugar-gemini.png';
@@ -18,141 +19,121 @@ import productHealthBeautyA from '../assets/product-health-beauty-a.png';
 import productHealthBeautyB from '../assets/product-health-beauty-b.png';
 import productHeavyMachineryBulk from '../assets/product-heavy-machinery-bulk.png';
 import productHomewareBulk from '../assets/product-homeware-bulk.png';
-import promoBanner from '../assets/tradafy-promo-banner.jpeg';
+import tradafyLogo from '../assets/tradafy-logo.png';
 import { PublicLayout, Reveal, Marquee } from '../components/ui';
 import ProductShowcaseCarousel from '../components/landing/ProductShowcaseCarousel';
 import { useNavigate } from 'react-router-dom';
 
-// --- SUB-COMPONENTS FOR PIXEL-PERFECT SECTIONS ---
+const orbitCards = [
+  { title: 'DOCUMENTS', copy: 'Generate NDA, LOI, and SPA in seconds.', icon: FileText, accent: 'text-violet-600', tint: 'from-violet-100 to-white' },
+  { title: 'TRADAFICATION', copy: 'Offline verification, compliance & trust validation.', icon: ShieldCheck, accent: 'text-amber-600', tint: 'from-amber-100 to-white' },
+  { title: 'REAL-TIME CHAT', copy: 'Negotiate in one live thread.', icon: MessageSquare, accent: 'text-blue-600', tint: 'from-blue-100 to-white' },
+  { title: 'TIMELINE TRACKING', copy: 'Track milestones, tasks, and deadlines.', icon: Clock3, accent: 'text-cyan-600', tint: 'from-cyan-100 to-white' },
+  { title: 'SHIPPING BIDS', copy: 'Compare live freight offers from top carriers.', icon: Truck, accent: 'text-emerald-600', tint: 'from-emerald-100 to-white' },
+  { title: 'DOCUMENT REVIEW', copy: 'Request legal review and get expert feedback.', icon: FileText, accent: 'text-pink-600', tint: 'from-pink-100 to-white' }
+];
 
-const DashboardMock = () => (
-  <div className="relative overflow-hidden rounded-[28px] border border-white/20 bg-[linear-gradient(180deg,#fdfefe_0%,#f4f8fd_100%)] shadow-[0_0_80px_rgba(10,37,64,0.3)] animate-in-up hover-lift transition-all duration-[800ms] ease-out hover:-translate-y-4 hover:shadow-[0_30px_100px_rgba(59,130,246,0.25)]">
-    <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-1000 group-hover:opacity-100" />
-    <div className="bg-[linear-gradient(135deg,#0A2540_0%,#143A6A_68%,#245c9d_100%)] px-4 py-3 text-white">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 shadow-lg">
-            <Ship className="h-4 w-4 text-blue-100" />
-          </div>
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-sky-100">
-              Live Deal Workspace
+function WorkspaceOrbitPreview() {
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    let rafId = 0;
+    const start = performance.now();
+    const tick = (now) => {
+      setPhase((now - start) / 1000);
+      rafId = window.requestAnimationFrame(tick);
+    };
+    rafId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
+
+  const orbitRadius = 270;
+  const containerSize = 640;
+  const centerSize = 180;
+  const cardWidth = 160;
+  const cardHeight = 120;
+  const iconSize = 48;
+
+  const cards = orbitCards.map((card, index) => {
+    const baseAngle = (index * (Math.PI * 2)) / orbitCards.length;
+    const currentAngle = baseAngle + phase * 0.065;
+    const depth = Math.sin(currentAngle) * 42;
+    const scale = 0.9 + ((depth + 42) / 84) * 0.12;
+    return {
+      ...card,
+      x: Math.cos(currentAngle) * orbitRadius,
+      y: Math.sin(currentAngle) * orbitRadius * 0.7,
+      z: depth,
+      scale,
+      angle: currentAngle
+    };
+  });
+
+  return (
+    <div className="relative mx-auto flex items-center justify-center overflow-visible" style={{ width: containerSize, height: containerSize, isolation: 'isolate' }}>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0" style={{ zIndex: 0 }}>
+        {cards.map((card, index) => {
+          const rotation = (card.angle * 180) / Math.PI;
+          const hubRadius = centerSize / 2 - 4;
+          const len = orbitRadius - hubRadius;
+          const lineOpacity = 0.5 + ((card.z + 42) / 84) * 0.14;
+          return (
+            <div
+              key={`bar-${index}`}
+                className="absolute left-0 top-0 h-[3px] origin-left -translate-y-1/2"
+                style={{
+                  width: `${len}px`,
+                  transform: `rotate(${rotation}deg) translateX(${hubRadius}px)`,
+                  background: 'linear-gradient(90deg, rgba(96,165,250,0.98), rgba(59,130,246,0.14))',
+                  boxShadow: '0 0 10px rgba(59,130,246,0.32)',
+                  borderRadius: '999px',
+                  opacity: lineOpacity,
+                  zIndex: 0
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div className="absolute left-1/2 top-1/2 h-0 w-0" style={{ perspective: '1800px', transformStyle: 'preserve-3d', zIndex: 10 }}>
+        <div className="absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[42px] border border-[#161f38] bg-[#081224] shadow-[0_30px_78px_rgba(8,18,36,0.64),0_0_0_1px_rgba(255,255,255,0.08),0_0_64px_rgba(132,93,255,0.42)] pointer-events-auto" style={{ width: centerSize, height: centerSize, zIndex: 20 }}>
+          <div className="absolute inset-0 rounded-[42px] bg-[radial-gradient(circle_at_top,rgba(119,79,255,0.38),transparent_48%),radial-gradient(circle_at_bottom,rgba(88,28,135,0.4),transparent_50%)]" />
+          <div className="relative z-10 flex flex-col items-center text-center px-3">
+            <div className="flex items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top,rgba(140,117,255,0.28),rgba(44,52,94,0.1))] shadow-[0_0_36px_rgba(132,93,255,0.4)] backdrop-blur-xl" style={{ width: iconSize, height: iconSize, transform: 'translateZ(20px)' }}>
+              <img src={tradafyLogo} alt="Tradafy logo" className="h-[54px] w-[54px] object-contain drop-shadow-[0_0_14px_rgba(168,139,255,0.85)]" draggable="false" />
             </div>
-            <h4 className="mt-1.5 text-[15px] font-black tracking-tight">Sunflower Oil to Dubai</h4>
-            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em] text-sky-100/70">DEAL-0921-X • 2,500 MT • Bidding Open</p>
+            <div className="mt-2.5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-slate-300 shadow-[0_0_24px_rgba(255,255,255,0.06)]">Tradafy OS</div>
+            <h3 className="mt-1.5 text-[14px] font-black tracking-[0.12em] text-white">LIVE DEAL</h3>
+            <div className="text-[14px] font-black tracking-[0.12em] text-white/90">WORKSPACE</div>
           </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-right">
-          <div className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/70">Next milestone</div>
-          <div className="mt-0.5 text-[11px] font-black text-white">Selection in 6h</div>
-        </div>
-      </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/75">
-        <span className="rounded-full bg-white/10 px-2.5 py-1 text-white">Chat</span>
-        <span className="rounded-full bg-white/6 px-2.5 py-1">Docs</span>
-        <span className="rounded-full bg-white/6 px-2.5 py-1">Shipping</span>
-        <span className="rounded-full bg-white/6 px-2.5 py-1">Finance</span>
-      </div>
-    </div>
-
-    <div className="grid gap-0 xl:grid-cols-[0.38fr_0.62fr]">
-      <div className="border-r border-slate-100 bg-[linear-gradient(180deg,#f8fbff_0%,#f3f7fc_100%)] p-3.5">
-        <div className="mb-2.5 flex items-center justify-between">
-          <h5 className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Carrier Market</h5>
-          <span className="rounded-full bg-[#eaf3ff] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#245c9d]">8 bids</span>
-        </div>
-        <div className="space-y-2">
-          {[
-            { name: 'Maersk Logistics', price: '$118 / MT', status: 'Best value' },
-            { name: 'MSC Shipping', price: '$124 / MT', status: 'Fastest lane' },
-            { name: 'Evergreen Line', price: '$129 / MT', status: 'Docs included' }
-          ].map((bid, i) => (
-            <div key={bid.name} className={`rounded-[18px] border p-2.5 shadow-sm ${i === 0 ? 'border-[#b8d0eb] bg-white' : 'border-slate-100 bg-white/90'}`}>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#0A2540]">{bid.name}</p>
-                  <p className="mt-0.5 text-[8px] font-bold text-slate-400">{bid.status}</p>
-                </div>
-                <div className="rounded-full bg-slate-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#143A6A]">
-                  {bid.price}
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.title} className="absolute left-0 top-0 pointer-events-auto" style={{ transform: `translate3d(${card.x}px, ${card.y}px, ${card.z}px) scale(${card.scale})`, transformStyle: 'preserve-3d', width: `${cardWidth}px`, zIndex: Math.round(220 + card.z) }}>
+              <div className="group relative cursor-default -translate-x-1/2 -translate-y-1/2">
+                <div className="absolute inset-x-2 inset-y-2 rounded-[22px] bg-black/10 blur-xl" style={{ opacity: 0.44 + ((card.z + 42) / 84) * 0.14 }} />
+                <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-[22px] border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,250,255,0.96)_100%)] px-2 shadow-[0_18px_38px_rgba(10,37,64,0.14)] ring-1 ring-white/70 backdrop-blur-md transition-all duration-500 group-hover:-translate-y-1" style={{ height: cardHeight }}>
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-sky-300 to-transparent opacity-80" />
+                  <div className="flex flex-col items-center text-center gap-2">
+                    <div className={`flex items-center justify-center rounded-[18px] bg-gradient-to-br ${card.tint} ring-1 ring-slate-100 shadow-[0_8px_18px_rgba(10,37,64,0.12)]`} style={{ width: 48, height: 48, transform: 'translateZ(10px)' }}>
+                      <Icon className={`h-[24px] w-[24px] ${card.accent}`} />
+                    </div>
+                    <div className="px-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#0A2540]">{card.title}</p>
+                      <p className="mt-0.5 text-[9px] font-medium leading-[1.3] text-slate-600">{card.copy}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-
-        <div className="mt-2.5 rounded-[20px] border border-[#dbe6f2] bg-white p-3">
-          <div className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">Lane Summary</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-[8px] font-bold text-slate-500">
-            <div className="rounded-2xl bg-slate-50 px-2.5 py-2">Origin: Odesa</div>
-            <div className="rounded-2xl bg-slate-50 px-2.5 py-2">To: Jebel Ali</div>
-            <div className="rounded-2xl bg-slate-50 px-2.5 py-2">Mode: Sea</div>
-            <div className="rounded-2xl bg-slate-50 px-2.5 py-2">ETA: 19 Days</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F0F7FF] ring-1 ring-blue-100">
-              <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#143A6A] text-[10px] font-black text-white shadow-lg">JD</div>
-              <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
-            </div>
-            <div>
-              <p className="text-[12px] font-black text-[#0A2540]">John Doe • Freight Desk</p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">Live negotiation</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-slate-300">
-            <MessageSquare className="h-4 w-4" />
-            <Bell className="h-4 w-4" />
-            <Settings className="h-4 w-4" />
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-[22px] border border-slate-100 bg-[linear-gradient(180deg,#fbfdff_0%,#f5f9fd_100%)] p-3.5 shadow-inner">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">Chat Feed</p>
-              <p className="mt-1 text-[12px] font-black text-[#0A2540]">High-context coordination</p>
-            </div>
-            <div className="rounded-full bg-[#eaf3ff] px-3 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#245c9d]">
-              Synced live
-            </div>
-          </div>
-
-          <div className="mt-2.5 space-y-2">
-            {[
-              { sender: 'Buyer', body: 'Please confirm the best vessel option with a 19-day transit window.', tone: 'bg-white border-slate-100 text-slate-700' },
-              { sender: 'Supplier', body: 'Cargo is ready on April 12. Export docs and packing list are already uploaded.', tone: 'bg-[#eef6ff] border-blue-100 text-[#143A6A]' },
-              { sender: 'Shipping Agent', body: 'Maersk and MSC are both live. Best value bid is now visible for approval.', tone: 'bg-[#0A2540] border-[#0A2540] text-white' }
-            ].map((message) => (
-              <div key={message.body} className={`rounded-[18px] border px-3 py-2.5 ${message.tone}`}>
-                <div className="text-[8px] font-black uppercase tracking-[0.16em] opacity-70">{message.sender}</div>
-                <p className="mt-1 text-[12px] font-semibold leading-4.5">{message.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          {[
-            { label: 'Documents', value: '12 verified files' },
-            { label: 'Transport bids', value: '3 shortlisted' },
-            { label: 'Shipment status', value: 'Ready for award' }
-          ].map((item) => (
-            <div key={item.label} className="rounded-[18px] border border-slate-100 bg-[linear-gradient(180deg,#ffffff_0%,#f6f9fd_100%)] px-3 py-2.5">
-              <div className="text-[8px] font-black uppercase tracking-[0.16em] text-slate-400">{item.label}</div>
-              <div className="mt-1 text-[12px] font-black text-[#0A2540]">{item.value}</div>
-            </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
-  </div>
-);
+  );
+}
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -256,19 +237,46 @@ function LandingPage() {
     }
   ];
 
+  const timelineSteps = [
+    { label: 'Draft', status: 'completed' },
+    { label: 'Negotiation', status: 'completed' },
+    { label: 'Compliance', status: 'current' },
+    { label: 'Execution', status: 'pending' },
+    { label: 'Shipment', status: 'pending' }
+  ];
+
+  const platformFeatures = [
+    { title: 'Live chat', copy: 'Keep every stakeholder in one thread.', icon: MessageSquare, accent: 'text-blue-600', tint: 'bg-blue-50' },
+    { title: 'Doc builder', copy: 'Draft and review trade docs quickly.', icon: FileText, accent: 'text-violet-600', tint: 'bg-violet-50' },
+    { title: 'Carrier bids', copy: 'Compare shipping offers in real time.', icon: Truck, accent: 'text-emerald-600', tint: 'bg-emerald-50' },
+    { title: 'Verification', copy: 'Validate partners before deals move.', icon: ShieldCheck, accent: 'text-amber-600', tint: 'bg-amber-50' }
+  ];
+
   return (
     <PublicLayout
       topSlot={(
-        <section className="w-full overflow-hidden bg-[#0d1f43]">
-          <img
-            src={promoBanner}
-            alt="Tradafy promotion banner"
-            className="block h-[220px] w-full object-contain object-center"
-          />
+        <section className="w-full border-b border-white/10 bg-[linear-gradient(90deg,#071425_0%,#0A2540_50%,#11345e_100%)] text-white">
+          <div className="mx-auto flex max-w-[1500px] flex-col gap-2 px-4 py-2 sm:px-5 sm:py-2.5 lg:px-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-sky-100">
+                <Ship className="h-3.5 w-3.5 text-[#E5A93D]" />
+                Live workspace preview
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px] font-bold text-sky-100/80">
+                <span className="rounded-full bg-white/8 px-3 py-1">Chat</span>
+                <span className="rounded-full bg-white/8 px-3 py-1">Docs</span>
+                <span className="rounded-full bg-white/8 px-3 py-1">Shipping</span>
+                <span className="rounded-full bg-white/8 px-3 py-1">Timeline</span>
+              </div>
+            </div>
+            <div className="text-[11px] font-medium text-sky-100/72 sm:text-[12px]">
+              One shared workspace for negotiation, documents, logistics, and deal visibility.
+            </div>
+          </div>
         </section>
       )}
     >
-      <div className="space-y-5 pb-12 sm:space-y-6 sm:pb-14 lg:space-y-8 lg:pb-16">
+      <div className="space-y-8 pb-12 sm:space-y-10 sm:pb-14 lg:space-y-12 lg:pb-16">
 
         {/* --- SECTION 1: PIXEL-PERFECT HERO --- */}
         <section className="relative overflow-hidden rounded-[28px] px-4 pt-3 pb-6 text-white shadow-2xl sm:px-6 sm:pt-4 sm:pb-8 lg:min-h-[38vh] lg:rounded-[40px] lg:px-16 lg:pt-5 lg:pb-14"
@@ -349,84 +357,157 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* --- SECTION 2: DISCOVER OPPORTUNITIES (MOVED & BACKGROUND APPLIED) --- */}
-        <section className="relative overflow-hidden rounded-[30px] px-4 py-5 text-white shadow-2xl sm:px-6 sm:py-6 lg:rounded-[36px] lg:px-14 lg:py-7"
-          style={{
-            background: `linear-gradient(rgba(10, 31, 56, 0.85), rgba(20, 58, 106, 0.7)), url(${bgNegotiation})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}>
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(229,169,61,0.25),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.15),transparent_30%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
-          <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 animate-float-slow rounded-full bg-[#E5A93D]/20 blur-[100px]" />
-          <div className="relative grid gap-5 xl:grid-cols-[0.9fr_1.1fr] items-center">
-            <div className="space-y-3.5">
-              <Reveal effect="right">
-                  <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.22em] text-sky-100">
-                    Market Clarity
+        <section className="relative z-20 overflow-hidden rounded-[40px] border border-white/80 bg-[linear-gradient(180deg,#ffffff_0%,#f0f7ff_100%)] px-6 py-8 shadow-[0_30px_90px_rgba(10,37,64,0.1)] sm:px-10 lg:px-16 lg:py-10 lg:pb-12 lg:overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.1),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(229,169,61,0.08),transparent_30%)]" />
+
+          <div className="relative flex h-full flex-col gap-1 lg:gap-1.5">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <Reveal effect="up">
+                <div className="max-w-3xl space-y-1.5">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#cfe0f2] bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#245c9d]">
+                    <Ship className="h-3 w-3 text-[#E5A93D]" />
+                    Trade OS
                   </div>
-                  <h2 className="text-[30px] font-black text-white tracking-tight leading-[0.95] lg:text-[2.2rem]">Discover real trade opportunities</h2>
-                  <p className="max-w-2xl text-[13px] font-semibold leading-5 text-sky-100/85 lg:text-[15px]">Live products from <span className="text-white border-b-2 border-[#E5A93D]">verified suppliers</span>, organized into one buyer-friendly trade command surface.</p>
+                  <h1 className="text-[1.45rem] font-black leading-[0.92] tracking-tight text-[#071A31] lg:text-[2.15rem]">
+                    Live Deal Workspace.
+                    <br />
+                    {/* <span className="bg-gradient-to-r from-[#143A6A] via-[#245c9d] to-[#3B82F6] bg-clip-text text-transparent">
+                      Bigger. Clearer. More 3D.
+                    </span> */}
+                  </h1>
+                  {/* <p className="max-w-[56ch] text-[11px] font-medium leading-4.5 text-slate-600 lg:text-[12px]">
+                    Consolidate global trade into one professional hub. Keep conversations, documents, shipping, and deal progress visible in one place.
+                  </p> */}
                 </div>
               </Reveal>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {[
-                  { title: 'Without Tradafy', tone: 'text-rose-200', icon: XCircle, items: ['Lost deals', 'Miscommunication', 'Delays'] },
-                  { title: 'With TRADAFY', tone: 'text-emerald-300', icon: CheckCircle2, items: ['Structured deals', 'Real-time coordination', 'Faster execution'] }
-                ].map((group, index) => (
-                  <Reveal key={group.title} delay={200 + index * 160} effect="up">
-                    <div className="rounded-[22px] border border-white/10 bg-white/10 p-3.5 backdrop-blur-md shadow-xl">
-                      <h3 className={`text-[11px] font-black uppercase tracking-[0.16em] ${group.tone}`}>{group.title}</h3>
-                      <div className="mt-2.5 space-y-2">
-                        {group.items.map((item) => (
-                          <div key={item} className="flex items-center gap-2.5 rounded-2xl bg-white/6 px-3 py-2 text-[12px] font-bold text-white/90">
-                            <group.icon className={`h-3.5 w-3.5 ${index === 0 ? 'text-rose-300' : 'text-emerald-400'}`} />
-                            {item}
-                          </div>
-                        ))}
-                      </div>
+
+              <button
+                onClick={() => navigate('/login')}
+                className="group inline-flex h-fit items-center gap-2 rounded-xl bg-[#0A2540] px-4 py-2 text-[13px] font-black text-white shadow-lg transition hover:-translate-y-1"
+              >
+                Start now
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+
+            <div className="rounded-[22px] border border-slate-200/80 bg-white/72 px-3 py-1.5 shadow-sm backdrop-blur">
+              <div className="grid gap-1.5 sm:grid-cols-5 sm:gap-2">
+                {timelineSteps.map((step, idx) => (
+                  <div key={step.label} className="flex items-center gap-3">
+                    <div
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-black ${
+                        step.status === 'completed'
+                          ? 'bg-[#245c9d] text-white'
+                          : step.status === 'current'
+                            ? 'bg-white text-[#245c9d] ring-2 ring-indigo-100'
+                            : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {step.status === 'completed' ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
                     </div>
-                  </Reveal>
-                ))}
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-1">
-                {[
-                  { value: '150+', label: 'Verified suppliers' },
-                  { value: '32', label: 'Trade corridors' },
-                  { value: '24/7', label: 'Workspace visibility' }
-                ].map((item) => (
-                  <div key={item.label} className="rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent)] px-5 py-4 backdrop-blur shadow-xl">
-                    <div className="text-3xl font-black text-white">{item.value}</div>
-                    <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-amber-300/90">{item.label}</div>
+                    <div className="min-w-0">
+                      <span
+                        className={`block text-[9px] font-black uppercase tracking-[0.22em] ${
+                          step.status === 'completed' || step.status === 'current' ? 'text-[#0A2540]' : 'text-slate-400'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                      <span className="mt-0.5 block text-[9px] text-slate-500">
+                        {step.status === 'completed' ? 'Done' : step.status === 'current' ? 'Live now' : 'Next up'}
+                      </span>
+                    </div>
+                    {idx < timelineSteps.length - 1 ? <div className="hidden h-px flex-1 bg-slate-200 sm:block" /> : null}
                   </div>
                 ))}
               </div>
             </div>
-            <Reveal delay={600} effect="zoom">
-              <div className="space-y-2">
-                <DashboardMock />
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {[
-                    { label: 'Product match', value: 'Sunflower Oil / 2,500 MT' },
-                    { label: 'Carrier market', value: '8 live shipping bids' },
-                    { label: 'Execution status', value: 'Docs and shipment aligned' }
-                  ].map((card) => (
-                    <div key={card.label} className="rounded-[18px] border border-white/10 bg-white/10 px-3 py-2.5 text-left backdrop-blur">
-                      <div className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/70">{card.label}</div>
-                      <div className="mt-1 text-[12px] font-black text-white">{card.value}</div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {platformFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div
+                    key={feature.title}
+                    className="rounded-[18px] border border-slate-200/80 bg-white/92 p-2 shadow-[0_12px_30px_rgba(10,37,64,0.06)] transition-colors hover:bg-white"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${feature.tint} ring-1 ring-slate-100`}>
+                        <Icon className={`h-3.5 w-3.5 ${feature.accent}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#0A2540]">{feature.title}</p>
+                        <p className="mt-0.5 text-[8px] leading-3.5 text-slate-500">{feature.copy}</p>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="grid flex-1 items-center gap-4 lg:grid-cols-[1fr_1fr] lg:gap-8">
+              <Reveal effect="up">
+                <div className="space-y-2.5 lg:pr-2">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {[
+                      { value: '120+', label: 'Ports connected' },
+                      { value: '99.9%', label: 'Workspace uptime' },
+                      { value: '30+', label: 'Trade corridors' }
+                    ].map((stat) => (
+                      <div key={stat.label} className="rounded-[22px] border border-slate-200/80 bg-white px-6 py-5 shadow-[0_12px_30px_rgba(10,37,64,0.06)]">
+                        <p className="text-[28px] font-black leading-none text-[#071A31]">{stat.value}</p>
+                        <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-[24px] border border-[#dbe7f5] bg-white/90 p-6 shadow-[0_18px_50px_rgba(10,37,64,0.06)]">
+                    <div className="flex items-center gap-3 text-[13px] font-black uppercase tracking-[0.2em] text-[#245c9d]">
+                      <Globe2 className="h-4 w-4 text-[#E5A93D]" />
+                      Why it works
+                    </div>
+                    <div className="mt-4 space-y-2.5">
+                      {[
+                        'Centralized communication',
+                        'Full deal visibility',
+                        'Integrated shipping and documents'
+                      ].map((item) => (
+                        <div key={item} className="flex items-start gap-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#245c9d]" />
+                          <p className="text-[14px] font-bold text-slate-700">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-0.5">
+                    <button
+                      onClick={() => navigate('/products')}
+                      className="group inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,#E5A93D,#FF8A00)] px-4 py-2 text-[13px] font-black text-[#0A2540] shadow-[0_10px_35px_rgba(229,169,61,0.35)] transition hover:-translate-y-1"
+                    >
+                      Start trading
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                    <div className="text-[10px] font-medium text-slate-500">Built to keep the whole deal on one screen.</div>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
+              </Reveal>
+
+              <Reveal delay={150} effect="zoom">
+                <div className="flex justify-center lg:justify-end lg:pl-1">
+                  <WorkspaceOrbitPreview />
+                </div>
+              </Reveal>
+            </div>
           </div>
         </section>
 
         {/* --- SECTION 3: LIVE PRODUCT SHOWCASE --- */}
-        <Reveal effect="up">
+        <div className="relative z-0 mt-8 sm:mt-10 lg:mt-12">
+          <Reveal effect="up">
           <ProductShowcaseCarousel />
-        </Reveal>
+          </Reveal>
+        </div>
 
         {/* --- SECTION 4: TRUST SIGNALS --- */}
         <section className="relative overflow-hidden rounded-[30px] border border-white/5 bg-[#050e1c] py-8 shadow-[0_24px_72px_rgba(3,7,20,0.5)] sm:rounded-[40px] sm:py-10 animate-float-slow">
