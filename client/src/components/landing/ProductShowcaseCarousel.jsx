@@ -278,100 +278,107 @@ export default function ProductShowcaseCarousel() {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,#07111f,#102a4e_56%,#143a6a_100%)] px-4 py-4 text-white shadow-[0_24px_70px_rgba(10,37,64,0.32)] sm:px-5 sm:py-5 lg:h-[calc(100vh-9rem)] lg:min-h-[720px] lg:px-5 lg:py-5">
+    <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(145deg,#07111f,#102a4e_56%,#143a6a_100%)] px-4 py-5 text-white shadow-[0_24px_70px_rgba(10,37,64,0.32)] sm:px-6 sm:py-6 lg:flex lg:h-[calc(100vh-6rem)] lg:min-h-[580px] lg:max-h-[820px] lg:flex-col lg:px-8 lg:py-6">
       <style>{`
         @keyframes product-marquee {
           from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+          to   { transform: translateX(-50%); }
         }
       `}</style>
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.14),transparent_28%)]" />
-      <div className="absolute -right-24 -top-20 h-64 w-64 rounded-full bg-white/10 blur-[90px]" />
-      <div className="absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-[#E5A93D]/10 blur-[80px]" />
+      {/* Background accents */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,169,61,0.14),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_28%)]" />
+      <div className="absolute -right-20 -top-16 h-56 w-56 rounded-full bg-white/10 blur-[80px]" />
+      <div className="absolute -left-12 bottom-0 h-48 w-48 rounded-full bg-[#E5A93D]/10 blur-[70px]" />
 
-      <div className="relative flex h-full min-h-0 flex-col gap-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-sky-100 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-[#E5A93D]" />
+      {/* ── Top bar: label + heading + stats ── */}
+      <div className="relative shrink-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          {/* Left: label + heading */}
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.22em] text-sky-100 backdrop-blur">
+              <Sparkles className="h-3 w-3 text-[#E5A93D]" />
               Live Product Showcase
             </div>
-            <h3 className="mt-3 text-[1.6rem] font-black tracking-tight text-white sm:text-[2.15rem]">
-              Products that move. Listings that sell.
+            <h3 className="text-[1.45rem] font-black leading-tight tracking-tight text-white sm:text-[1.75rem] lg:text-[2rem]">
+              Products that move.{' '}
+              <span className="text-[#E5A93D]">Listings that sell.</span>
             </h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-sky-100/75">
-              Live catalog cards glide from right to left so buyers can browse fast, spot the newest stock, and open any listing in one click.
+            <p className="max-w-xl text-[12px] leading-relaxed text-sky-100/65 sm:text-[13px]">
+              Live catalog cards scroll left so buyers browse fast, spot new stock, and open any listing in one click.
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-[18px] border border-white/10 bg-white/8 px-4 py-3">
-              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-sky-100/70">Products</div>
-              <div className="mt-1 text-[1.1rem] font-black text-white">{totalProducts}</div>
-            </div>
-            <div className="rounded-[18px] border border-white/10 bg-white/8 px-4 py-3">
-              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-sky-100/70">Categories</div>
-              <div className="mt-1 text-[1.1rem] font-black text-white">{categoryCount}</div>
-            </div>
-            <div className="rounded-[18px] border border-white/10 bg-white/8 px-4 py-3">
-              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-sky-100/70">Newest</div>
-              <div className="mt-1 max-w-[7rem] truncate text-sm font-semibold text-white">{newestListing?.title || '—'}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mt-2 flex min-h-0 flex-1 flex-col gap-3 overflow-hidden rounded-[26px] border border-white/10 bg-white/7 p-3 backdrop-blur">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-[#07111f] to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-[#143a6a] to-transparent" />
-
-          <div className="relative z-10 grid min-h-0 flex-1 gap-3 lg:grid-cols-[16rem_minmax(0,1fr)]">
-            {loading ? (
-              <div className="space-y-3">
-                <div className="h-[clamp(120px,18vh,180px)] animate-pulse rounded-[24px] bg-white/10" />
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className="h-24 animate-pulse rounded-[18px] bg-white/10" />
-                  ))}
+          {/* Right: stat pills */}
+          <div className="flex shrink-0 gap-2">
+            {[
+              { label: 'Products',   value: totalProducts },
+              { label: 'Categories', value: categoryCount },
+              { label: 'Newest',     value: newestListing?.title || '—', truncate: true },
+            ].map((stat, i) => (
+              <div key={i} className="rounded-[16px] border border-white/10 bg-white/8 px-3 py-2.5 text-center shadow-sm">
+                <div className="text-[8px] font-black uppercase tracking-[0.16em] text-sky-100/60">{stat.label}</div>
+                <div className={`mt-1 font-black text-white ${stat.truncate ? 'max-w-[6rem] truncate text-[11px]' : 'text-[1.1rem]'}`}>
+                  {stat.value}
                 </div>
               </div>
-            ) : error ? (
-              <div className="flex h-full min-h-[220px] items-center justify-center rounded-[22px] border border-rose-200/30 bg-rose-500/10 px-5 py-6 text-sm text-rose-100">
-                {error}
-              </div>
-            ) : totalProducts > 0 ? (
-              <>
-                <ProductTile
-                  product={featuredProduct}
-                  onHover={(productId) => setHoveredProductId(productId)}
-                  onSelect={handleSelect}
-                />
-
-                <div className="relative flex min-h-[260px] items-center overflow-hidden rounded-[22px] border border-white/10 bg-white/5 px-3 py-3">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#07111f] to-transparent" />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#143a6a] to-transparent" />
-                  <div className="flex h-full w-max gap-3 pr-4 will-change-transform" style={{ animation: `product-marquee ${marqueeDuration}s linear infinite` }}>
-                    {repeatedProducts.map((product, index) => (
-                      <ProductTile
-                        key={`${product._id}-${index}`}
-                        product={product}
-                        onHover={(productId) => setHoveredProductId(productId)}
-                        onSelect={(productId) => {
-                          setHoveredProductId(productId);
-                          handleSelect(productId);
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex h-full min-h-[220px] items-center justify-center rounded-[22px] border border-white/10 bg-white/5 px-5 py-6 text-sm text-slate-200">
-                No products are listed yet.
-              </div>
-            )}
+            ))}
           </div>
         </div>
+      </div>
+
+      {/* ── Main content: featured tile (desktop) + marquee strip ── */}
+      <div className="relative mt-4 flex min-h-0 flex-1 gap-4 overflow-hidden rounded-[22px] border border-white/10 bg-white/5 p-3 backdrop-blur lg:p-4">
+        {/* Fade edges */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#07111f] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#143a6a] to-transparent" />
+
+        {loading ? (
+          <div className="flex w-full items-center gap-4 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-full w-[16.5rem] shrink-0 animate-pulse rounded-[22px] bg-white/10 sm:w-[18rem]" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex w-full items-center justify-center rounded-[20px] border border-rose-200/30 bg-rose-500/10 px-6 py-8 text-sm text-rose-100">
+            {error}
+          </div>
+        ) : totalProducts > 0 ? (
+          <div className="relative z-0 flex min-h-0 w-full flex-col gap-3 lg:flex-row">
+            {/* Featured card — desktop only */}
+            <div className="hidden shrink-0 lg:block lg:w-[16.5rem]">
+              <ProductTile
+                product={featuredProduct}
+                onHover={(productId) => setHoveredProductId(productId)}
+                onSelect={handleSelect}
+              />
+            </div>
+
+            {/* Scrolling marquee */}
+            <div className="relative flex min-h-[260px] flex-1 items-center overflow-hidden rounded-[18px] lg:min-h-0">
+              <div
+                className="flex h-full w-max items-center gap-4 will-change-transform"
+                style={{ animation: `product-marquee ${marqueeDuration}s linear infinite` }}
+              >
+                {repeatedProducts.map((product, index) => (
+                  <ProductTile
+                    key={`${product._id}-${index}`}
+                    product={product}
+                    onHover={(productId) => setHoveredProductId(productId)}
+                    onSelect={(productId) => {
+                      setHoveredProductId(productId);
+                      handleSelect(productId);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex w-full items-center justify-center rounded-[20px] border border-white/10 bg-white/5 px-6 py-8 text-sm text-slate-200">
+            No products are listed yet.
+          </div>
+        )}
       </div>
     </section>
   );

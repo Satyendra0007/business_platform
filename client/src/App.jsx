@@ -40,6 +40,8 @@ import VerifyPhonePage from './pages/VerifyPhonePage';
 import PhoneVerifyPage from './pages/PhoneVerifyPage';
 import PricingPage     from './pages/PricingPage';
 import BillingSuccessPage from './pages/BillingSuccessPage';
+import NewsPage from './pages/NewsPage';
+import EventsPage from './pages/EventsPage';
 import NotFound from './pages/NotFound';
 
 
@@ -158,6 +160,8 @@ export default function App() {
         <Route path="/product/:productId" element={<ProductDetailPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/premium-plans" element={<PremiumPlansPage />} />
+        <Route path="/news" element={<NewsPage />} />
+        <Route path="/events" element={<EventsPage />} />
 
         {/* ── Authenticated ── */}
         <Route element={<RequireAuth />}>
