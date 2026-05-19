@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Message = require('./message.model');
 const Deal    = require('../deal/deal.model');
+const { getIO } = require('../../socket');
 const { matchedData } = require('express-validator');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -158,6 +159,13 @@ const sendMessage = async (req, res) => {
     });
 
     await message.populate('senderId', senderSelect);
+
+    try {
+      const io = getIO();
+      io.to(`deal_${dealId}`).emit('chat:new_message', message);
+    } catch (socketErr) {
+      console.error('[Socket emit error chat:new_message]', socketErr);
+    }
 
     res.status(201).json({ success: true, data: message });
   } catch (error) {

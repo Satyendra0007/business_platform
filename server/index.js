@@ -9,6 +9,10 @@ const connectDB = require('./src/config/db');
 connectDB();
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { initSocket } = require('./src/socket');
+initSocket(server);
 
 // Security & Middleware
 app.use(helmet()); // Secure HTTP headers
@@ -67,6 +71,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5004;
 
-app.listen(PORT, () => console.log(`Server running securely on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running securely on port ${PORT}`));
 
 // nodemon restart trigger

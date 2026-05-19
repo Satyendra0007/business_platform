@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Deal    = require('./deal.model');
 const Company = require('../company/company.model');
 const User    = require('../user/user.model');
+const { getIO } = require('../../socket');
 const { matchedData } = require('express-validator');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -400,6 +401,13 @@ const updateDealStatus = async (req, res) => {
 
     await deal.save();
 
+    try {
+      const io = getIO();
+      io.to(`deal_${deal._id}`).emit('deal:updated', deal);
+    } catch (socketErr) {
+      console.error('[Socket emit error deal:updated]', socketErr);
+    }
+
     res.json({ success: true, message: `Deal status updated to '${status}'.`, data: deal });
   } catch (error) {
     console.error('[updateDealStatus]', error);
@@ -474,6 +482,13 @@ const updateShipment = async (req, res) => {
         }
       }
     });
+
+    try {
+      const io = getIO();
+      io.to(`deal_${req.params.id}`).emit('shipment:updated', updated.shipment);
+    } catch (socketErr) {
+      console.error('[Socket emit error shipment:updated]', socketErr);
+    }
 
     res.json({
       success: true,

@@ -20,6 +20,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppShell, MetricCard } from './ui';
 import { useAuth } from '../hooks/useAuth';
+import { useSocket } from '../context/SocketContext';
 import { getCompanyById } from '../lib/companyService';
 import { getDealById, advanceDealStatus, getMessages, sendMessage, updateDealShipment } from '../lib/dealService';
 import { buildDocumentContext, uploadPdfToCloudinary } from '../utils/pdf';
@@ -228,6 +229,7 @@ function ChatTab({
   documentError,
   onGenerateDocument,
 }) {
+  const { socket } = useSocket();
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState([]);
@@ -272,6 +274,23 @@ function ChatTab({
   }, [dealId]);
 
   useEffect(() => { loadMessages(); }, [loadMessages]);
+
+  useEffect(() => {
+    if (!socket || !dealId) return;
+
+    const handleNewMessage = (msg) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
+    };
+
+    socket.on('chat:new_message', handleNewMessage);
+
+    return () => {
+      socket.off('chat:new_message', handleNewMessage);
+    };
+  }, [socket, dealId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -638,8 +657,15 @@ function ChatTab({
         <div ref={bottomRef} className="h-1" />
       </div>
 
-      <form onSubmit={handleSend} className="shrink-0 border-t border-slate-100 bg-white px-4 py-0.5 sm:px-5 sm:py-1">
-        {pendingAttachments.length > 0 && (
+      <form onSubmit={handleSend} className="shrink-0 border-t border-slate-100 bg-white px-4 py-2 sm:px-5">
+        {deal?.status === 'closed' ? (
+          <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 py-4 text-sm font-semibold text-slate-500">
+            <AlertCircle className="mr-2 h-5 w-5 text-slate-400" />
+            Messaging is not allowed after the deal is closed
+          </div>
+        ) : (
+          <>
+            {pendingAttachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {pendingAttachments.map((attachment, index) => (
               <div
@@ -724,6 +750,8 @@ function ChatTab({
           className="hidden"
           onChange={(e) => uploadAttachmentFiles(e.target.files)}
         />
+          </>
+        )}
       </form>
     </div>
   );
@@ -991,6 +1019,7 @@ function DealParticipantsCard({ deal, user, chatContacts }) {
 
 export default function DealPage() {
   const { user }  = useAuth();
+  const { socket } = useSocket();
   const navigate  = useNavigate();
   const { dealId }= useParams();
   const isShippingAgentRole = Boolean(user?.roles?.includes('shipping_agent') && !user?.roles?.includes('admin'));
@@ -1025,6 +1054,29 @@ export default function DealPage() {
   }, [dealId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!socket || !dealId) return;
+
+    socket.emit('join_deal', dealId);
+
+    const handleDealUpdated = () => {
+      load();
+    };
+
+    const handleShipmentUpdated = (updatedShipment) => {
+      setDeal((prev) => (prev ? { ...prev, shipment: updatedShipment } : prev));
+    };
+
+    socket.on('deal:updated', handleDealUpdated);
+    socket.on('shipment:updated', handleShipmentUpdated);
+
+    return () => {
+      socket.emit('leave_deal', dealId);
+      socket.off('deal:updated', handleDealUpdated);
+      socket.off('shipment:updated', handleShipmentUpdated);
+    };
+  }, [socket, dealId, load]);
 
   useEffect(() => {
     if (!user?.companyId) {

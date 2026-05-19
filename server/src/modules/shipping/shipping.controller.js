@@ -272,6 +272,13 @@ const acceptBid = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    try {
+      const io = require('../../socket').getIO();
+      io.to(`deal_${deal._id}`).emit('deal:updated', deal);
+    } catch (socketErr) {
+      console.error('[Socket emit error deal:updated]', socketErr);
+    }
+
     res.json({
       success: true,
       message: 'Bid accepted. Deal has moved to shipping stage.',
