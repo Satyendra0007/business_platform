@@ -119,7 +119,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit, onOpenRequest }) {
   const [closing,    setClosing]    = useState(false);
   const [actionError, setActionError] = useState('');
 
-  const canConvert = !incoming && (rfq.status === 'open' || rfq.status === 'in_progress') && !rfq.dealId;
+  const canConvert = (rfq.status === 'open' || rfq.status === 'in_progress') && !rfq.dealId;
   const canClose   = !incoming && rfq.status !== 'converted' && rfq.status !== 'closed';
   const canEdit    = !incoming && rfq.status !== 'converted' && rfq.status !== 'closed';
   const isConverted = rfq.status === 'converted';
@@ -201,7 +201,7 @@ function RFQCard({ rfq, incoming, onConvert, onClose, onEdit, onOpenRequest }) {
             {buyerCompany ? <p className="text-slate-400">Company: {buyerCompany}</p> : null}
             {buyerEmail ? <p className="text-slate-400">{buyerEmail}</p> : null}
             <p className="pt-1 text-slate-500">
-              This buyer is requesting your product. Coordinate offline - the deal chat opens after the buyer converts this deal request.
+              This buyer is requesting your product. Convert this request to open the deal chat.
             </p>
           </div>
         ) : isConverted ? (
@@ -400,33 +400,35 @@ export default function RFQListPage({ incoming = false }) {
               ))}
             </div>
 
-            <div className="space-y-4">
-              {rfqs.filter(r => filter === 'all' || r.status === filter).map((rfq) => (
-                <RFQCard
-                  key={rfq._id}
-                  rfq={rfq}
-                  incoming={incoming}
-                  onConvert={handleConverted}
-                  onClose={handleClosed}
-                  onEdit={(r) => navigate(`/rfq/${r._id}/edit`)}
-                  onOpenRequest={setSelectedRFQ}
-                />
-              ))}
-              
-              {/* Show empty message if filter matches nothing but rfqs exist */}
-              {rfqs.filter(r => filter === 'all' || r.status === filter).length === 0 && (
-                <div className="rounded-[28px] border border-dashed border-slate-200 py-16 text-center text-sm font-medium text-slate-500">
-                  No deal requests match the selected filter.
-                </div>
-              )}
-            </div>
-
-            <RequestDetailPanel
-              rfq={selectedRFQ}
-              incoming={incoming}
-              onClose={() => setSelectedRFQ(null)}
-              navigate={navigate}
-            />
+            {selectedRFQ ? (
+              <RequestDetailPanel
+                rfq={selectedRFQ}
+                incoming={incoming}
+                onClose={() => setSelectedRFQ(null)}
+                navigate={navigate}
+              />
+            ) : (
+              <div className="space-y-4">
+                {rfqs.filter(r => filter === 'all' || r.status === filter).map((rfq) => (
+                  <RFQCard
+                    key={rfq._id}
+                    rfq={rfq}
+                    incoming={incoming}
+                    onConvert={handleConverted}
+                    onClose={handleClosed}
+                    onEdit={(r) => navigate(`/rfq/${r._id}/edit`)}
+                    onOpenRequest={setSelectedRFQ}
+                  />
+                ))}
+                
+                {/* Show empty message if filter matches nothing but rfqs exist */}
+                {rfqs.filter(r => filter === 'all' || r.status === filter).length === 0 && (
+                  <div className="rounded-[28px] border border-dashed border-slate-200 py-16 text-center text-sm font-medium text-slate-500">
+                    No deal requests match the selected filter.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

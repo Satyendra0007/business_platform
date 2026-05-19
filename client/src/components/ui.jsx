@@ -155,9 +155,9 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-6">
             <h4 className="text-white font-bold text-sm uppercase tracking-widest">Solutions</h4>
             <ul className="space-y-4 text-sm">
-              <li><button onClick={() => navigate('/products')} className="hover:text-white transition-colors">Bulk Marketplace</button></li>
-              <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Users</button></li>
-              <li><button className="hover:text-white transition-colors cursor-not-allowed">Deal Management</button></li>
+              <li><button onClick={() => { window.scrollTo(0, 0); navigate('/products'); }} className="hover:text-white transition-colors">Our Products</button></li>
+              <li><button onClick={() => { window.scrollTo(0, 0); navigate('/news'); }} className="hover:text-white transition-colors">Newspage</button></li>
+              <li><button onClick={() => { window.scrollTo(0, 0); navigate('/events'); }} className="hover:text-white transition-colors">Network & Events</button></li>
               <li><button className="hover:text-white transition-colors cursor-not-allowed">Verified Suppliers</button></li>
             </ul>
           </div>

@@ -21,8 +21,7 @@ import DealDocumentActions from '../components/deal-documents/DealDocumentAction
 import { useAuth } from '../hooks/useAuth';
 import { getCompanyById } from '../lib/companyService';
 import { sendMessage } from '../lib/dealService';
-import { createRFQ, getIncomingRFQs } from '../lib/rfqService';
-import { getMyRFQs } from '../lib/rfqService';
+import { createRFQ, getIncomingRFQs, getMyRFQs, convertRFQToDeal } from '../lib/rfqService';
 import { buildDocumentContext, uploadPdfToCloudinary } from '../utils/pdf';
 import { generateLOI } from '../utils/pdf/generateLOI';
 import { generateSPA } from '../utils/pdf/generateSPA';
@@ -143,6 +142,9 @@ function DealRequestCard({ rfq, navigate, onOpenRequest, view = 'supplier' }) {
 }
 
 function DealRequestDetailPanel({ request, isSupplier, onClose, navigate }) {
+  const [converting, setConverting] = useState(false);
+  const [actionError, setActionError] = useState('');
+
   if (!request) return null;
 
   const partyLabel = isSupplier ? 'Buyer' : 'Supplier';
@@ -153,6 +155,20 @@ function DealRequestDetailPanel({ request, isSupplier, onClose, navigate }) {
     ? (request.buyerCompanyName || 'Company pending')
     : (request.supplierCompanyName || 'Company pending');
   const partyEmail = isSupplier ? request.buyerUserEmail : request.supplierUserEmail;
+
+  const handleConvert = async () => {
+    if (!window.confirm('Convert this deal request into a live Deal workspace?')) return;
+    setConverting(true);
+    setActionError('');
+    try {
+      const result = await convertRFQToDeal(request._id);
+      navigate(`/deal/${result.deal._id}`);
+    } catch (err) {
+      setActionError(err.response?.data?.message || err.message);
+    } finally {
+      setConverting(false);
+    }
+  };
 
   return (
     <section className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
@@ -187,14 +203,17 @@ function DealRequestDetailPanel({ request, isSupplier, onClose, navigate }) {
           <p className="mt-1 text-sm text-slate-600">
             {request.dealId
               ? 'Deal chat is available now.'
-              : isSupplier
-                ? 'This request is waiting for the buyer to convert it into a live deal.'
-                : 'This request is waiting for the supplier to open a live deal workspace.'}
+              : 'You can convert this request to start the deal workspace and chat.'}
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
+        {actionError && (
+          <div className="w-full rounded-[20px] border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {actionError}
+          </div>
+        )}
         {request.dealId ? (
           <button
             type="button"
@@ -204,7 +223,17 @@ function DealRequestDetailPanel({ request, isSupplier, onClose, navigate }) {
             Open Chat
             <ArrowRight className="h-4 w-4" />
           </button>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            onClick={handleConvert}
+            disabled={converting || request.status === 'closed'}
+            className="inline-flex items-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f2846,#245c9d)] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+          >
+            {converting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            {converting ? 'Converting...' : 'Convert to Deal'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onClose}
@@ -479,6 +508,22 @@ export default function DealRequestPage() {
                 <div key={index} className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
               ))}
             </div>
+          ) : selectedRequest ? (
+            <div className="space-y-6">
+              <DealRequestDetailPanel
+                request={selectedRequest}
+                isSupplier
+                onClose={() => setSelectedRequest(null)}
+                navigate={navigate}
+              />
+              <DealDocumentActions
+                request={selectedRequest}
+                loadingKey={documentLoadingKey}
+                onGenerate={generateDocument}
+                statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+                errorMessage={documentError}
+              />
+            </div>
           ) : incomingRequests.length > 0 ? (
             <div className="space-y-3">
               {incomingRequests.map((request) => (
@@ -501,22 +546,6 @@ export default function DealRequestPage() {
                 </p>
               </div>
             </div>
-          )}
-
-          <DealRequestDetailPanel
-            request={selectedRequest}
-            isSupplier
-            onClose={() => setSelectedRequest(null)}
-            navigate={navigate}
-          />
-          {selectedRequest && (
-            <DealDocumentActions
-              request={selectedRequest}
-              loadingKey={documentLoadingKey}
-              onGenerate={generateDocument}
-              statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
-              errorMessage={documentError}
-            />
           )}
         </div>
       </AppShell>
@@ -595,7 +624,7 @@ export default function DealRequestPage() {
             </div>
           </div>
 
-          {!isSupplier && (
+          {!isSupplier && !selectedRequest && (
             <BuyerRequestWorkspace
               buyerRequests={buyerRequests}
               buyerLoading={buyerLoading}
@@ -632,7 +661,7 @@ export default function DealRequestPage() {
       title="Deal Request"
       subtitle="Create a structured trade request with the same clarity you would expect from a company verification form."
     >
-      {!isSupplier && (
+      {!isSupplier && !selectedRequest && (
         <BuyerRequestWorkspace
           buyerRequests={buyerRequests}
           buyerLoading={buyerLoading}
@@ -641,6 +670,24 @@ export default function DealRequestPage() {
           onOpenRequest={setSelectedRequest}
           emptyMessage="No deal requests are showing yet. Your submitted requests will appear here."
         />
+      )}
+
+      {!isSupplier && selectedRequest && (
+        <div className="mt-6 space-y-6">
+          <DealRequestDetailPanel
+            request={selectedRequest}
+            isSupplier={false}
+            onClose={() => setSelectedRequest(null)}
+            navigate={navigate}
+          />
+          <DealDocumentActions
+            request={selectedRequest}
+            loadingKey={documentLoadingKey}
+            onGenerate={generateDocument}
+            statusMessage={companyLoading ? 'Loading company details for document fields…' : documentStatus}
+            errorMessage={documentError}
+          />
+        </div>
       )}
 
       <div className={`${!isSupplier ? 'mt-6' : ''} grid gap-6 xl:grid-cols-[0.86fr_1.14fr]`}>
